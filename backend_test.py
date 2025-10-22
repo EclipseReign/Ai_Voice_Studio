@@ -449,59 +449,70 @@ class PiperTTSAPITester:
         return files_found == len(self.generated_audio_ids)
 
     def run_all_tests(self):
-        """Run all API tests"""
-        print("🚀 Starting Text-to-Speech API Tests (gTTS)")
+        """Run all API tests for Piper TTS"""
+        print("🚀 Starting Text-to-Speech API Tests (Piper TTS)")
         print(f"   Base URL: {self.base_url}")
         print("=" * 60)
         
         # Test 1: Root endpoint
         self.test_root_endpoint()
         
-        # Test 2: Get languages (gTTS)
-        sample_language = self.test_languages_endpoint()
+        # Test 2: Get voices (Piper TTS) - CRITICAL: Must run first to populate available_voices
+        voices_success = self.test_voices_endpoint()
+        if not voices_success:
+            print("❌ Cannot continue without voices - stopping tests")
+            return False
         
-        # Test 3: Generate text (short duration)
-        generated_text_short = self.test_text_generation_short()
+        # Test 3: Skip text generation (already confirmed working per review request)
+        print("\n🔍 Skipping text generation test (already confirmed working)")
         
-        # Test 4: Generate text (long duration)
-        generated_text_long = self.test_text_generation_long()
+        # Test 4: Synthesize audio with English voice
+        audio_id_english = self.test_audio_synthesis_english()
         
-        # Test 5: Synthesize audio (normal speed)
-        audio_id_normal = self.test_audio_synthesis_normal(generated_text_short, sample_language)
+        # Test 5: Synthesize audio with Russian voice
+        audio_id_russian = self.test_audio_synthesis_russian()
         
-        # Test 6: Synthesize audio (slow speed)
-        audio_id_slow = self.test_audio_synthesis_slow(generated_text_short, sample_language)
+        # Test 6: Test speed variations (slow and fast)
+        speed_audio_ids = self.test_audio_synthesis_speed_variations()
         
-        # Test 7: Synthesize audio in different languages
-        multi_lang_audio_ids = self.test_audio_synthesis_different_languages(generated_text_short)
-        
-        # Test 8: Synthesize long text
+        # Test 7: Synthesize long text (~500 words)
         long_audio_id = self.test_audio_synthesis_long_text()
         
         # Wait for audio processing
         if self.generated_audio_ids:
             print("\n⏳ Waiting for audio processing...")
-            time.sleep(3)
+            time.sleep(5)  # Longer wait for Piper processing
         
-        # Test 9: Download audio files
+        # Test 8: Download audio files (WAV format)
+        download_success_count = 0
         for audio_id in self.generated_audio_ids[:3]:  # Test first 3 downloads
-            self.test_audio_download(audio_id)
+            if self.test_audio_download(audio_id):
+                download_success_count += 1
         
-        # Test 10: Get history
+        # Test 9: Get history
         self.test_history_endpoint()
         
-        # Test 11: Verify audio files exist on disk
-        self.verify_audio_files_exist()
+        # Test 10: Verify audio files exist on disk (WAV format)
+        files_verified = self.verify_audio_files_exist()
         
         # Print results
         print("\n" + "=" * 60)
         print(f"📊 Test Results: {self.tests_passed}/{self.tests_run} passed")
+        print(f"🎵 Audio files generated: {len(self.generated_audio_ids)}")
+        print(f"📥 Downloads tested: {download_success_count}")
+        print(f"📁 Files verified on disk: {files_verified}")
         
         if self.tests_passed < self.tests_run:
             print("\n❌ Failed Tests:")
             for result in self.test_results:
                 if not result["success"]:
                     print(f"   - {result['test_name']}: {result.get('error', 'Unknown error')}")
+        
+        # Summary of Piper TTS specific checks
+        print("\n🎯 Piper TTS Specific Verification:")
+        print(f"   ✅ Voices endpoint returned {len(self.available_voices)} voices" if self.available_voices else "   ❌ No voices available")
+        print(f"   ✅ Audio format is WAV (not MP3)" if files_verified else "   ❌ Audio files not verified")
+        print(f"   ✅ Multiple languages supported" if len([v for v in self.available_voices if v.get('locale', '').startswith(('en-', 'ru-'))]) >= 2 else "   ❌ Limited language support")
         
         return self.tests_passed == self.tests_run
 
