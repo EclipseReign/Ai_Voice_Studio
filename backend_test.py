@@ -517,7 +517,7 @@ class PiperTTSAPITester:
         return self.tests_passed == self.tests_run
 
 def main():
-    tester = TextToSpeechAPITester()
+    tester = PiperTTSAPITester()
     success = tester.run_all_tests()
     
     # Save detailed results
