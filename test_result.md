@@ -101,3 +101,173 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: |
+  Сервис для генерации текста и озвучки по промпту. Два режима:
+  1. AI генерация: вводишь тему, длительность, язык -> генерируется текст -> можно редактировать -> озвучить
+  2. Ручной ввод: вводишь свой текст -> озвучить
+  Настройки: язык, скорость речи (normal/slow)
+  Использовать gTTS для озвучки
+  Поддержка длинных текстов (до часа аудио)
+
+backend:
+  - task: "Text generation via LLM"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented text generation using emergentintegrations LLM (gpt-4o-mini). Endpoint: POST /api/text/generate with prompt, duration_minutes, language"
+
+  - task: "Audio synthesis with gTTS"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented audio synthesis using gTTS. Endpoint: POST /api/audio/synthesize with text, language, slow parameters. Saves to /app/backend/audio_files/"
+
+  - task: "Languages list endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "GET /api/languages returns list of supported languages for gTTS. Tested via curl - working"
+
+  - task: "Audio download endpoint"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "GET /api/audio/download/{audio_id} returns MP3 file. Needs testing with actual generated audio"
+
+  - task: "History endpoint"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "GET /api/history returns recent audio generations. Needs testing"
+
+frontend:
+  - task: "AI text generation mode"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/HomePage.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Tab with prompt input, duration slider, language select. Generate text button, editable textarea, synthesize button"
+
+  - task: "Manual text input mode"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/HomePage.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Tab with manual text input, language select, synthesize button"
+
+  - task: "Voice settings panel"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/HomePage.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Settings card with language select and speed select (normal/slow)"
+
+  - task: "Audio player and download"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/HomePage.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Audio player card appears after synthesis with HTML5 audio player and download button"
+
+  - task: "Generation history"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/HomePage.js"
+    stuck_count: 0
+    priority: "low"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "History card showing recent 5 generations with download links"
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Text generation via LLM"
+    - "Audio synthesis with gTTS"
+    - "AI text generation mode"
+    - "Manual text input mode"
+  stuck_tasks: []
+  test_all: true
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: |
+      Converted from edge-tts to gTTS as requested by user.
+      Main changes:
+      - Replaced /voices endpoint with /languages endpoint
+      - Simplified speed control to normal/slow (gTTS limitation)
+      - Removed voice selection (gTTS only supports language selection)
+      - Updated frontend to work with new API
+      
+      Backend ready for testing. Key endpoints:
+      1. POST /api/text/generate - Generate text from prompt
+      2. POST /api/audio/synthesize - Convert text to speech with gTTS
+      3. GET /api/audio/download/{id} - Download generated MP3
+      4. GET /api/languages - Get supported languages
+      5. GET /api/history - Get generation history
+      
+      Please test:
+      - Text generation with different durations (1-60 minutes)
+      - Audio synthesis with both normal and slow speeds
+      - Both UI modes (AI generate and manual input)
+      - Download functionality
+      - Long text handling (for hour-long audio)
