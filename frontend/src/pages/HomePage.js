@@ -404,7 +404,7 @@ const HomePage = () => {
                 <CardContent>
                   <div className="space-y-2 max-h-64 overflow-y-auto">
                     {history.slice(0, 5).map((item) => (
-                      <div key={item.id} className="p-3 bg-slate-50 rounded-lg border border-slate-200" data-testid={`history-item-${item.id}`}>
+                      <div key={item.id} className="p-3 bg-slate-50 rounded-lg border border-slate-200" data-testid={'history-item-' + item.id}>
                         <p className="text-sm text-slate-700 mb-2">{item.text}</p>
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-slate-500">{new Date(item.created_at).toLocaleString()}</span>
