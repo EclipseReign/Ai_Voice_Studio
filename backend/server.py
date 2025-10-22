@@ -36,16 +36,15 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Models
-class Voice(BaseModel):
+class Language(BaseModel):
+    code: str
     name: str
-    short_name: str
-    gender: str
-    locale: str
+    tld: str  # Top-level domain for gTTS
 
 class TextGenerateRequest(BaseModel):
     prompt: str
     duration_minutes: int
-    language: str = "en-US"
+    language: str = "en"
     
 class TextGenerateResponse(BaseModel):
     id: str
