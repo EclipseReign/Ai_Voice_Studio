@@ -25,30 +25,26 @@ const HomePage = () => {
   const [manualText, setManualText] = useState("");
   
   // Common state
-  const [voices, setVoices] = useState([]);
-  const [selectedVoice, setSelectedVoice] = useState("");
-  const [language, setLanguage] = useState("en-US");
-  const [speed, setSpeed] = useState([0]);
+  const [languages, setLanguages] = useState([]);
+  const [language, setLanguage] = useState("en");
+  const [slow, setSlow] = useState(false);
   const [isSynthesizing, setIsSynthesizing] = useState(false);
   const [audioUrl, setAudioUrl] = useState(null);
   const [history, setHistory] = useState([]);
   
-  // Fetch voices on mount
+  // Fetch languages on mount
   useEffect(() => {
-    fetchVoices();
+    fetchLanguages();
     fetchHistory();
   }, []);
   
-  const fetchVoices = async () => {
+  const fetchLanguages = async () => {
     try {
-      const response = await axios.get(API + '/voices');
-      setVoices(response.data);
-      if (response.data.length > 0) {
-        setSelectedVoice(response.data[0].short_name);
-      }
+      const response = await axios.get(API + '/languages');
+      setLanguages(response.data);
     } catch (error) {
-      console.error("Error fetching voices:", error);
-      toast.error("Failed to load voices");
+      console.error("Error fetching languages:", error);
+      toast.error("Failed to load languages");
     }
   };
   
