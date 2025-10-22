@@ -5,7 +5,7 @@ import time
 from datetime import datetime
 
 class TextToSpeechAPITester:
-    def __init__(self, base_url="https://speaktogen.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://promptspeak.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.tests_run = 0
         self.tests_passed = 0
