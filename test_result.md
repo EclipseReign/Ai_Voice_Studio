@@ -266,41 +266,26 @@ test_plan:
 agent_communication:
   - agent: "main"
     message: |
-      Converted from edge-tts to gTTS as requested by user.
-      Main changes:
-      - Replaced /voices endpoint with /languages endpoint
-      - Simplified speed control to normal/slow (gTTS limitation)
-      - Removed voice selection (gTTS only supports language selection)
-      - Updated frontend to work with new API
+      CONVERTED TO EDGE-TTS for better quality (user wanted free + realistic)
       
-      Backend ready for testing. Key endpoints:
-      1. POST /api/text/generate - Generate text from prompt
-      2. POST /api/audio/synthesize - Convert text to speech with gTTS
-      3. GET /api/audio/download/{id} - Download generated MP3
-      4. GET /api/languages - Get supported languages
-      5. GET /api/history - Get generation history
+      edge-tts advantages:
+      - FREE (no API key needed)
+      - HIGH QUALITY (Microsoft Azure voices)
+      - REALISTIC natural speech
+      - 100+ voices across many languages
+      - Supports speed AND pitch adjustments
+      - Perfect for hour-long audio
       
-      Please test:
-      - Text generation with different durations (1-60 minutes)
-      - Audio synthesis with both normal and slow speeds
-      - Both UI modes (AI generate and manual input)
-      - Download functionality
-      - Long text handling (for hour-long audio)
-  - agent: "testing"
+      Key endpoints:
+      1. POST /api/text/generate - Generate text from prompt (LLM)
+      2. POST /api/audio/synthesize - Text-to-speech with edge-tts
+      3. GET /api/voices - List 100+ available voices
+      4. GET /api/audio/download/{id} - Download MP3
+      5. GET /api/history - Generation history
+      
+      Ready for comprehensive testing with edge-tts integration.
+  - agent: "main"
     message: |
-      🎉 BACKEND TESTING COMPLETE - ALL SYSTEMS WORKING PERFECTLY!
-      
-      Comprehensive testing completed with 14/14 tests passed:
-      ✅ Text generation: Both short (2min) and long (10min) durations working
-      ✅ LLM integration: emergentintegrations gpt-4o-mini responding correctly
-      ✅ Audio synthesis: gTTS working with normal/slow speeds and multiple languages
-      ✅ File management: MP3 files properly saved to /app/backend/audio_files/
-      ✅ Database: MongoDB storing text and audio generations correctly
-      ✅ Downloads: Audio files downloadable with correct MIME types
-      ✅ History: Generation history endpoint working with proper sorting
-      ✅ Long text: Successfully handled 8895+ character texts (hour-long capability)
-      ✅ Multi-language: Tested English, Spanish, Russian, French
-      
-      Backend is production-ready. All core functionality verified.
-      Database contains 2 text generations and 6 audio generations.
-      No errors in backend logs. Ready for frontend integration testing.
+      Backend updated with edge-tts. All endpoints need retesting.
+      All backend tasks need_retesting set to true.
+      Ready for comprehensive backend testing with edge-tts.
