@@ -409,7 +409,7 @@ const HomePage = () => {
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-slate-500">{new Date(item.created_at).toLocaleString()}</span>
                           <a href={process.env.REACT_APP_BACKEND_URL + item.audio_url} download>
-                            <Button size="sm" variant="ghost" data-testid={`history-download-${item.id}`}>
+                            <Button size="sm" variant="ghost" data-testid={'history-download-' + item.id}>
                               <Download className="w-3 h-3" />
                             </Button>
                           </a>
