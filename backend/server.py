@@ -100,32 +100,36 @@ def calculate_word_count(duration_minutes: int) -> int:
 async def root():
     return {"message": "Text-to-Speech API"}
 
-@api_router.get("/languages", response_model=List[Language])
-async def get_languages():
-    """Get available languages for gTTS"""
+@api_router.get("/voices", response_model=List[Voice])
+async def get_voices():
+    """Get available voices from edge-tts"""
     try:
-        # Common languages supported by gTTS
-        languages = [
-            Language(code="en", name="English", tld="com"),
-            Language(code="es", name="Spanish", tld="es"),
-            Language(code="fr", name="French", tld="fr"),
-            Language(code="de", name="German", tld="de"),
-            Language(code="it", name="Italian", tld="it"),
-            Language(code="pt", name="Portuguese", tld="com.br"),
-            Language(code="ru", name="Russian", tld="ru"),
-            Language(code="zh-CN", name="Chinese (Simplified)", tld="com"),
-            Language(code="ja", name="Japanese", tld="co.jp"),
-            Language(code="ko", name="Korean", tld="co.kr"),
-            Language(code="ar", name="Arabic", tld="com"),
-            Language(code="hi", name="Hindi", tld="co.in"),
-            Language(code="nl", name="Dutch", tld="nl"),
-            Language(code="pl", name="Polish", tld="pl"),
-            Language(code="tr", name="Turkish", tld="com.tr"),
-        ]
-        return languages
+        voices = await edge_tts.list_voices()
+        
+        # Filter for common languages and return formatted list
+        filtered_voices = []
+        seen_combinations = set()
+        
+        for voice in voices:
+            locale = voice["Locale"]
+            
+            # Priority languages
+            if locale.startswith(('en-', 'es-', 'fr-', 'de-', 'ru-', 'zh-', 'ja-', 'it-', 'pt-', 'ar-', 'hi-', 'ko-')):
+                # Create unique key to avoid duplicates
+                key = (voice["ShortName"], voice["Gender"], locale)
+                if key not in seen_combinations and len(filtered_voices) < 100:
+                    filtered_voices.append(Voice(
+                        name=voice["FriendlyName"],
+                        short_name=voice["ShortName"],
+                        gender=voice["Gender"],
+                        locale=voice["Locale"]
+                    ))
+                    seen_combinations.add(key)
+        
+        return filtered_voices
     except Exception as e:
-        logger.error(f"Error fetching languages: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error fetching languages: {str(e)}")
+        logger.error(f"Error fetching voices: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fetching voices: {str(e)}")
 
 @api_router.post("/text/generate", response_model=TextGenerateResponse)
 async def generate_text(request: TextGenerateRequest):
