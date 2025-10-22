@@ -272,23 +272,40 @@ class PiperTTSAPITester:
         
         return None
 
-    def test_audio_synthesis_different_languages(self, text):
-        """Test audio synthesis with different languages"""
-        languages_to_test = ["es", "ru", "fr"]
+    def test_audio_synthesis_speed_variations(self):
+        """Test audio synthesis with different speed rates"""
+        # Find English voice for speed testing
+        en_voice = None
+        for voice in self.available_voices:
+            if voice.get('locale', '').startswith('en-'):
+                en_voice = voice.get('short_name')
+                break
+        
+        if not en_voice:
+            print("⚠️  No English voice found, skipping speed test")
+            return []
+            
+        test_text = "This is a speed test for the Piper text-to-speech system."
+        speed_tests = [
+            ("Slow Speed (0.8)", 0.8),
+            ("Fast Speed (1.5)", 1.5)
+        ]
+        
         audio_ids = []
         
-        for lang in languages_to_test:
+        for test_name, rate in speed_tests:
             success, response = self.run_test(
-                f"Synthesize Audio ({lang.upper()})",
+                f"Synthesize Audio ({test_name})",
                 "POST",
                 "audio/synthesize",
                 200,
                 data={
-                    "text": "Hello, this is a test message in different languages.",
-                    "language": lang,
-                    "slow": False
+                    "text": test_text,
+                    "voice": en_voice,
+                    "rate": rate,
+                    "language": "en-US"
                 },
-                timeout=60
+                timeout=90
             )
             
             if success and response:
