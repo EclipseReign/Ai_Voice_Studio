@@ -244,9 +244,10 @@ metadata:
 test_plan:
   current_focus:
     - "Text generation via LLM"
-    - "Audio synthesis with gTTS"
-    - "AI text generation mode"
-    - "Manual text input mode"
+    - "Audio synthesis with edge-tts"
+    - "Voices list endpoint"
+    - "Audio download endpoint"
+    - "History endpoint"
   stuck_tasks: []
   test_all: true
   test_priority: "high_first"
