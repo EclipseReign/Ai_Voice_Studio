@@ -1,8 +1,8 @@
 {
-  "timestamp": "2025-10-22T10:56:09.610081",
-  "total_tests": 4,
-  "passed_tests": 3,
-  "success_rate": "75.0%",
+  "timestamp": "2025-10-22T10:59:03.538349",
+  "total_tests": 5,
+  "passed_tests": 4,
+  "success_rate": "80.0%",
   "test_results": [
     {
       "test_name": "Root API Endpoint",
@@ -21,12 +21,515 @@
       "endpoint": "voices",
       "method": "GET",
       "expected_status": 200,
-      "actual_status": 500,
-      "success": false,
-      "response_data": null,
-      "error": {
-        "detail": "Error fetching voices: 401, message='Unauthorized', url='https://api.msedgeservices.com/tts/cognitiveservices/voices/list?Ocp-Apim-Subscription-Key=6A5AA1D4EAFF4E9FB37E23D68491D6F4&Sec-MS-GEC=7016A5B328D5C2423A8EBC71DA08C9AD07D0D51BCECA27503439138830726148&Sec-MS-GEC-Version=1-140.0.3485.14'"
-      }
+      "actual_status": 200,
+      "success": true,
+      "response_data": [
+        {
+          "name": "Microsoft HiuGaai Online (Natural) - Chinese (Cantonese Traditional)",
+          "short_name": "zh-HK-HiuGaaiNeural",
+          "gender": "Female",
+          "locale": "zh-HK"
+        },
+        {
+          "name": "Microsoft HiuMaan Online (Natural) - Chinese (Hong Kong SAR)",
+          "short_name": "zh-HK-HiuMaanNeural",
+          "gender": "Female",
+          "locale": "zh-HK"
+        },
+        {
+          "name": "Microsoft WanLung Online (Natural) - Chinese (Hong Kong SAR)",
+          "short_name": "zh-HK-WanLungNeural",
+          "gender": "Male",
+          "locale": "zh-HK"
+        },
+        {
+          "name": "Microsoft Xiaoxiao Online (Natural) - Chinese (Mainland)",
+          "short_name": "zh-CN-XiaoxiaoNeural",
+          "gender": "Female",
+          "locale": "zh-CN"
+        },
+        {
+          "name": "Microsoft Xiaoyi Online (Natural) - Chinese (Mainland)",
+          "short_name": "zh-CN-XiaoyiNeural",
+          "gender": "Female",
+          "locale": "zh-CN"
+        },
+        {
+          "name": "Microsoft Yunjian Online (Natural) - Chinese (Mainland)",
+          "short_name": "zh-CN-YunjianNeural",
+          "gender": "Male",
+          "locale": "zh-CN"
+        },
+        {
+          "name": "Microsoft Yunxi Online (Natural) - Chinese (Mainland)",
+          "short_name": "zh-CN-YunxiNeural",
+          "gender": "Male",
+          "locale": "zh-CN"
+        },
+        {
+          "name": "Microsoft Yunxia Online (Natural) - Chinese (Mainland)",
+          "short_name": "zh-CN-YunxiaNeural",
+          "gender": "Male",
+          "locale": "zh-CN"
+        },
+        {
+          "name": "Microsoft Yunyang Online (Natural) - Chinese (Mainland)",
+          "short_name": "zh-CN-YunyangNeural",
+          "gender": "Male",
+          "locale": "zh-CN"
+        },
+        {
+          "name": "Microsoft Xiaobei Online (Natural) - Chinese (Northeastern Mandarin)",
+          "short_name": "zh-CN-liaoning-XiaobeiNeural",
+          "gender": "Female",
+          "locale": "zh-CN-liaoning"
+        },
+        {
+          "name": "Microsoft HsiaoChen Online (Natural) - Chinese (Taiwan)",
+          "short_name": "zh-TW-HsiaoChenNeural",
+          "gender": "Female",
+          "locale": "zh-TW"
+        },
+        {
+          "name": "Microsoft YunJhe Online (Natural) - Chinese (Taiwan)",
+          "short_name": "zh-TW-YunJheNeural",
+          "gender": "Male",
+          "locale": "zh-TW"
+        },
+        {
+          "name": "Microsoft HsiaoYu Online (Natural) - Chinese (Taiwanese Mandarin)",
+          "short_name": "zh-TW-HsiaoYuNeural",
+          "gender": "Female",
+          "locale": "zh-TW"
+        },
+        {
+          "name": "Microsoft Xiaoni Online (Natural) - Chinese (Zhongyuan Mandarin Shaanxi)",
+          "short_name": "zh-CN-shaanxi-XiaoniNeural",
+          "gender": "Female",
+          "locale": "zh-CN-shaanxi"
+        },
+        {
+          "name": "Microsoft WilliamMultilingual Online (Natural) - English (Australia)",
+          "short_name": "en-AU-WilliamMultilingualNeural",
+          "gender": "Male",
+          "locale": "en-AU"
+        },
+        {
+          "name": "Microsoft Natasha Online (Natural) - English (Australia)",
+          "short_name": "en-AU-NatashaNeural",
+          "gender": "Female",
+          "locale": "en-AU"
+        },
+        {
+          "name": "Microsoft Clara Online (Natural) - English (Canada)",
+          "short_name": "en-CA-ClaraNeural",
+          "gender": "Female",
+          "locale": "en-CA"
+        },
+        {
+          "name": "Microsoft Liam Online (Natural) - English (Canada)",
+          "short_name": "en-CA-LiamNeural",
+          "gender": "Male",
+          "locale": "en-CA"
+        },
+        {
+          "name": "Microsoft Yan Online (Natural) - English (Hong Kong SAR)",
+          "short_name": "en-HK-YanNeural",
+          "gender": "Female",
+          "locale": "en-HK"
+        },
+        {
+          "name": "Microsoft Sam Online (Natural) - English (Hongkong)",
+          "short_name": "en-HK-SamNeural",
+          "gender": "Male",
+          "locale": "en-HK"
+        },
+        {
+          "name": "Microsoft Neerja Online (Natural) - English (India) (Preview)",
+          "short_name": "en-IN-NeerjaExpressiveNeural",
+          "gender": "Female",
+          "locale": "en-IN"
+        },
+        {
+          "name": "Microsoft Neerja Online (Natural) - English (India)",
+          "short_name": "en-IN-NeerjaNeural",
+          "gender": "Female",
+          "locale": "en-IN"
+        },
+        {
+          "name": "Microsoft Prabhat Online (Natural) - English (India)",
+          "short_name": "en-IN-PrabhatNeural",
+          "gender": "Male",
+          "locale": "en-IN"
+        },
+        {
+          "name": "Microsoft Connor Online (Natural) - English (Ireland)",
+          "short_name": "en-IE-ConnorNeural",
+          "gender": "Male",
+          "locale": "en-IE"
+        },
+        {
+          "name": "Microsoft Emily Online (Natural) - English (Ireland)",
+          "short_name": "en-IE-EmilyNeural",
+          "gender": "Female",
+          "locale": "en-IE"
+        },
+        {
+          "name": "Microsoft Asilia Online (Natural) - English (Kenya)",
+          "short_name": "en-KE-AsiliaNeural",
+          "gender": "Female",
+          "locale": "en-KE"
+        },
+        {
+          "name": "Microsoft Chilemba Online (Natural) - English (Kenya)",
+          "short_name": "en-KE-ChilembaNeural",
+          "gender": "Male",
+          "locale": "en-KE"
+        },
+        {
+          "name": "Microsoft Mitchell Online (Natural) - English (New Zealand)",
+          "short_name": "en-NZ-MitchellNeural",
+          "gender": "Male",
+          "locale": "en-NZ"
+        },
+        {
+          "name": "Microsoft Molly Online (Natural) - English (New Zealand)",
+          "short_name": "en-NZ-MollyNeural",
+          "gender": "Female",
+          "locale": "en-NZ"
+        },
+        {
+          "name": "Microsoft Abeo Online (Natural) - English (Nigeria)",
+          "short_name": "en-NG-AbeoNeural",
+          "gender": "Male",
+          "locale": "en-NG"
+        },
+        {
+          "name": "Microsoft Ezinne Online (Natural) - English (Nigeria)",
+          "short_name": "en-NG-EzinneNeural",
+          "gender": "Female",
+          "locale": "en-NG"
+        },
+        {
+          "name": "Microsoft James Online (Natural) - English (Philippines)",
+          "short_name": "en-PH-JamesNeural",
+          "gender": "Male",
+          "locale": "en-PH"
+        },
+        {
+          "name": "Microsoft Rosa Online (Natural) - English (Philippines)",
+          "short_name": "en-PH-RosaNeural",
+          "gender": "Female",
+          "locale": "en-PH"
+        },
+        {
+          "name": "Microsoft Ava Online (Natural) - English (United States)",
+          "short_name": "en-US-AvaNeural",
+          "gender": "Female",
+          "locale": "en-US"
+        },
+        {
+          "name": "Microsoft Andrew Online (Natural) - English (United States)",
+          "short_name": "en-US-AndrewNeural",
+          "gender": "Male",
+          "locale": "en-US"
+        },
+        {
+          "name": "Microsoft Emma Online (Natural) - English (United States)",
+          "short_name": "en-US-EmmaNeural",
+          "gender": "Female",
+          "locale": "en-US"
+        },
+        {
+          "name": "Microsoft Brian Online (Natural) - English (United States)",
+          "short_name": "en-US-BrianNeural",
+          "gender": "Male",
+          "locale": "en-US"
+        },
+        {
+          "name": "Microsoft Luna Online (Natural) - English (Singapore)",
+          "short_name": "en-SG-LunaNeural",
+          "gender": "Female",
+          "locale": "en-SG"
+        },
+        {
+          "name": "Microsoft Wayne Online (Natural) - English (Singapore)",
+          "short_name": "en-SG-WayneNeural",
+          "gender": "Male",
+          "locale": "en-SG"
+        },
+        {
+          "name": "Microsoft Leah Online (Natural) - English (South Africa)",
+          "short_name": "en-ZA-LeahNeural",
+          "gender": "Female",
+          "locale": "en-ZA"
+        },
+        {
+          "name": "Microsoft Luke Online (Natural) - English (South Africa)",
+          "short_name": "en-ZA-LukeNeural",
+          "gender": "Male",
+          "locale": "en-ZA"
+        },
+        {
+          "name": "Microsoft Elimu Online (Natural) - English (Tanzania)",
+          "short_name": "en-TZ-ElimuNeural",
+          "gender": "Male",
+          "locale": "en-TZ"
+        },
+        {
+          "name": "Microsoft Imani Online (Natural) - English (Tanzania)",
+          "short_name": "en-TZ-ImaniNeural",
+          "gender": "Female",
+          "locale": "en-TZ"
+        },
+        {
+          "name": "Microsoft Libby Online (Natural) - English (United Kingdom)",
+          "short_name": "en-GB-LibbyNeural",
+          "gender": "Female",
+          "locale": "en-GB"
+        },
+        {
+          "name": "Microsoft Maisie Online (Natural) - English (United Kingdom)",
+          "short_name": "en-GB-MaisieNeural",
+          "gender": "Female",
+          "locale": "en-GB"
+        },
+        {
+          "name": "Microsoft Ryan Online (Natural) - English (United Kingdom)",
+          "short_name": "en-GB-RyanNeural",
+          "gender": "Male",
+          "locale": "en-GB"
+        },
+        {
+          "name": "Microsoft Sonia Online (Natural) - English (United Kingdom)",
+          "short_name": "en-GB-SoniaNeural",
+          "gender": "Female",
+          "locale": "en-GB"
+        },
+        {
+          "name": "Microsoft Thomas Online (Natural) - English (United Kingdom)",
+          "short_name": "en-GB-ThomasNeural",
+          "gender": "Male",
+          "locale": "en-GB"
+        },
+        {
+          "name": "Microsoft Ana Online (Natural) - English (United States)",
+          "short_name": "en-US-AnaNeural",
+          "gender": "Female",
+          "locale": "en-US"
+        },
+        {
+          "name": "Microsoft AndrewMultilingual Online (Natural) - English (United States)",
+          "short_name": "en-US-AndrewMultilingualNeural",
+          "gender": "Male",
+          "locale": "en-US"
+        },
+        {
+          "name": "Microsoft Charline Online (Natural) - French (Belgium)",
+          "short_name": "fr-BE-CharlineNeural",
+          "gender": "Female",
+          "locale": "fr-BE"
+        },
+        {
+          "name": "Microsoft Thierry Online (Natural) - French (Canada)",
+          "short_name": "fr-CA-ThierryNeural",
+          "gender": "Male",
+          "locale": "fr-CA"
+        },
+        {
+          "name": "Microsoft VivienneMultilingual Online (Natural) - French (France)",
+          "short_name": "fr-FR-VivienneMultilingualNeural",
+          "gender": "Female",
+          "locale": "fr-FR"
+        },
+        {
+          "name": "Microsoft Ariane Online (Natural) - French (Switzerland)",
+          "short_name": "fr-CH-ArianeNeural",
+          "gender": "Female",
+          "locale": "fr-CH"
+        },
+        {
+          "name": "Microsoft Ingrid Online (Natural) - German (Austria)",
+          "short_name": "de-AT-IngridNeural",
+          "gender": "Female",
+          "locale": "de-AT"
+        },
+        {
+          "name": "Microsoft SeraphinaMultilingual Online (Natural) - German (Germany)",
+          "short_name": "de-DE-SeraphinaMultilingualNeural",
+          "gender": "Female",
+          "locale": "de-DE"
+        },
+        {
+          "name": "Microsoft Jan Online (Natural) - German (Switzerland)",
+          "short_name": "de-CH-JanNeural",
+          "gender": "Male",
+          "locale": "de-CH"
+        },
+        {
+          "name": "Microsoft GiuseppeMultilingual Online (Natural) - Italian (Italy)",
+          "short_name": "it-IT-GiuseppeMultilingualNeural",
+          "gender": "Male",
+          "locale": "it-IT"
+        },
+        {
+          "name": "Microsoft Keita Online (Natural) - Japanese (Japan)",
+          "short_name": "ja-JP-KeitaNeural",
+          "gender": "Male",
+          "locale": "ja-JP"
+        },
+        {
+          "name": "Microsoft ThalitaMultilingual Online (Natural) - Portuguese (Brazil)",
+          "short_name": "pt-BR-ThalitaMultilingualNeural",
+          "gender": "Female",
+          "locale": "pt-BR"
+        },
+        {
+          "name": "Microsoft Duarte Online (Natural) - Portuguese (Portugal)",
+          "short_name": "pt-PT-DuarteNeural",
+          "gender": "Male",
+          "locale": "pt-PT"
+        },
+        {
+          "name": "Microsoft Dmitry Online (Natural) - Russian (Russia)",
+          "short_name": "ru-RU-DmitryNeural",
+          "gender": "Male",
+          "locale": "ru-RU"
+        },
+        {
+          "name": "Microsoft Elena Online (Natural) - Spanish (Argentina)",
+          "short_name": "es-AR-ElenaNeural",
+          "gender": "Female",
+          "locale": "es-AR"
+        },
+        {
+          "name": "Microsoft Marcelo Online (Natural) - Spanish (Bolivia)",
+          "short_name": "es-BO-MarceloNeural",
+          "gender": "Male",
+          "locale": "es-BO"
+        },
+        {
+          "name": "Microsoft Catalina Online (Natural) - Spanish (Chile)",
+          "short_name": "es-CL-CatalinaNeural",
+          "gender": "Female",
+          "locale": "es-CL"
+        },
+        {
+          "name": "Microsoft Gonzalo Online (Natural) - Spanish (Colombia)",
+          "short_name": "es-CO-GonzaloNeural",
+          "gender": "Male",
+          "locale": "es-CO"
+        },
+        {
+          "name": "Microsoft Ximena Online (Natural) - Spanish (Colombia)",
+          "short_name": "es-ES-XimenaNeural",
+          "gender": "Female",
+          "locale": "es-ES"
+        },
+        {
+          "name": "Microsoft Juan Online (Natural) - Spanish (Costa Rica)",
+          "short_name": "es-CR-JuanNeural",
+          "gender": "Male",
+          "locale": "es-CR"
+        },
+        {
+          "name": "Microsoft Belkys Online (Natural) - Spanish (Cuba)",
+          "short_name": "es-CU-BelkysNeural",
+          "gender": "Female",
+          "locale": "es-CU"
+        },
+        {
+          "name": "Microsoft Emilio Online (Natural) - Spanish (Dominican Republic)",
+          "short_name": "es-DO-EmilioNeural",
+          "gender": "Male",
+          "locale": "es-DO"
+        },
+        {
+          "name": "Microsoft Andrea Online (Natural) - Spanish (Ecuador)",
+          "short_name": "es-EC-AndreaNeural",
+          "gender": "Female",
+          "locale": "es-EC"
+        },
+        {
+          "name": "Microsoft Lorena Online (Natural) - Spanish (El Salvador)",
+          "short_name": "es-SV-LorenaNeural",
+          "gender": "Female",
+          "locale": "es-SV"
+        },
+        {
+          "name": "Microsoft Javier Online (Natural) - Spanish (Equatorial Guinea)",
+          "short_name": "es-GQ-JavierNeural",
+          "gender": "Male",
+          "locale": "es-GQ"
+        },
+        {
+          "name": "Microsoft Andres Online (Natural) - Spanish (Guatemala)",
+          "short_name": "es-GT-AndresNeural",
+          "gender": "Male",
+          "locale": "es-GT"
+        },
+        {
+          "name": "Microsoft Carlos Online (Natural) - Spanish (Honduras)",
+          "short_name": "es-HN-CarlosNeural",
+          "gender": "Male",
+          "locale": "es-HN"
+        },
+        {
+          "name": "Microsoft Dalia Online (Natural) - Spanish (Mexico)",
+          "short_name": "es-MX-DaliaNeural",
+          "gender": "Female",
+          "locale": "es-MX"
+        },
+        {
+          "name": "Microsoft Federico Online (Natural) - Spanish (Nicaragua)",
+          "short_name": "es-NI-FedericoNeural",
+          "gender": "Male",
+          "locale": "es-NI"
+        },
+        {
+          "name": "Microsoft Margarita Online (Natural) - Spanish (Panama)",
+          "short_name": "es-PA-MargaritaNeural",
+          "gender": "Female",
+          "locale": "es-PA"
+        },
+        {
+          "name": "Microsoft Mario Online (Natural) - Spanish (Paraguay)",
+          "short_name": "es-PY-MarioNeural",
+          "gender": "Male",
+          "locale": "es-PY"
+        },
+        {
+          "name": "Microsoft Alex Online (Natural) - Spanish (Peru)",
+          "short_name": "es-PE-AlexNeural",
+          "gender": "Male",
+          "locale": "es-PE"
+        },
+        {
+          "name": "Microsoft Karina Online (Natural) - Spanish (Puerto Rico)",
+          "short_name": "es-PR-KarinaNeural",
+          "gender": "Female",
+          "locale": "es-PR"
+        },
+        {
+          "name": "Microsoft Alonso Online (Natural) - Spanish (United States)",
+          "short_name": "es-US-AlonsoNeural",
+          "gender": "Male",
+          "locale": "es-US"
+        },
+        {
+          "name": "Microsoft Mateo Online (Natural) - Spanish (Uruguay)",
+          "short_name": "es-UY-MateoNeural",
+          "gender": "Male",
+          "locale": "es-UY"
+        },
+        {
+          "name": "Microsoft Paola Online (Natural) - Spanish (Venezuela)",
+          "short_name": "es-VE-PaolaNeural",
+          "gender": "Female",
+          "locale": "es-VE"
+        }
+      ],
+      "error": null
     },
     {
       "test_name": "Generate Text",
@@ -36,12 +539,24 @@
       "actual_status": 200,
       "success": true,
       "response_data": {
-        "id": "321c7745-7c03-409e-b76c-1646198b0293",
-        "text": "Welcome to our exploration of the incredible benefits of artificial intelligence in healthcare. In recent years, AI has emerged as a game-changer, revolutionizing how we approach medical treatment, patient care, and healthcare management. So, let\u2019s dive into this fascinating world and discover how AI is improving lives.\n\nFirst up, one of the most significant advantages of AI is its ability to analyze vast amounts of data quickly and accurately. With electronic health records and countless research studies generated every day, AI algorithms can spot patterns and trends that even the most experienced doctors might miss. This means faster diagnoses, tailored treatment plans, and ultimately, better outcomes for patients. Imagine a world where AI helps identify potential health issues even before they develop, giving patients the chance to address problems early.\n\nAnother remarkable aspect is AI's role in enhancing medical imaging. Machines powered by AI can analyze X-rays, MRIs, and CT scans in a fraction of the time it would take a human radiologist. These algorithms can detect anomalies and diseases like cancer with remarkable accuracy. This not only boosts efficiency but also allows healthcare professionals to focus more on patient interaction, spending less time on paperwork and more time on what really matters - caring for patients.\n\nMoreover, AI solutions are becoming invaluable in drug discovery. By predicting how different compounds interact with biological systems, AI can significantly reduce the time and cost it takes to bring new medications to market. This means that potentially life-saving treatments can reach patients more quickly than ever before.\n\nAs we look to the future, it\u2019s clear that artificial intelligence is not here to replace healthcare professionals but to enhance their capabilities. With AI as our ally, we\u2019re moving toward a healthier, more efficient healthcare system\u2014one that prioritizes patient outcomes and enhances the overall experience. So, let\u2019s embrace the potential of AI and look forward to the brighter future it promises in healthcare.",
-        "word_count": 319,
-        "estimated_duration": 127.6
+        "id": "72f59c41-2d5a-4d60-9914-687ec0e1804c",
+        "text": "Welcome to our discussion on the incredible benefits of artificial intelligence in healthcare. As technology continues to advance, AI is transforming the way we approach medical challenges, leading to faster diagnoses, personalized treatment plans, and improved patient outcomes. Let\u2019s dive into how this innovative technology is reshaping the healthcare landscape.\n\nFirst and foremost, one of the most exciting advantages of AI is its ability to analyze large amounts of medical data quickly and accurately. Imagine a system that can sift through thousands of patient records and research papers in mere seconds! This capability helps healthcare professionals spot patterns, identify diseases earlier, and ultimately make better-informed decisions. Studies have shown that AI can outperform human doctors in various diagnostic tasks, particularly in radiology, where it can detect conditions like tumors from imaging data with remarkable precision.\n\nNext, let\u2019s talk about personalized medicine. Every patient's situation is unique, and AI can help tailor treatment plans that cater to individual needs. By analyzing genetic information, lifestyle factors, and medical histories, AI-driven systems can recommend therapies that are more likely to be effective for specific patients. This not only enhances the chances of recovery but also minimizes the risk of side effects from treatments that may not be suitable.\n\nLastly, AI also plays a crucial role in streamlining administrative tasks. From scheduling appointments to managing billing processes, AI can alleviate the repetitive workload for healthcare staff, allowing them to focus more on patient care and less on paperwork. This can lead to a more efficient healthcare system overall.\n\nIn conclusion, the integration of artificial intelligence in healthcare is revolutionizing the way we diagnose, treat, and manage patient care. With faster data analysis, personalized treatment options, and improved administrative efficiency, AI is not just a tool of the future\u2014it\u2019s changing lives today. As we continue to embrace this technology, the potential for enhanced healthcare outcomes is truly exciting. Thank you for listening!",
+        "word_count": 317,
+        "estimated_duration": 126.8
       },
       "error": null
+    },
+    {
+      "test_name": "Synthesize Audio",
+      "endpoint": "audio/synthesize",
+      "method": "POST",
+      "expected_status": 200,
+      "actual_status": 500,
+      "success": false,
+      "response_data": null,
+      "error": {
+        "detail": "Error synthesizing audio: 403, message='Invalid response status', url='wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken=6A5AA1D4EAFF4E9FB37E23D68491D6F4&ConnectionId=d24b43b7d1664a9382b0d69c4afb499a'"
+      }
     },
     {
       "test_name": "Get Generation History",
