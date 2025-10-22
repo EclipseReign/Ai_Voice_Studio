@@ -115,11 +115,15 @@ async def generate_text_chunk(
 ) -> str:
     """Generate a chunk of text using LLM"""
     
+    # Increase target words by 20% to compensate for LLM undergeneration
+    # LLM typically generates 10-20% fewer words than requested
+    adjusted_words = int(target_words * 1.2)
+    
     # Create LLM chat instance
     chat = LlmChat(
         api_key=os.environ.get('EMERGENT_LLM_KEY'),
         session_id=str(uuid.uuid4()),
-        system_message="You are a professional narrator and content writer. Create engaging, natural-flowing narration scripts suitable for audio. Write in a continuous narrative style without section headers or labels."
+        system_message="You are a professional narrator and content writer. Create engaging, natural-flowing narration scripts suitable for audio. Write in a continuous narrative style without section headers or labels. Always write the full requested length."
     ).with_model("openai", "gpt-4o-mini")
     
     # Build prompt based on chunk position
@@ -127,19 +131,20 @@ async def generate_text_chunk(
         # Single complete text
         user_prompt = f"""Create a narration script about: {prompt}
 
-Write approximately {target_words} words in {language}.
+Write AT LEAST {adjusted_words} words in {language}. This is important - make sure to write enough content to reach this word count.
 Style: Natural, conversational narration suitable for audio storytelling.
 Write as a continuous narrative without any section labels, headers, or markers like "Introduction", "Conclusion", etc.
-Just tell the story or explain the topic in an engaging, flowing way."""
+Just tell the story or explain the topic in an engaging, flowing way with lots of details and examples."""
     
     elif is_first:
         # First chunk of multi-part text
         user_prompt = f"""Begin a narration script about: {prompt}
 
-This is the opening of a longer narration. Write approximately {target_words} words in {language}.
+This is the opening of a longer narration. Write AT LEAST {adjusted_words} words in {language}.
 Style: Natural, conversational narration suitable for audio.
 Start the story/topic naturally without labels like "Introduction".
 Write in a continuous narrative flow that will continue in the next part.
+Include plenty of details and context to reach the target word count.
 End at a natural pause point, but don't conclude the topic."""
     
     elif is_last:
@@ -149,9 +154,10 @@ End at a natural pause point, but don't conclude the topic."""
 
 Previous content ended with: "...{context_preview}"
 
-Write approximately {target_words} words in {language} to conclude this narration.
+Write AT LEAST {adjusted_words} words in {language} to conclude this narration.
 Continue naturally from where the previous part ended.
 Wrap up the topic naturally without using labels like "Conclusion" or "In conclusion".
+Include final details and examples to reach the target word count.
 Just bring the narrative to a natural, satisfying end."""
     
     else:
@@ -161,9 +167,10 @@ Just bring the narrative to a natural, satisfying end."""
 
 Previous content ended with: "...{context_preview}"
 
-Write approximately {target_words} words in {language} to continue this narration.
+Write AT LEAST {adjusted_words} words in {language} to continue this narration.
 Continue naturally from where the previous part ended.
 Maintain the same tone and style.
+Include more details, examples, and elaboration to reach the target word count.
 End at a natural pause point, but don't conclude - there's more to come."""
     
     # Generate text
