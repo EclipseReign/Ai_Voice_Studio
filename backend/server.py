@@ -64,7 +64,7 @@ class AudioSynthesizeResponse(BaseModel):
     id: str
     audio_url: str
     text: str
-    language: str
+    voice: str
     created_at: str
 
 class GenerationHistory(BaseModel):
