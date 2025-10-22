@@ -98,7 +98,8 @@ const HomePage = () => {
     
     setIsSynthesizing(true);
     try {
-      const speedStr = speed[0] > 0 ? `+${speed[0]}%` : `${speed[0]}%`;
+      const speedValue = speed[0];
+      const speedStr = speedValue > 0 ? `+${speedValue}%` : `${speedValue}%`;
       
       const response = await axios.post(`${API}/audio/synthesize`, {
         text: text,
