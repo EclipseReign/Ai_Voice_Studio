@@ -126,17 +126,20 @@ backend:
         agent: "testing"
         comment: "✅ PASSED - Text generation working perfectly. Tested short (2 min, 295 words) and long (10 min, 1283 words) durations. LLM integration successful, proper word count calculation, database storage working. Generated realistic content based on prompts."
 
-  - task: "Audio synthesis with edge-tts"
+  - task: "Audio synthesis with Piper TTS"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "UPDATED to edge-tts for better quality. Endpoint: POST /api/audio/synthesize with text, voice, rate, pitch, language. Much higher quality than gTTS, supports 100+ voices."
+      - working: true
+        agent: "main"
+        comment: "SWITCHED TO PIPER TTS due to edge-tts 403 errors. Piper is local, free, high-quality neural TTS. Successfully tested English and Russian voices. Endpoint: POST /api/audio/synthesize with text, voice, rate, language. Generates WAV files. Supports 100+ voices across many languages."
 
   - task: "Voices list endpoint"
     implemented: true
