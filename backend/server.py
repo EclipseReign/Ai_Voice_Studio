@@ -37,6 +37,14 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Piper configuration
+PIPER_MODELS_DIR = ROOT_DIR / "piper_models"
+PIPER_MODELS_DIR.mkdir(exist_ok=True)
+VOICES_CACHE_FILE = PIPER_MODELS_DIR / "voices_cache.json"
+
+# Cache for loaded Piper voices
+loaded_voices: Dict[str, PiperVoice] = {}
+
 # Models
 class Voice(BaseModel):
     name: str
