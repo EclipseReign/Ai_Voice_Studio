@@ -384,17 +384,17 @@ const HomePage = () => {
                     <SelectContent className="max-h-64">
                       {getVoicesByLanguage().map((voice) => (
                         <SelectItem key={voice.short_name} value={voice.short_name}>
-                          {voice.name} ({voice.gender})
+                          {voice.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-slate-500 mt-1">Choose from high-quality voices</p>
+                  <p className="text-xs text-slate-500 mt-1">Neural TTS voices powered by Piper</p>
                 </div>
                 
                 <div>
                   <Label htmlFor="speed">
-                    Speed: {speed[0] > 0 ? '+' : ''}{speed[0]}%
+                    Speed: {speed[0] > 0 ? '+' : ''}{speed[0]}% ({(1 + speed[0]/100).toFixed(1)}x)
                   </Label>
                   <Slider
                     id="speed"
@@ -406,24 +406,7 @@ const HomePage = () => {
                     step={10}
                     className="mt-2"
                   />
-                  <p className="text-xs text-slate-500 mt-1">Adjust speech speed</p>
-                </div>
-                
-                <div>
-                  <Label htmlFor="pitch">
-                    Pitch: {pitch[0] > 0 ? '+' : ''}{pitch[0]}Hz
-                  </Label>
-                  <Slider
-                    id="pitch"
-                    data-testid="pitch-slider"
-                    value={pitch}
-                    onValueChange={setPitch}
-                    min={-50}
-                    max={50}
-                    step={5}
-                    className="mt-2"
-                  />
-                  <p className="text-xs text-slate-500 mt-1">Adjust voice pitch (tone)</p>
+                  <p className="text-xs text-slate-500 mt-1">Adjust speech speed (0.5x to 2.0x)</p>
                 </div>
               </CardContent>
             </Card>
