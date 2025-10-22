@@ -29,7 +29,6 @@ const HomePage = () => {
   const [selectedVoice, setSelectedVoice] = useState("");
   const [language, setLanguage] = useState("en-US");
   const [speed, setSpeed] = useState([0]);
-  const [pitch, setPitch] = useState([0]);
   const [isSynthesizing, setIsSynthesizing] = useState(false);
   const [audioUrl, setAudioUrl] = useState(null);
   const [history, setHistory] = useState([]);
