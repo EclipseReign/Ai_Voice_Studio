@@ -170,31 +170,54 @@ async def root():
 
 @api_router.get("/voices", response_model=List[Voice])
 async def get_voices():
-    """Get available voices from edge-tts"""
+    """Get available voices from Piper"""
     try:
-        voices = await edge_tts.list_voices()
+        voices_data = await fetch_available_voices()
         
-        # Filter for common languages and return formatted list
+        # Priority languages mapping
+        lang_map = {
+            'en': 'en-US',
+            'ru': 'ru-RU',
+            'es': 'es-ES',
+            'fr': 'fr-FR',
+            'de': 'de-DE',
+            'it': 'it-IT',
+            'pt': 'pt-BR',
+            'zh': 'zh-CN',
+            'ja': 'ja-JP',
+            'ko': 'ko-KR',
+            'ar': 'ar-SA',
+            'hi': 'hi-IN'
+        }
+        
         filtered_voices = []
-        seen_combinations = set()
         
-        for voice in voices:
-            locale = voice["Locale"]
+        for voice_key in sorted(voices_data.keys()):
+            # Extract language code
+            lang_code = voice_key.split('_')[0]
             
-            # Priority languages
-            if locale.startswith(('en-', 'es-', 'fr-', 'de-', 'ru-', 'zh-', 'ja-', 'it-', 'pt-', 'ar-', 'hi-', 'ko-')):
-                # Create unique key to avoid duplicates
-                key = (voice["ShortName"], voice["Gender"], locale)
-                if key not in seen_combinations and len(filtered_voices) < 100:
-                    filtered_voices.append(Voice(
-                        name=voice["FriendlyName"],
-                        short_name=voice["ShortName"],
-                        gender=voice["Gender"],
-                        locale=voice["Locale"]
-                    ))
-                    seen_combinations.add(key)
+            # Only include priority languages
+            if lang_code in lang_map:
+                voice_info = voices_data[voice_key]
+                qualities = list(voice_info['files'].keys())
+                quality = qualities[0] if qualities else 'medium'
+                
+                # Extract voice name from key (e.g., en_US-amy-low -> Amy)
+                voice_name = voice_key.split('-')[1] if '-' in voice_key else voice_key
+                voice_name = voice_name.capitalize()
+                
+                # Get full locale from voice_key (e.g., en_US)
+                locale_parts = voice_key.split('-')[0].replace('_', '-')
+                
+                filtered_voices.append(Voice(
+                    name=f"{voice_name} ({quality})",
+                    short_name=voice_key,
+                    language=voice_info.get('language', {}).get('name_english', lang_code.upper()),
+                    quality=quality,
+                    locale=locale_parts
+                ))
         
-        return filtered_voices
+        return filtered_voices[:100]  # Limit to 100 voices
     except Exception as e:
         logger.error(f"Error fetching voices: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error fetching voices: {str(e)}")
