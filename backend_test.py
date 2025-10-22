@@ -89,12 +89,13 @@ class PiperTTSAPITester:
         return success
 
     def test_voices_endpoint(self):
-        """Test voices endpoint (edge-tts)"""
+        """Test voices endpoint (Piper TTS)"""
         success, response = self.run_test(
-            "Get Available Voices (edge-tts)",
+            "Get Available Voices (Piper TTS)",
             "GET",
             "voices",
-            200
+            200,
+            timeout=60  # Longer timeout for first voice fetch
         )
         
         if success and isinstance(response, list):
@@ -105,15 +106,29 @@ class PiperTTSAPITester:
             en_voices = [v for v in response if v.get('locale', '').startswith('en-')]
             ru_voices = [v for v in response if v.get('locale', '').startswith('ru-')]
             es_voices = [v for v in response if v.get('locale', '').startswith('es-')]
+            fr_voices = [v for v in response if v.get('locale', '').startswith('fr-')]
+            de_voices = [v for v in response if v.get('locale', '').startswith('de-')]
             
             print(f"   English voices: {len(en_voices)}")
             print(f"   Russian voices: {len(ru_voices)}")
             print(f"   Spanish voices: {len(es_voices)}")
+            print(f"   French voices: {len(fr_voices)}")
+            print(f"   German voices: {len(de_voices)}")
             
             if en_voices:
                 print(f"   Sample EN voice: {en_voices[0].get('name')} ({en_voices[0].get('short_name')})")
             if ru_voices:
                 print(f"   Sample RU voice: {ru_voices[0].get('name')} ({ru_voices[0].get('short_name')})")
+                
+            # Verify voice structure
+            if response:
+                sample_voice = response[0]
+                required_fields = ['name', 'short_name', 'language', 'quality', 'locale']
+                missing_fields = [field for field in required_fields if field not in sample_voice]
+                if missing_fields:
+                    print(f"   ⚠️  Missing fields in voice data: {missing_fields}")
+                else:
+                    print(f"   ✅ Voice data structure is correct")
                 
         return success
 
