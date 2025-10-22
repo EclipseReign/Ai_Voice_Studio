@@ -321,18 +321,17 @@ async def synthesize_audio(request: AudioSynthesizeRequest):
         
         # Run synthesis in thread pool to avoid blocking
         def synthesize():
+            # Create synthesis config with speed adjustment
+            # length_scale is inverse of speed (higher = slower, lower = faster)
+            syn_config = SynthesisConfig(
+                length_scale=1.0 / request.rate,  # Convert rate to length_scale
+                noise_scale=0.667,
+                noise_w_scale=0.8
+            )
+            
             with wave.open(str(wav_file), 'wb') as wav_out:
-                # Configure WAV file
-                wav_out.setnchannels(1)  # Mono
-                wav_out.setsampwidth(2)  # 16-bit
-                wav_out.setframerate(voice.config.sample_rate)
-                
-                # Synthesize with speed adjustment
-                for audio_bytes in voice.synthesize_stream_raw(
-                    request.text,
-                    length_scale=1.0 / request.rate  # Piper uses length_scale (inverse of rate)
-                ):
-                    wav_out.writeframes(audio_bytes)
+                # Synthesize directly to WAV file
+                voice.synthesize_wav(request.text, wav_out, syn_config=syn_config)
         
         # Run in thread pool
         await asyncio.to_thread(synthesize)
