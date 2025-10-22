@@ -122,7 +122,7 @@ backend:
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
@@ -130,6 +130,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ PASSED - Text generation working perfectly. Tested short (2 min, 295 words) and long (10 min, 1283 words) durations. LLM integration successful, proper word count calculation, database storage working. Generated realistic content based on prompts."
+      - working: "NA"
+        agent: "main"
+        comment: "УЛУЧШЕНИЕ: Переделана генерация для поддержки длинных текстов (50+ минут). Реализована генерация по чанкам (по 1200 слов). Убраны структурные маркеры ('Introduction', 'Conclusion') из промптов. Текст теперь генерируется как непрерывный рассказ. Для коротких текстов (<1200 слов) - одна генерация, для длинных - несколько чанков объединяются в единый текст. Нужно протестировать на 50 минутах."
 
   - task: "Audio synthesis with Piper TTS"
     implemented: true
