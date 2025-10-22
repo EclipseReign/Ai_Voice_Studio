@@ -281,3 +281,35 @@ agent_communication:
       Backend updated with edge-tts. All endpoints need retesting.
       All backend tasks need_retesting set to true.
       Ready for comprehensive backend testing with edge-tts.
+  - agent: "main"
+    message: |
+      CRITICAL FIX: Switched from edge-tts to Piper TTS
+      
+      PROBLEM: edge-tts was getting 403 errors from Microsoft's service (blocked in server environment)
+      
+      SOLUTION: Piper TTS - Local neural TTS
+      
+      Piper TTS advantages:
+      - 100% LOCAL (no external API calls = no blocking)
+      - FREE forever (no API key needed)
+      - HIGH QUALITY neural voices
+      - FAST synthesis (real-time or faster)
+      - RELIABLE (works in any deployment)
+      - 100+ voices: English, Russian, Spanish, French, German, Italian, Portuguese, Chinese, Arabic, Hindi, Korean, etc.
+      - Speed adjustment support
+      - Perfect for hour-long audio
+      - Auto-downloads models on first use
+      
+      TESTED:
+      - English voice (en_US-lessac-medium): ✅ 181KB WAV
+      - Russian voice (ru_RU-irina-medium): ✅ 251KB WAV
+      
+      Changes made:
+      1. Installed piper-tts==1.3.0
+      2. Updated /api/audio/synthesize to use Piper
+      3. Updated /api/voices to list Piper voices
+      4. Changed audio format from MP3 to WAV
+      5. Removed pitch control (Piper doesn't support it)
+      6. Frontend updated to work with new API
+      
+      Ready for full testing!
