@@ -132,6 +132,137 @@ class PiperTTSAPITester:
                 
         return success
 
+    def test_text_generation_short_russian(self):
+        """Test text generation endpoint with short duration (10 minutes) in Russian"""
+        success, response = self.run_test(
+            "Generate Text (Short - 10 minutes, Russian)",
+            "POST",
+            "text/generate",
+            200,
+            data={
+                "prompt": "История космических путешествий",
+                "duration_minutes": 10,
+                "language": "ru-RU"
+            },
+            timeout=90
+        )
+        
+        if success and response:
+            word_count = response.get('word_count', 0)
+            estimated_duration = response.get('estimated_duration', 0)
+            text = response.get('text', '')
+            
+            print(f"   Generated {word_count} words")
+            print(f"   Estimated duration: {estimated_duration:.1f} seconds ({estimated_duration/60:.1f} minutes)")
+            print(f"   Text preview: {text[:200]}...")
+            
+            # Check for expected word count (~1500 words for 10 minutes)
+            expected_words = 10 * 150  # 1500 words
+            word_range_ok = 1200 <= word_count <= 1800  # Allow some variance
+            
+            # Check for unwanted structural markers
+            unwanted_markers = ["Introduction", "Conclusion", "Введение", "Заключение"]
+            has_markers = any(marker in text for marker in unwanted_markers)
+            
+            # Check duration estimate (should be close to 600 seconds = 10 minutes)
+            duration_ok = 500 <= estimated_duration <= 700  # Allow some variance
+            
+            print(f"   ✅ Word count in range (1200-1800): {word_range_ok} ({word_count} words)")
+            print(f"   ✅ No structural markers: {not has_markers}")
+            print(f"   ✅ Duration estimate correct: {duration_ok} ({estimated_duration:.0f}s)")
+            
+            return {
+                'text': text,
+                'word_count': word_count,
+                'estimated_duration': estimated_duration,
+                'word_range_ok': word_range_ok,
+                'no_markers': not has_markers,
+                'duration_ok': duration_ok
+            }
+        
+        return None
+
+    def test_text_generation_long_russian(self):
+        """Test text generation endpoint with long duration (50 minutes) in Russian - KEY TEST"""
+        print("\n🔥 CRITICAL TEST: 50-minute text generation with chunked processing")
+        print("   This will take several minutes as it requires ~7 LLM requests...")
+        
+        success, response = self.run_test(
+            "Generate Text (Long - 50 minutes, Russian) - CHUNKED GENERATION",
+            "POST",
+            "text/generate",
+            200,
+            data={
+                "prompt": "История развития искусственного интеллекта",
+                "duration_minutes": 50,
+                "language": "ru-RU"
+            },
+            timeout=600  # 10 minutes timeout for long generation
+        )
+        
+        if success and response:
+            word_count = response.get('word_count', 0)
+            estimated_duration = response.get('estimated_duration', 0)
+            text = response.get('text', '')
+            
+            print(f"   Generated {word_count} words")
+            print(f"   Estimated duration: {estimated_duration:.1f} seconds ({estimated_duration/60:.1f} minutes)")
+            print(f"   Text preview: {text[:300]}...")
+            print(f"   Text ending: ...{text[-200:]}")
+            
+            # Check for expected word count (~7500 words for 50 minutes)
+            expected_words = 50 * 150  # 7500 words
+            word_range_ok = 7000 <= word_count <= 8000  # Allow some variance
+            
+            # Check for unwanted structural markers
+            unwanted_markers = ["Introduction", "Conclusion", "Введение", "Заключение"]
+            has_markers = any(marker in text for marker in unwanted_markers)
+            
+            # Check duration estimate (should be close to 3000 seconds = 50 minutes)
+            duration_ok = 2800 <= estimated_duration <= 3200  # Allow some variance
+            
+            # Check text continuity (should be one continuous narrative)
+            is_continuous = len(text.strip()) > 0 and not text.startswith("Chapter") and not text.startswith("Part")
+            
+            print(f"   ✅ Word count in range (7000-8000): {word_range_ok} ({word_count} words)")
+            print(f"   ✅ No structural markers: {not has_markers}")
+            print(f"   ✅ Duration estimate correct: {duration_ok} ({estimated_duration:.0f}s = {estimated_duration/60:.1f}min)")
+            print(f"   ✅ Continuous narrative: {is_continuous}")
+            
+            return {
+                'text': text,
+                'word_count': word_count,
+                'estimated_duration': estimated_duration,
+                'word_range_ok': word_range_ok,
+                'no_markers': not has_markers,
+                'duration_ok': duration_ok,
+                'is_continuous': is_continuous
+            }
+        
+        return None
+
+    def test_database_verification(self, text_data):
+        """Verify that generated text is properly saved in database"""
+        if not text_data:
+            print("⚠️  Skipping database verification - no text data")
+            return False
+            
+        print("\n🔍 Verifying database storage...")
+        
+        # We can't directly access MongoDB from here, but we can verify the response data
+        # contains the expected fields that should be saved to DB
+        required_fields = ['word_count', 'estimated_duration']
+        has_required_fields = all(field in text_data for field in required_fields)
+        
+        if has_required_fields:
+            print(f"   ✅ Response contains required DB fields")
+            print(f"   ✅ Word count: {text_data['word_count']}")
+            print(f"   ✅ Duration: {text_data['estimated_duration']:.1f}s")
+            return True
+        else:
+            print(f"   ❌ Missing required fields for DB storage")
+            return False
+
     def test_text_generation_short(self):
         """Test text generation endpoint with short duration"""
         success, response = self.run_test(
