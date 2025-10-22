@@ -254,13 +254,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Text generation via LLM"
-    - "Audio synthesis with edge-tts"
-    - "Voices list endpoint"
-    - "Audio download endpoint"
-    - "History endpoint"
+    - "Text generation via LLM"  # Priority: Test long duration (50 min) to verify chunked generation
   stuck_tasks: []
-  test_all: true
+  test_all: false
   test_priority: "high_first"
 
 agent_communication:
