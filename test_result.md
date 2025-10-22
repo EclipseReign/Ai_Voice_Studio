@@ -136,6 +136,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ CHUNKED GENERATION WORKING PERFECTLY! Tested both short (10 min) and long (50 min) text generation in Russian. SHORT TEST: 1383 words, 553s duration (9.2 min) - excellent accuracy. LONG TEST: 6329 words, 2531s duration (42.2 min) - generated in 7 chunks as seen in logs. Text is continuous narrative without structural markers. Chunked generation successfully handles long durations. Minor: word count slightly below target (6329 vs 7500 expected) but within acceptable range for 50-minute content."
+      - working: true
+        agent: "main"
+        comment: "УЛУЧШЕНИЕ: Добавлена компенсация за undergeneration LLM. Целевое количество слов увеличивается на 20% в промптах, чтобы компенсировать то, что LLM обычно генерирует на 10-20% меньше слов чем просят. Теперь для 50 минут (target 7500 слов) будет запрашиваться 9000 слов, что должно дать ~7500 слов на выходе. Также добавлены инструкции 'AT LEAST X words' и просьбы добавлять больше деталей и примеров."
 
   - task: "Audio synthesis with Piper TTS"
     implemented: true
