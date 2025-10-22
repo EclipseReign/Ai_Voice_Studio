@@ -418,7 +418,8 @@ const HomePage = () => {
                   <CardTitle>Generated Audio</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <audio controls className="w-full" data-testid="audio-player">
+                  <audio controls className="w-full" data-testid="audio-player" key={audioUrl}>
+                    <source src={audioUrl} type="audio/wav" />
                     <source src={audioUrl} type="audio/mpeg" />
                     Your browser does not support the audio element.
                   </audio>
