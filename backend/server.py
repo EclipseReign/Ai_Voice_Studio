@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 import asyncio
 import io
 from emergentintegrations.llm.chat import LlmChat, UserMessage
-from gtts import gTTS
+import edge_tts
 import tempfile
 
 ROOT_DIR = Path(__file__).parent
