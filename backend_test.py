@@ -88,22 +88,34 @@ class EdgeTTSAPITester:
         )
         return success
 
-    def test_languages_endpoint(self):
-        """Test languages endpoint (gTTS)"""
+    def test_voices_endpoint(self):
+        """Test voices endpoint (edge-tts)"""
         success, response = self.run_test(
-            "Get Available Languages",
+            "Get Available Voices (edge-tts)",
             "GET",
-            "languages",
+            "voices",
             200
         )
         
         if success and isinstance(response, list):
-            print(f"   Found {len(response)} languages")
-            if len(response) > 0:
-                print(f"   Sample language: {response[0].get('name', 'Unknown')} ({response[0].get('code', 'Unknown')})")
-                return response[0].get('code')  # Return first language code for testing
-        
-        return "en"  # Default fallback
+            print(f"   Found {len(response)} voices")
+            self.available_voices = response
+            
+            # Show sample voices by language
+            en_voices = [v for v in response if v.get('locale', '').startswith('en-')]
+            ru_voices = [v for v in response if v.get('locale', '').startswith('ru-')]
+            es_voices = [v for v in response if v.get('locale', '').startswith('es-')]
+            
+            print(f"   English voices: {len(en_voices)}")
+            print(f"   Russian voices: {len(ru_voices)}")
+            print(f"   Spanish voices: {len(es_voices)}")
+            
+            if en_voices:
+                print(f"   Sample EN voice: {en_voices[0].get('name')} ({en_voices[0].get('short_name')})")
+            if ru_voices:
+                print(f"   Sample RU voice: {ru_voices[0].get('name')} ({ru_voices[0].get('short_name')})")
+                
+        return success
 
     def test_text_generation_short(self):
         """Test text generation endpoint with short duration"""
