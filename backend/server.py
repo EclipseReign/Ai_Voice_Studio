@@ -67,8 +67,7 @@ class TextGenerateResponse(BaseModel):
 class AudioSynthesizeRequest(BaseModel):
     text: str
     voice: str
-    rate: str = "+0%"  # Speed: -50% to +100%
-    pitch: str = "+0Hz"  # Pitch adjustment (optional)
+    rate: float = 1.0  # Speed: 0.5 to 2.0 (1.0 = normal)
     language: str = "en-US"
 
 class AudioSynthesizeResponse(BaseModel):
