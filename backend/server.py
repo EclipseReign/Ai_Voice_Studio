@@ -240,32 +240,55 @@ async def generate_text(request: TextGenerateRequest):
         # Calculate target word count
         target_words = calculate_word_count(request.duration_minutes)
         
-        # Create LLM chat instance
-        chat = LlmChat(
-            api_key=os.environ.get('EMERGENT_LLM_KEY'),
-            session_id=str(uuid.uuid4()),
-            system_message=f"You are a professional content writer. Generate engaging, natural-sounding narration scripts."
-        ).with_model("openai", "gpt-4o-mini")
+        # For long texts, generate in chunks to avoid LLM token limits
+        # Each chunk targets ~1200 words (LLM can handle this comfortably)
+        chunk_size = 1200
         
-        # Create prompt for text generation
-        user_prompt = f"""Write a detailed narration script about: {request.prompt}
-
-Requirements:
-- Target length: approximately {target_words} words (for {request.duration_minutes} minute(s) of audio)
-- Language: {request.language}
-- Style: Natural, conversational narration suitable for audio
-- Structure: Introduction, main content, conclusion
-- Make it engaging and suitable for listening
-
-Generate ONLY the narration text without any meta-commentary or formatting markers."""
+        if target_words <= chunk_size:
+            # Short text - generate in one go
+            generated_text = await generate_text_chunk(
+                request.prompt, 
+                target_words, 
+                request.language, 
+                is_complete=True
+            )
+        else:
+            # Long text - generate in multiple chunks
+            num_chunks = (target_words + chunk_size - 1) // chunk_size  # Ceiling division
+            chunks = []
+            
+            for i in range(num_chunks):
+                # Calculate words for this chunk
+                remaining_words = target_words - sum(len(chunk.split()) for chunk in chunks)
+                chunk_words = min(chunk_size, remaining_words)
+                
+                if chunk_words <= 0:
+                    break
+                
+                # Generate chunk
+                is_first = (i == 0)
+                is_last = (i == num_chunks - 1)
+                
+                chunk_text = await generate_text_chunk(
+                    request.prompt,
+                    chunk_words,
+                    request.language,
+                    is_complete=False,
+                    is_first=is_first,
+                    is_last=is_last,
+                    previous_content=" ".join(chunks) if chunks else None
+                )
+                
+                chunks.append(chunk_text)
+                logger.info(f"Generated chunk {i+1}/{num_chunks}: {len(chunk_text.split())} words")
+            
+            # Combine all chunks
+            generated_text = " ".join(chunks)
         
-        # Generate text
-        user_message = UserMessage(text=user_prompt)
-        response = await chat.send_message(user_message)
-        
-        generated_text = response.strip()
         word_count = len(generated_text.split())
         estimated_duration = estimate_duration(generated_text)
+        
+        logger.info(f"Generated text: {word_count} words, estimated duration: {estimated_duration:.1f}s")
         
         # Save to database
         text_id = str(uuid.uuid4())
