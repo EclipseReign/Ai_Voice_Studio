@@ -313,15 +313,15 @@ const HomePage = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label htmlFor="voice">Voice</Label>
-                  <Select value={selectedVoice} onValueChange={setSelectedVoice}>
-                    <SelectTrigger id="voice" data-testid="voice-select" className="mt-2">
-                      <SelectValue placeholder="Select a voice" />
+                  <Label htmlFor="language-setting">Language</Label>
+                  <Select value={language} onValueChange={setLanguage}>
+                    <SelectTrigger id="language-setting" data-testid="language-setting-select" className="mt-2">
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {getVoicesByLanguage().map((voice) => (
-                        <SelectItem key={voice.short_name} value={voice.short_name}>
-                          {voice.name}
+                      {languages.map((lang) => (
+                        <SelectItem key={lang.code} value={lang.code}>
+                          {lang.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -329,19 +329,16 @@ const HomePage = () => {
                 </div>
                 
                 <div>
-                  <Label htmlFor="speed">
-                    Speed: {speed[0] > 0 ? '+' : ''}{speed[0]}%
-                  </Label>
-                  <Slider
-                    id="speed"
-                    data-testid="speed-slider"
-                    value={speed}
-                    onValueChange={setSpeed}
-                    min={-50}
-                    max={100}
-                    step={10}
-                    className="mt-2"
-                  />
+                  <Label htmlFor="speed">Speech Speed</Label>
+                  <Select value={slow ? "slow" : "normal"} onValueChange={(val) => setSlow(val === "slow")}>
+                    <SelectTrigger id="speed" data-testid="speed-select" className="mt-2">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="normal">Normal</SelectItem>
+                      <SelectItem value="slow">Slow</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <p className="text-xs text-slate-500 mt-1">Adjust speech speed</p>
                 </div>
               </CardContent>
