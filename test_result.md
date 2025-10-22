@@ -138,7 +138,7 @@ backend:
         agent: "main"
         comment: "UPDATED to edge-tts for better quality. Endpoint: POST /api/audio/synthesize with text, voice, rate, pitch, language. Much higher quality than gTTS, supports 100+ voices."
 
-  - task: "Languages list endpoint"
+  - task: "Voices list endpoint"
     implemented: true
     working: true
     file: "/app/backend/server.py"
@@ -148,10 +148,7 @@ backend:
     status_history:
       - working: true
         agent: "main"
-        comment: "GET /api/languages returns list of supported languages for gTTS. Tested via curl - working"
-      - working: true
-        agent: "testing"
-        comment: "✅ PASSED - Languages endpoint confirmed working. Returns 15 languages with proper structure (code, name, tld). API response format correct."
+        comment: "GET /api/voices returns 100+ voices from edge-tts with name, short_name, gender, locale. Tested via curl - working perfectly."
 
   - task: "Audio download endpoint"
     implemented: true
