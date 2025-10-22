@@ -6,7 +6,7 @@ import os
 from datetime import datetime
 from pathlib import Path
 
-class EdgeTTSAPITester:
+class PiperTTSAPITester:
     def __init__(self, base_url="https://soundscribe-15.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.tests_run = 0
