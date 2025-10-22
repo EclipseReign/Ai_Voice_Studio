@@ -126,20 +126,17 @@ backend:
         agent: "testing"
         comment: "✅ PASSED - Text generation working perfectly. Tested short (2 min, 295 words) and long (10 min, 1283 words) durations. LLM integration successful, proper word count calculation, database storage working. Generated realistic content based on prompts."
 
-  - task: "Audio synthesis with gTTS"
+  - task: "Audio synthesis with edge-tts"
     implemented: true
-    working: true
+    working: "NA"
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
-        comment: "Implemented audio synthesis using gTTS. Endpoint: POST /api/audio/synthesize with text, language, slow parameters. Saves to /app/backend/audio_files/"
-      - working: true
-        agent: "testing"
-        comment: "✅ PASSED - Audio synthesis working excellently. Tested normal/slow speeds, multiple languages (en, es, ru, fr), and long text (8895 chars). All MP3 files created successfully in /app/backend/audio_files/. File sizes appropriate (36KB-4.8MB). Database records saved correctly."
+        comment: "UPDATED to edge-tts for better quality. Endpoint: POST /api/audio/synthesize with text, voice, rate, pitch, language. Much higher quality than gTTS, supports 100+ voices."
 
   - task: "Languages list endpoint"
     implemented: true
