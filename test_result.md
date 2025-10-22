@@ -256,8 +256,7 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus:
-    - "Text generation via LLM"  # Priority: Test long duration (50 min) to verify chunked generation
+  current_focus: []
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
