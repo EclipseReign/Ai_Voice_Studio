@@ -25,26 +25,31 @@ const HomePage = () => {
   const [manualText, setManualText] = useState("");
   
   // Common state
-  const [languages, setLanguages] = useState([]);
-  const [language, setLanguage] = useState("en");
-  const [slow, setSlow] = useState(false);
+  const [voices, setVoices] = useState([]);
+  const [selectedVoice, setSelectedVoice] = useState("");
+  const [language, setLanguage] = useState("en-US");
+  const [speed, setSpeed] = useState([0]);
+  const [pitch, setPitch] = useState([0]);
   const [isSynthesizing, setIsSynthesizing] = useState(false);
   const [audioUrl, setAudioUrl] = useState(null);
   const [history, setHistory] = useState([]);
   
-  // Fetch languages on mount
+  // Fetch voices on mount
   useEffect(() => {
-    fetchLanguages();
+    fetchVoices();
     fetchHistory();
   }, []);
   
-  const fetchLanguages = async () => {
+  const fetchVoices = async () => {
     try {
-      const response = await axios.get(API + '/languages');
-      setLanguages(response.data);
+      const response = await axios.get(API + '/voices');
+      setVoices(response.data);
+      if (response.data.length > 0) {
+        setSelectedVoice(response.data[0].short_name);
+      }
     } catch (error) {
-      console.error("Error fetching languages:", error);
-      toast.error("Failed to load languages");
+      console.error("Error fetching voices:", error);
+      toast.error("Failed to load voices");
     }
   };
   
