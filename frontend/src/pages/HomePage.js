@@ -357,27 +357,72 @@ const HomePage = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {languages.map((lang) => (
-                        <SelectItem key={lang.code} value={lang.code}>
-                          {lang.name}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="en-US">English (US)</SelectItem>
+                      <SelectItem value="en-GB">English (UK)</SelectItem>
+                      <SelectItem value="es-ES">Spanish</SelectItem>
+                      <SelectItem value="fr-FR">French</SelectItem>
+                      <SelectItem value="de-DE">German</SelectItem>
+                      <SelectItem value="it-IT">Italian</SelectItem>
+                      <SelectItem value="pt-BR">Portuguese (BR)</SelectItem>
+                      <SelectItem value="ru-RU">Russian</SelectItem>
+                      <SelectItem value="zh-CN">Chinese (Simplified)</SelectItem>
+                      <SelectItem value="ja-JP">Japanese</SelectItem>
+                      <SelectItem value="ar-SA">Arabic</SelectItem>
+                      <SelectItem value="hi-IN">Hindi</SelectItem>
+                      <SelectItem value="ko-KR">Korean</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 
                 <div>
-                  <Label htmlFor="speed">Speech Speed</Label>
-                  <Select value={slow ? "slow" : "normal"} onValueChange={(val) => setSlow(val === "slow")}>
-                    <SelectTrigger id="speed" data-testid="speed-select" className="mt-2">
-                      <SelectValue />
+                  <Label htmlFor="voice">Voice</Label>
+                  <Select value={selectedVoice} onValueChange={setSelectedVoice}>
+                    <SelectTrigger id="voice" data-testid="voice-select" className="mt-2">
+                      <SelectValue placeholder="Select a voice" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="normal">Normal</SelectItem>
-                      <SelectItem value="slow">Slow</SelectItem>
+                    <SelectContent className="max-h-64">
+                      {getVoicesByLanguage().map((voice) => (
+                        <SelectItem key={voice.short_name} value={voice.short_name}>
+                          {voice.name} ({voice.gender})
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-slate-500 mt-1">Choose from high-quality voices</p>
+                </div>
+                
+                <div>
+                  <Label htmlFor="speed">
+                    Speed: {speed[0] > 0 ? '+' : ''}{speed[0]}%
+                  </Label>
+                  <Slider
+                    id="speed"
+                    data-testid="speed-slider"
+                    value={speed}
+                    onValueChange={setSpeed}
+                    min={-50}
+                    max={100}
+                    step={10}
+                    className="mt-2"
+                  />
                   <p className="text-xs text-slate-500 mt-1">Adjust speech speed</p>
+                </div>
+                
+                <div>
+                  <Label htmlFor="pitch">
+                    Pitch: {pitch[0] > 0 ? '+' : ''}{pitch[0]}Hz
+                  </Label>
+                  <Slider
+                    id="pitch"
+                    data-testid="pitch-slider"
+                    value={pitch}
+                    onValueChange={setPitch}
+                    min={-50}
+                    max={50}
+                    step={5}
+                    className="mt-2"
+                  />
+                  <p className="text-xs text-slate-500 mt-1">Adjust voice pitch (tone)</p>
                 </div>
               </CardContent>
             </Card>
