@@ -17,6 +17,7 @@ import json
 import urllib.request
 import wave
 from piper import PiperVoice
+from piper.config import SynthesisConfig
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
