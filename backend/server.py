@@ -7,14 +7,16 @@ import os
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict
-from typing import List, Optional, Literal
+from typing import List, Optional, Literal, Dict
 import uuid
 from datetime import datetime, timezone
 import asyncio
 import io
 from emergentintegrations.llm.chat import LlmChat, UserMessage
-import edge_tts
-import tempfile
+import json
+import urllib.request
+import wave
+from piper import PiperVoice
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
