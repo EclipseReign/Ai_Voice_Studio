@@ -125,7 +125,8 @@ const HomePage = () => {
   };
   
   const getVoicesByLanguage = () => {
-    return voices.filter(v => v.locale.startsWith(language.split('-')[0]));
+    const langCode = language.split('-')[0].toLowerCase();
+    return voices.filter(v => v.locale.toLowerCase().startsWith(langCode));
   };
   
   return (
