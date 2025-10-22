@@ -6,13 +6,14 @@ import os
 from datetime import datetime
 from pathlib import Path
 
-class TextToSpeechAPITester:
+class EdgeTTSAPITester:
     def __init__(self, base_url="https://promptspeak.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.tests_run = 0
         self.tests_passed = 0
         self.test_results = []
         self.generated_audio_ids = []
+        self.available_voices = []
 
     def run_test(self, name, method, endpoint, expected_status, data=None, timeout=30):
         """Run a single API test"""
