@@ -130,13 +130,22 @@ async def download_voice_model(voice_key: str, voices_data: Dict) -> tuple[Path,
         if not voice_info:
             raise ValueError(f"Voice {voice_key} not found")
         
-        # Get the best quality available
-        qualities = list(voice_info['files'].keys())
-        quality = qualities[0]  # Default to first (usually medium or high)
+        # Find .onnx and .onnx.json files in the files dict
+        model_file_path = None
+        config_file_path = None
         
-        # Get file paths
-        model_url = f"https://huggingface.co/rhasspy/piper-voices/resolve/main/{voice_info['files'][quality]}"
-        config_url = model_url.replace('.onnx', '.onnx.json')
+        for file_path in voice_info['files'].keys():
+            if file_path.endswith('.onnx.json'):
+                config_file_path = file_path
+            elif file_path.endswith('.onnx'):
+                model_file_path = file_path
+        
+        if not model_file_path or not config_file_path:
+            raise ValueError(f"Model or config file not found for {voice_key}")
+        
+        # Construct URLs
+        model_url = f"https://huggingface.co/rhasspy/piper-voices/resolve/main/{model_file_path}"
+        config_url = f"https://huggingface.co/rhasspy/piper-voices/resolve/main/{config_file_path}"
         
         model_path = PIPER_MODELS_DIR / f"{voice_key}.onnx"
         config_path = PIPER_MODELS_DIR / f"{voice_key}.onnx.json"
