@@ -283,7 +283,7 @@ Generate ONLY the narration text without any meta-commentary or formatting marke
 
 @api_router.post("/audio/synthesize", response_model=AudioSynthesizeResponse)
 async def synthesize_audio(request: AudioSynthesizeRequest):
-    """Synthesize audio from text using edge-tts"""
+    """Synthesize audio from text using Piper TTS"""
     try:
         # Create unique ID
         audio_id = str(uuid.uuid4())
@@ -292,25 +292,41 @@ async def synthesize_audio(request: AudioSynthesizeRequest):
         audio_dir = Path("/app/backend/audio_files")
         audio_dir.mkdir(exist_ok=True)
         
-        # Generate audio file path
-        audio_file = audio_dir / f"{audio_id}.mp3"
+        # Generate audio file paths
+        wav_file = audio_dir / f"{audio_id}.wav"
         
         text_length = len(request.text)
         logger.info(f"Generating audio for text of length: {text_length} characters with voice: {request.voice}")
         
-        # Create edge-tts communicate instance
-        # edge-tts supports rate and pitch adjustments
-        communicate = edge_tts.Communicate(
-            text=request.text,
-            voice=request.voice,
-            rate=request.rate,
-            pitch=request.pitch
-        )
+        # Fetch voices data and download model if needed
+        voices_data = await fetch_available_voices()
+        model_path, config_path = await download_voice_model(request.voice, voices_data)
         
-        # Save audio to file
-        await communicate.save(str(audio_file))
+        # Load or get cached voice
+        voice = get_or_load_voice(request.voice, model_path, config_path)
         
-        logger.info(f"Audio file saved: {audio_file}")
+        # Synthesize audio
+        logger.info(f"Synthesizing with Piper voice: {request.voice}, rate: {request.rate}")
+        
+        # Run synthesis in thread pool to avoid blocking
+        def synthesize():
+            with wave.open(str(wav_file), 'wb') as wav_out:
+                # Configure WAV file
+                wav_out.setnchannels(1)  # Mono
+                wav_out.setsampwidth(2)  # 16-bit
+                wav_out.setframerate(voice.config.sample_rate)
+                
+                # Synthesize with speed adjustment
+                for audio_bytes in voice.synthesize_stream_raw(
+                    request.text,
+                    length_scale=1.0 / request.rate  # Piper uses length_scale (inverse of rate)
+                ):
+                    wav_out.writeframes(audio_bytes)
+        
+        # Run in thread pool
+        await asyncio.to_thread(synthesize)
+        
+        logger.info(f"Audio file saved: {wav_file}")
         
         # Save to database
         audio_doc = {
@@ -318,9 +334,8 @@ async def synthesize_audio(request: AudioSynthesizeRequest):
             "text": request.text,
             "voice": request.voice,
             "rate": request.rate,
-            "pitch": request.pitch,
             "language": request.language,
-            "audio_path": str(audio_file),
+            "audio_path": str(wav_file),
             "created_at": datetime.now(timezone.utc).isoformat()
         }
         
@@ -335,7 +350,7 @@ async def synthesize_audio(request: AudioSynthesizeRequest):
         )
         
     except Exception as e:
-        logger.error(f"Error synthesizing audio: {str(e)}")
+        logger.error(f"Error synthesizing audio: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error synthesizing audio: {str(e)}")
 
 @api_router.get("/audio/download/{audio_id}")
