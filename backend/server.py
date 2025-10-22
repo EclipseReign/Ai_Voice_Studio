@@ -87,17 +87,13 @@ class GenerationHistory(BaseModel):
     created_at: str
 
 # Helper function to estimate speaking duration
-def estimate_duration(text: str, rate: str = "+0%") -> float:
+def estimate_duration(text: str, rate: float = 1.0) -> float:
     """Estimate audio duration in seconds. Average: 150 words per minute"""
     words = len(text.split())
     
-    # Parse rate
-    rate_value = int(rate.replace('%', '').replace('+', ''))
-    speed_multiplier = 1 + (rate_value / 100)
-    
     # Base: 150 words per minute
     base_minutes = words / 150
-    adjusted_minutes = base_minutes / speed_multiplier
+    adjusted_minutes = base_minutes / rate
     
     return adjusted_minutes * 60  # Convert to seconds
 
@@ -105,6 +101,68 @@ def estimate_duration(text: str, rate: str = "+0%") -> float:
 def calculate_word_count(duration_minutes: int) -> int:
     """Calculate target word count for desired duration"""
     return duration_minutes * 150  # 150 words per minute
+
+# Piper helper functions
+async def fetch_available_voices() -> Dict:
+    """Fetch available Piper voices from HuggingFace"""
+    try:
+        if VOICES_CACHE_FILE.exists():
+            with open(VOICES_CACHE_FILE, 'r') as f:
+                return json.load(f)
+        
+        url = "https://huggingface.co/rhasspy/piper-voices/raw/main/voices.json"
+        with urllib.request.urlopen(url, timeout=10) as response:
+            voices_data = json.loads(response.read())
+        
+        # Cache the data
+        with open(VOICES_CACHE_FILE, 'w') as f:
+            json.dump(voices_data, f)
+        
+        return voices_data
+    except Exception as e:
+        logger.error(f"Error fetching voices: {e}")
+        return {}
+
+async def download_voice_model(voice_key: str, voices_data: Dict) -> tuple[Path, Path]:
+    """Download a Piper voice model and config if not already present"""
+    try:
+        voice_info = voices_data.get(voice_key)
+        if not voice_info:
+            raise ValueError(f"Voice {voice_key} not found")
+        
+        # Get the best quality available
+        qualities = list(voice_info['files'].keys())
+        quality = qualities[0]  # Default to first (usually medium or high)
+        
+        # Get file paths
+        model_url = f"https://huggingface.co/rhasspy/piper-voices/resolve/main/{voice_info['files'][quality]}"
+        config_url = model_url.replace('.onnx', '.onnx.json')
+        
+        model_path = PIPER_MODELS_DIR / f"{voice_key}.onnx"
+        config_path = PIPER_MODELS_DIR / f"{voice_key}.onnx.json"
+        
+        # Download if not exists
+        if not model_path.exists():
+            logger.info(f"Downloading model for {voice_key}...")
+            urllib.request.urlretrieve(model_url, model_path)
+            logger.info(f"Model downloaded: {model_path}")
+        
+        if not config_path.exists():
+            logger.info(f"Downloading config for {voice_key}...")
+            urllib.request.urlretrieve(config_url, config_path)
+            logger.info(f"Config downloaded: {config_path}")
+        
+        return model_path, config_path
+    except Exception as e:
+        logger.error(f"Error downloading voice model: {e}")
+        raise
+
+def get_or_load_voice(voice_key: str, model_path: Path, config_path: Path) -> PiperVoice:
+    """Get a cached voice or load it"""
+    if voice_key not in loaded_voices:
+        logger.info(f"Loading voice: {voice_key}")
+        loaded_voices[voice_key] = PiperVoice.load(str(model_path), str(config_path))
+    return loaded_voices[voice_key]
 
 @api_router.get("/")
 async def root():
