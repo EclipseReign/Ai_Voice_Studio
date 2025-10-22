@@ -208,14 +208,15 @@ async def get_voices():
             # Only include priority languages
             if lang_code in lang_map:
                 voice_info = voices_data[voice_key]
-                qualities = list(voice_info['files'].keys())
-                quality = qualities[0] if qualities else 'medium'
                 
-                # Extract voice name from key (e.g., en_US-amy-low -> Amy)
-                voice_name = voice_key.split('-')[1] if '-' in voice_key else voice_key
+                # Get quality from voice_info
+                quality = voice_info.get('quality', 'medium')
+                
+                # Extract voice name from key (e.g., en_US-lessac-medium -> Lessac)
+                voice_name = voice_info.get('name', voice_key.split('-')[1] if '-' in voice_key else voice_key)
                 voice_name = voice_name.capitalize()
                 
-                # Get full locale from voice_key (e.g., en_US)
+                # Get full locale from voice_key (e.g., en_US -> en-US)
                 locale_parts = voice_key.split('-')[0].replace('_', '-')
                 
                 filtered_voices.append(Voice(
