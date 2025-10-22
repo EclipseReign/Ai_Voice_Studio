@@ -49,7 +49,8 @@ loaded_voices: Dict[str, PiperVoice] = {}
 class Voice(BaseModel):
     name: str
     short_name: str
-    gender: str
+    language: str
+    quality: str
     locale: str
 
 class TextGenerateRequest(BaseModel):
