@@ -99,17 +99,17 @@ const HomePage = () => {
     
     setIsSynthesizing(true);
     try {
+      // Convert speed percentage to rate multiplier
+      // speed range: -50 to 100 -> rate range: 0.5 to 2.0
       const speedValue = speed[0];
-      const speedStr = speedValue > 0 ? '+' + speedValue + '%' : speedValue + '%';
+      const rate = 1.0 + (speedValue / 100);
       
-      const pitchValue = pitch[0];
-      const pitchStr = pitchValue > 0 ? '+' + pitchValue + 'Hz' : pitchValue + 'Hz';
+      console.log("Synthesizing with voice:", selectedVoice, "rate:", rate);
       
       const response = await axios.post(API + '/audio/synthesize', {
         text: text,
         voice: selectedVoice,
-        rate: speedStr,
-        pitch: pitchStr,
+        rate: rate,
         language: language
       });
       
@@ -118,7 +118,8 @@ const HomePage = () => {
       fetchHistory();
     } catch (error) {
       console.error("Error synthesizing audio:", error);
-      toast.error("Failed to generate audio");
+      const errorMsg = error.response?.data?.detail || "Failed to generate audio";
+      toast.error(errorMsg);
     } finally {
       setIsSynthesizing(false);
     }
