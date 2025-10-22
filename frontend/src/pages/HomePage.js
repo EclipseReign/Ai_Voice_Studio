@@ -101,14 +101,14 @@ const HomePage = () => {
       const speedValue = speed[0];
       const speedStr = speedValue > 0 ? '+' + speedValue + '%' : speedValue + '%';
       
-      const response = await axios.post(`${API}/audio/synthesize`, {
+      const response = await axios.post(API + '/audio/synthesize', {
         text: text,
         voice: selectedVoice,
         rate: speedStr,
         language: language
       });
       
-      setAudioUrl(`${process.env.REACT_APP_BACKEND_URL}${response.data.audio_url}`);
+      setAudioUrl(process.env.REACT_APP_BACKEND_URL + response.data.audio_url);
       toast.success("Audio generated successfully!");
       fetchHistory();
     } catch (error) {
