@@ -152,18 +152,15 @@ backend:
 
   - task: "Audio download endpoint"
     implemented: true
-    working: true
+    working: "NA"
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
-        comment: "GET /api/audio/download/{audio_id} returns MP3 file. Needs testing with actual generated audio"
-      - working: true
-        agent: "testing"
-        comment: "✅ PASSED - Audio download working perfectly. Successfully downloaded multiple MP3 files with correct MIME type (audio/mpeg). Files are valid and playable. Database lookup and file serving working correctly."
+        comment: "GET /api/audio/download/{audio_id} returns MP3 file. Needs retesting with edge-tts generated audio"
 
   - task: "History endpoint"
     implemented: true
