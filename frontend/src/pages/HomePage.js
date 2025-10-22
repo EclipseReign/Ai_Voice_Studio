@@ -270,16 +270,11 @@ const HomePage = () => {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="en-US">English (US)</SelectItem>
-                            <SelectItem value="en-GB">English (UK)</SelectItem>
-                            <SelectItem value="es-ES">Spanish</SelectItem>
-                            <SelectItem value="fr-FR">French</SelectItem>
-                            <SelectItem value="de-DE">German</SelectItem>
-                            <SelectItem value="it-IT">Italian</SelectItem>
-                            <SelectItem value="pt-BR">Portuguese (BR)</SelectItem>
-                            <SelectItem value="ru-RU">Russian</SelectItem>
-                            <SelectItem value="zh-CN">Chinese (Simplified)</SelectItem>
-                            <SelectItem value="ja-JP">Japanese</SelectItem>
+                            {languages.map((lang) => (
+                              <SelectItem key={lang.code} value={lang.code}>
+                                {lang.name}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
