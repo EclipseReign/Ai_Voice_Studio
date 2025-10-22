@@ -41,7 +41,7 @@ const HomePage = () => {
   
   const fetchVoices = async () => {
     try {
-      const response = await axios.get(`${API}/voices`);
+      const response = await axios.get(API + '/voices');
       setVoices(response.data);
       if (response.data.length > 0) {
         setSelectedVoice(response.data[0].short_name);
