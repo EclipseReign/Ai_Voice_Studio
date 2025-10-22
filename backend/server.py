@@ -1,4 +1,5 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException, BackgroundTasks
+from fastapi.responses import FileResponse, StreamingResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -6,10 +7,13 @@ import os
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict
-from typing import List
+from typing import List, Optional, Literal
 import uuid
 from datetime import datetime, timezone
-
+import edge_tts
+import asyncio
+import io
+from emergentintegrations.llm.chat import LlmChat, UserMessage
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -19,54 +23,272 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-# Create the main app without a prefix
+# Create the main app
 app = FastAPI()
-
-# Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
-# Define Models
-class StatusCheck(BaseModel):
-    model_config = ConfigDict(extra="ignore")  # Ignore MongoDB's _id field
+# Models
+class Voice(BaseModel):
+    name: str
+    short_name: str
+    gender: str
+    locale: str
+
+class TextGenerateRequest(BaseModel):
+    prompt: str
+    duration_minutes: int
+    language: str = "en-US"
     
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+class TextGenerateResponse(BaseModel):
+    id: str
+    text: str
+    word_count: int
+    estimated_duration: float
 
-class StatusCheckCreate(BaseModel):
-    client_name: str
+class AudioSynthesizeRequest(BaseModel):
+    text: str
+    voice: str
+    rate: str = "+0%"  # Speed: -50% to +100%
+    language: str = "en-US"
 
-# Add your routes to the router instead of directly to app
+class AudioSynthesizeResponse(BaseModel):
+    id: str
+    audio_url: str
+    text: str
+    voice: str
+    created_at: str
+
+class GenerationHistory(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    text: str
+    audio_url: Optional[str] = None
+    voice: Optional[str] = None
+    language: str
+    created_at: str
+
+# Helper function to estimate speaking duration
+def estimate_duration(text: str, rate: str = "+0%") -> float:
+    """Estimate audio duration in seconds. Average: 150 words per minute"""
+    words = len(text.split())
+    
+    # Parse rate
+    rate_value = int(rate.replace('%', '').replace('+', ''))
+    speed_multiplier = 1 + (rate_value / 100)
+    
+    # Base: 150 words per minute
+    base_minutes = words / 150
+    adjusted_minutes = base_minutes / speed_multiplier
+    
+    return adjusted_minutes * 60  # Convert to seconds
+
+# Helper function to calculate target word count
+def calculate_word_count(duration_minutes: int) -> int:
+    """Calculate target word count for desired duration"""
+    return duration_minutes * 150  # 150 words per minute
+
 @api_router.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "Text-to-Speech API"}
 
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.model_dump()
-    status_obj = StatusCheck(**status_dict)
-    
-    # Convert to dict and serialize datetime to ISO string for MongoDB
-    doc = status_obj.model_dump()
-    doc['timestamp'] = doc['timestamp'].isoformat()
-    
-    _ = await db.status_checks.insert_one(doc)
-    return status_obj
+@api_router.get("/voices", response_model=List[Voice])
+async def get_voices():
+    """Get available voices from edge-tts"""
+    try:
+        voices = await edge_tts.list_voices()
+        
+        # Filter for common languages and return formatted list
+        filtered_voices = []
+        seen_locales = set()
+        
+        for voice in voices:
+            locale = voice["Locale"]
+            
+            # Priority languages
+            if locale.startswith(('en-', 'es-', 'fr-', 'de-', 'ru-', 'zh-', 'ja-', 'it-', 'pt-')):
+                if locale not in seen_locales or len(filtered_voices) < 50:
+                    filtered_voices.append(Voice(
+                        name=voice["FriendlyName"],
+                        short_name=voice["ShortName"],
+                        gender=voice["Gender"],
+                        locale=voice["Locale"]
+                    ))
+                    seen_locales.add(locale)
+        
+        return filtered_voices
+    except Exception as e:
+        logger.error(f"Error fetching voices: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fetching voices: {str(e)}")
 
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    # Exclude MongoDB's _id field from the query results
-    status_checks = await db.status_checks.find({}, {"_id": 0}).to_list(1000)
-    
-    # Convert ISO string timestamps back to datetime objects
-    for check in status_checks:
-        if isinstance(check['timestamp'], str):
-            check['timestamp'] = datetime.fromisoformat(check['timestamp'])
-    
-    return status_checks
+@api_router.post("/text/generate", response_model=TextGenerateResponse)
+async def generate_text(request: TextGenerateRequest):
+    """Generate text based on prompt and duration using LLM"""
+    try:
+        # Calculate target word count
+        target_words = calculate_word_count(request.duration_minutes)
+        
+        # Create LLM chat instance
+        chat = LlmChat(
+            api_key=os.environ.get('EMERGENT_LLM_KEY'),
+            session_id=str(uuid.uuid4()),
+            system_message=f"You are a professional content writer. Generate engaging, natural-sounding narration scripts."
+        ).with_model("openai", "gpt-4o-mini")
+        
+        # Create prompt for text generation
+        user_prompt = f"""Write a detailed narration script about: {request.prompt}
 
-# Include the router in the main app
+Requirements:
+- Target length: approximately {target_words} words (for {request.duration_minutes} minute(s) of audio)
+- Language: {request.language}
+- Style: Natural, conversational narration suitable for audio
+- Structure: Introduction, main content, conclusion
+- Make it engaging and suitable for listening
+
+Generate ONLY the narration text without any meta-commentary or formatting markers."""
+        
+        # Generate text
+        user_message = UserMessage(text=user_prompt)
+        response = await chat.send_message(user_message)
+        
+        generated_text = response.strip()
+        word_count = len(generated_text.split())
+        estimated_duration = estimate_duration(generated_text)
+        
+        # Save to database
+        text_id = str(uuid.uuid4())
+        generation_doc = {
+            "id": text_id,
+            "text": generated_text,
+            "prompt": request.prompt,
+            "language": request.language,
+            "word_count": word_count,
+            "duration_minutes": request.duration_minutes,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        await db.text_generations.insert_one(generation_doc)
+        
+        return TextGenerateResponse(
+            id=text_id,
+            text=generated_text,
+            word_count=word_count,
+            estimated_duration=estimated_duration
+        )
+        
+    except Exception as e:
+        logger.error(f"Error generating text: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating text: {str(e)}")
+
+@api_router.post("/audio/synthesize", response_model=AudioSynthesizeResponse)
+async def synthesize_audio(request: AudioSynthesizeRequest):
+    """Synthesize audio from text using edge-tts"""
+    try:
+        # Create unique ID
+        audio_id = str(uuid.uuid4())
+        
+        # Create audio directory if it doesn't exist
+        audio_dir = Path("/app/backend/audio_files")
+        audio_dir.mkdir(exist_ok=True)
+        
+        # Generate audio file path
+        audio_file = audio_dir / f"{audio_id}.mp3"
+        
+        # Create edge-tts communicate instance
+        communicate = edge_tts.Communicate(
+            text=request.text,
+            voice=request.voice,
+            rate=request.rate
+        )
+        
+        # Save audio to file
+        await communicate.save(str(audio_file))
+        
+        # Save to database
+        audio_doc = {
+            "id": audio_id,
+            "text": request.text,
+            "voice": request.voice,
+            "rate": request.rate,
+            "language": request.language,
+            "audio_path": str(audio_file),
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        await db.audio_generations.insert_one(audio_doc)
+        
+        return AudioSynthesizeResponse(
+            id=audio_id,
+            audio_url=f"/api/audio/download/{audio_id}",
+            text=request.text[:100] + "..." if len(request.text) > 100 else request.text,
+            voice=request.voice,
+            created_at=audio_doc["created_at"]
+        )
+        
+    except Exception as e:
+        logger.error(f"Error synthesizing audio: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error synthesizing audio: {str(e)}")
+
+@api_router.get("/audio/download/{audio_id}")
+async def download_audio(audio_id: str):
+    """Download generated audio file"""
+    try:
+        # Fetch from database
+        audio_doc = await db.audio_generations.find_one({"id": audio_id}, {"_id": 0})
+        
+        if not audio_doc:
+            raise HTTPException(status_code=404, detail="Audio not found")
+        
+        audio_path = Path(audio_doc["audio_path"])
+        
+        if not audio_path.exists():
+            raise HTTPException(status_code=404, detail="Audio file not found")
+        
+        return FileResponse(
+            path=audio_path,
+            media_type="audio/mpeg",
+            filename=f"generated_audio_{audio_id}.mp3"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error downloading audio: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error downloading audio: {str(e)}")
+
+@api_router.get("/history", response_model=List[GenerationHistory])
+async def get_history():
+    """Get generation history"""
+    try:
+        # Fetch audio generations with most recent first
+        audio_gens = await db.audio_generations.find(
+            {}, {"_id": 0}
+        ).sort("created_at", -1).limit(50).to_list(50)
+        
+        history = []
+        for gen in audio_gens:
+            history.append(GenerationHistory(
+                id=gen["id"],
+                text=gen["text"][:100] + "..." if len(gen["text"]) > 100 else gen["text"],
+                audio_url=f"/api/audio/download/{gen['id']}",
+                voice=gen.get("voice"),
+                language=gen.get("language", "en-US"),
+                created_at=gen["created_at"]
+            ))
+        
+        return history
+        
+    except Exception as e:
+        logger.error(f"Error fetching history: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fetching history: {str(e)}")
+
+# Include router
 app.include_router(api_router)
 
 app.add_middleware(
@@ -76,13 +298,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
