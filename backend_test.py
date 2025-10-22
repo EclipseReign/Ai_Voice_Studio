@@ -225,30 +225,47 @@ class PiperTTSAPITester:
         
         return None
 
-    def test_audio_synthesis_slow(self, text, language="en"):
-        """Test audio synthesis with slow speed"""
-        if not text:
-            print("⚠️  Skipping audio synthesis - missing text")
+    def test_audio_synthesis_russian(self):
+        """Test audio synthesis with Russian voice (Piper TTS)"""
+        # Find Russian voice
+        ru_voice = None
+        for voice in self.available_voices:
+            if voice.get('short_name', '').startswith('ru_RU-irina'):
+                ru_voice = voice.get('short_name')
+                break
+        
+        if not ru_voice:
+            # Fallback to any Russian voice
+            for voice in self.available_voices:
+                if voice.get('locale', '').startswith('ru-'):
+                    ru_voice = voice.get('short_name')
+                    break
+        
+        if not ru_voice:
+            print("⚠️  No Russian voice found, skipping test")
             return None
             
+        test_text = "Привет, это тест системы синтеза речи Piper. Она должна генерировать четкий и естественный звук."
+        
         success, response = self.run_test(
-            "Synthesize Audio (Slow Speed)",
+            f"Synthesize Audio (Russian - {ru_voice})",
             "POST",
             "audio/synthesize",
             200,
             data={
-                "text": text[:500],  # Shorter text for slow speech
-                "language": language,
-                "slow": True
+                "text": test_text,
+                "voice": ru_voice,
+                "rate": 1.0,
+                "language": "ru-RU"
             },
-            timeout=60
+            timeout=90
         )
         
         if success and response:
             audio_id = response.get('id')
             print(f"   Audio ID: {audio_id}")
             print(f"   Audio URL: {response.get('audio_url')}")
-            print(f"   Language: {response.get('language')}")
+            print(f"   Voice: {response.get('voice')}")
             if audio_id:
                 self.generated_audio_ids.append(audio_id)
             return audio_id
