@@ -594,8 +594,18 @@ class PiperTTSAPITester:
             print("❌ Cannot continue without voices - stopping tests")
             return False
         
-        # Test 3: Skip text generation (already confirmed working per review request)
-        print("\n🔍 Skipping text generation test (already confirmed working)")
+        # Test 3: Text generation tests (Russian language as per review request)
+        print("\n🔥 TESTING UPDATED TEXT GENERATION FOR LONG VIDEOS")
+        
+        # Test 3a: Short text generation (10 minutes)
+        short_text_result = self.test_text_generation_short_russian()
+        
+        # Test 3b: Long text generation (50 minutes) - KEY TEST
+        long_text_result = self.test_text_generation_long_russian()
+        
+        # Test 3c: Database verification
+        db_verification_short = self.test_database_verification(short_text_result)
+        db_verification_long = self.test_database_verification(long_text_result)
         
         # Test 4: Synthesize audio with English voice
         audio_id_english = self.test_audio_synthesis_english()
