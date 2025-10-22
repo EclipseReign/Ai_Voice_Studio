@@ -10,10 +10,11 @@ from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional, Literal
 import uuid
 from datetime import datetime, timezone
-import edge_tts
 import asyncio
 import io
 from emergentintegrations.llm.chat import LlmChat, UserMessage
+from gtts import gTTS
+import tempfile
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
