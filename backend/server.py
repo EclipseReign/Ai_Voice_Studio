@@ -103,6 +103,75 @@ def calculate_word_count(duration_minutes: int) -> int:
     """Calculate target word count for desired duration"""
     return duration_minutes * 150  # 150 words per minute
 
+# Helper function to generate text chunks
+async def generate_text_chunk(
+    prompt: str, 
+    target_words: int, 
+    language: str,
+    is_complete: bool = True,
+    is_first: bool = True,
+    is_last: bool = False,
+    previous_content: Optional[str] = None
+) -> str:
+    """Generate a chunk of text using LLM"""
+    
+    # Create LLM chat instance
+    chat = LlmChat(
+        api_key=os.environ.get('EMERGENT_LLM_KEY'),
+        session_id=str(uuid.uuid4()),
+        system_message="You are a professional narrator and content writer. Create engaging, natural-flowing narration scripts suitable for audio. Write in a continuous narrative style without section headers or labels."
+    ).with_model("openai", "gpt-4o-mini")
+    
+    # Build prompt based on chunk position
+    if is_complete:
+        # Single complete text
+        user_prompt = f"""Create a narration script about: {prompt}
+
+Write approximately {target_words} words in {language}.
+Style: Natural, conversational narration suitable for audio storytelling.
+Write as a continuous narrative without any section labels, headers, or markers like "Introduction", "Conclusion", etc.
+Just tell the story or explain the topic in an engaging, flowing way."""
+    
+    elif is_first:
+        # First chunk of multi-part text
+        user_prompt = f"""Begin a narration script about: {prompt}
+
+This is the opening of a longer narration. Write approximately {target_words} words in {language}.
+Style: Natural, conversational narration suitable for audio.
+Start the story/topic naturally without labels like "Introduction".
+Write in a continuous narrative flow that will continue in the next part.
+End at a natural pause point, but don't conclude the topic."""
+    
+    elif is_last:
+        # Last chunk
+        context_preview = previous_content[-500:] if previous_content and len(previous_content) > 500 else previous_content
+        user_prompt = f"""Continue and conclude the narration about: {prompt}
+
+Previous content ended with: "...{context_preview}"
+
+Write approximately {target_words} words in {language} to conclude this narration.
+Continue naturally from where the previous part ended.
+Wrap up the topic naturally without using labels like "Conclusion" or "In conclusion".
+Just bring the narrative to a natural, satisfying end."""
+    
+    else:
+        # Middle chunk
+        context_preview = previous_content[-500:] if previous_content and len(previous_content) > 500 else previous_content
+        user_prompt = f"""Continue the narration about: {prompt}
+
+Previous content ended with: "...{context_preview}"
+
+Write approximately {target_words} words in {language} to continue this narration.
+Continue naturally from where the previous part ended.
+Maintain the same tone and style.
+End at a natural pause point, but don't conclude - there's more to come."""
+    
+    # Generate text
+    user_message = UserMessage(text=user_prompt)
+    response = await chat.send_message(user_message)
+    
+    return response.strip()
+
 # Piper helper functions
 async def fetch_available_voices() -> Dict:
     """Fetch available Piper voices from HuggingFace"""
