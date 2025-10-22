@@ -55,8 +55,10 @@ class TextGenerateResponse(BaseModel):
 
 class AudioSynthesizeRequest(BaseModel):
     text: str
-    language: str = "en"
-    slow: bool = False  # gTTS supports only slow=True/False
+    voice: str
+    rate: str = "+0%"  # Speed: -50% to +100%
+    pitch: str = "+0Hz"  # Pitch adjustment (optional)
+    language: str = "en-US"
 
 class AudioSynthesizeResponse(BaseModel):
     id: str
