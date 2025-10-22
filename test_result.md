@@ -164,18 +164,15 @@ backend:
 
   - task: "History endpoint"
     implemented: true
-    working: true
+    working: "NA"
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
-        comment: "GET /api/history returns recent audio generations. Needs testing"
-      - working: true
-        agent: "testing"
-        comment: "✅ PASSED - History endpoint working correctly. Returns list of recent generations with proper metadata (id, text preview, audio_url, language, slow flag, created_at). Database queries working, proper sorting by creation date."
+        comment: "GET /api/history returns recent audio generations. Needs retesting with edge-tts data"
 
 frontend:
   - task: "AI text generation mode"
