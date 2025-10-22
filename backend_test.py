@@ -7,7 +7,7 @@ from datetime import datetime
 from pathlib import Path
 
 class EdgeTTSAPITester:
-    def __init__(self, base_url="https://promptspeak.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://soundscribe-15.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.tests_run = 0
         self.tests_passed = 0
