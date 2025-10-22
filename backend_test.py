@@ -420,23 +420,32 @@ class PiperTTSAPITester:
         return success
 
     def verify_audio_files_exist(self):
-        """Verify that audio files are actually created on disk"""
+        """Verify that audio files are actually created on disk (WAV format for Piper)"""
         audio_dir = Path("/app/backend/audio_files")
         if not audio_dir.exists():
             print("❌ Audio directory does not exist")
             return False
         
         files_found = 0
+        total_size = 0
         for audio_id in self.generated_audio_ids:
-            audio_file = audio_dir / f"{audio_id}.mp3"
+            audio_file = audio_dir / f"{audio_id}.wav"  # Piper generates WAV files
             if audio_file.exists():
                 files_found += 1
                 file_size = audio_file.stat().st_size
-                print(f"✅ Audio file exists: {audio_id}.mp3 ({file_size} bytes)")
+                total_size += file_size
+                print(f"✅ Audio file exists: {audio_id}.wav ({file_size:,} bytes)")
+                
+                # Check if file is not empty or too small
+                if file_size < 1000:  # Less than 1KB is suspicious
+                    print(f"   ⚠️  File seems too small: {file_size} bytes")
+                elif file_size > 50000:  # More than 50KB is good
+                    print(f"   ✅ File size looks good: {file_size:,} bytes")
             else:
-                print(f"❌ Audio file missing: {audio_id}.mp3")
+                print(f"❌ Audio file missing: {audio_id}.wav")
         
         print(f"📁 Audio files verification: {files_found}/{len(self.generated_audio_ids)} files found")
+        print(f"📊 Total audio data: {total_size:,} bytes")
         return files_found == len(self.generated_audio_ids)
 
     def run_all_tests(self):
