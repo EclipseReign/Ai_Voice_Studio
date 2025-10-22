@@ -1,8 +1,8 @@
 {
-  "timestamp": "2025-10-22T10:59:03.538349",
-  "total_tests": 5,
-  "passed_tests": 4,
-  "success_rate": "80.0%",
+  "timestamp": "2025-10-22T12:34:19.429045",
+  "total_tests": 14,
+  "passed_tests": 14,
+  "success_rate": "100.0%",
   "test_results": [
     {
       "test_name": "Root API Endpoint",
@@ -17,546 +17,246 @@
       "error": null
     },
     {
-      "test_name": "Get Available Voices",
-      "endpoint": "voices",
+      "test_name": "Get Available Languages",
+      "endpoint": "languages",
       "method": "GET",
       "expected_status": 200,
       "actual_status": 200,
       "success": true,
       "response_data": [
         {
-          "name": "Microsoft HiuGaai Online (Natural) - Chinese (Cantonese Traditional)",
-          "short_name": "zh-HK-HiuGaaiNeural",
-          "gender": "Female",
-          "locale": "zh-HK"
+          "code": "en",
+          "name": "English",
+          "tld": "com"
         },
         {
-          "name": "Microsoft HiuMaan Online (Natural) - Chinese (Hong Kong SAR)",
-          "short_name": "zh-HK-HiuMaanNeural",
-          "gender": "Female",
-          "locale": "zh-HK"
+          "code": "es",
+          "name": "Spanish",
+          "tld": "es"
         },
         {
-          "name": "Microsoft WanLung Online (Natural) - Chinese (Hong Kong SAR)",
-          "short_name": "zh-HK-WanLungNeural",
-          "gender": "Male",
-          "locale": "zh-HK"
+          "code": "fr",
+          "name": "French",
+          "tld": "fr"
         },
         {
-          "name": "Microsoft Xiaoxiao Online (Natural) - Chinese (Mainland)",
-          "short_name": "zh-CN-XiaoxiaoNeural",
-          "gender": "Female",
-          "locale": "zh-CN"
+          "code": "de",
+          "name": "German",
+          "tld": "de"
         },
         {
-          "name": "Microsoft Xiaoyi Online (Natural) - Chinese (Mainland)",
-          "short_name": "zh-CN-XiaoyiNeural",
-          "gender": "Female",
-          "locale": "zh-CN"
+          "code": "it",
+          "name": "Italian",
+          "tld": "it"
         },
         {
-          "name": "Microsoft Yunjian Online (Natural) - Chinese (Mainland)",
-          "short_name": "zh-CN-YunjianNeural",
-          "gender": "Male",
-          "locale": "zh-CN"
+          "code": "pt",
+          "name": "Portuguese",
+          "tld": "com.br"
         },
         {
-          "name": "Microsoft Yunxi Online (Natural) - Chinese (Mainland)",
-          "short_name": "zh-CN-YunxiNeural",
-          "gender": "Male",
-          "locale": "zh-CN"
+          "code": "ru",
+          "name": "Russian",
+          "tld": "ru"
         },
         {
-          "name": "Microsoft Yunxia Online (Natural) - Chinese (Mainland)",
-          "short_name": "zh-CN-YunxiaNeural",
-          "gender": "Male",
-          "locale": "zh-CN"
+          "code": "zh-CN",
+          "name": "Chinese (Simplified)",
+          "tld": "com"
         },
         {
-          "name": "Microsoft Yunyang Online (Natural) - Chinese (Mainland)",
-          "short_name": "zh-CN-YunyangNeural",
-          "gender": "Male",
-          "locale": "zh-CN"
+          "code": "ja",
+          "name": "Japanese",
+          "tld": "co.jp"
         },
         {
-          "name": "Microsoft Xiaobei Online (Natural) - Chinese (Northeastern Mandarin)",
-          "short_name": "zh-CN-liaoning-XiaobeiNeural",
-          "gender": "Female",
-          "locale": "zh-CN-liaoning"
+          "code": "ko",
+          "name": "Korean",
+          "tld": "co.kr"
         },
         {
-          "name": "Microsoft HsiaoChen Online (Natural) - Chinese (Taiwan)",
-          "short_name": "zh-TW-HsiaoChenNeural",
-          "gender": "Female",
-          "locale": "zh-TW"
+          "code": "ar",
+          "name": "Arabic",
+          "tld": "com"
         },
         {
-          "name": "Microsoft YunJhe Online (Natural) - Chinese (Taiwan)",
-          "short_name": "zh-TW-YunJheNeural",
-          "gender": "Male",
-          "locale": "zh-TW"
+          "code": "hi",
+          "name": "Hindi",
+          "tld": "co.in"
         },
         {
-          "name": "Microsoft HsiaoYu Online (Natural) - Chinese (Taiwanese Mandarin)",
-          "short_name": "zh-TW-HsiaoYuNeural",
-          "gender": "Female",
-          "locale": "zh-TW"
+          "code": "nl",
+          "name": "Dutch",
+          "tld": "nl"
         },
         {
-          "name": "Microsoft Xiaoni Online (Natural) - Chinese (Zhongyuan Mandarin Shaanxi)",
-          "short_name": "zh-CN-shaanxi-XiaoniNeural",
-          "gender": "Female",
-          "locale": "zh-CN-shaanxi"
+          "code": "pl",
+          "name": "Polish",
+          "tld": "pl"
         },
         {
-          "name": "Microsoft WilliamMultilingual Online (Natural) - English (Australia)",
-          "short_name": "en-AU-WilliamMultilingualNeural",
-          "gender": "Male",
-          "locale": "en-AU"
-        },
-        {
-          "name": "Microsoft Natasha Online (Natural) - English (Australia)",
-          "short_name": "en-AU-NatashaNeural",
-          "gender": "Female",
-          "locale": "en-AU"
-        },
-        {
-          "name": "Microsoft Clara Online (Natural) - English (Canada)",
-          "short_name": "en-CA-ClaraNeural",
-          "gender": "Female",
-          "locale": "en-CA"
-        },
-        {
-          "name": "Microsoft Liam Online (Natural) - English (Canada)",
-          "short_name": "en-CA-LiamNeural",
-          "gender": "Male",
-          "locale": "en-CA"
-        },
-        {
-          "name": "Microsoft Yan Online (Natural) - English (Hong Kong SAR)",
-          "short_name": "en-HK-YanNeural",
-          "gender": "Female",
-          "locale": "en-HK"
-        },
-        {
-          "name": "Microsoft Sam Online (Natural) - English (Hongkong)",
-          "short_name": "en-HK-SamNeural",
-          "gender": "Male",
-          "locale": "en-HK"
-        },
-        {
-          "name": "Microsoft Neerja Online (Natural) - English (India) (Preview)",
-          "short_name": "en-IN-NeerjaExpressiveNeural",
-          "gender": "Female",
-          "locale": "en-IN"
-        },
-        {
-          "name": "Microsoft Neerja Online (Natural) - English (India)",
-          "short_name": "en-IN-NeerjaNeural",
-          "gender": "Female",
-          "locale": "en-IN"
-        },
-        {
-          "name": "Microsoft Prabhat Online (Natural) - English (India)",
-          "short_name": "en-IN-PrabhatNeural",
-          "gender": "Male",
-          "locale": "en-IN"
-        },
-        {
-          "name": "Microsoft Connor Online (Natural) - English (Ireland)",
-          "short_name": "en-IE-ConnorNeural",
-          "gender": "Male",
-          "locale": "en-IE"
-        },
-        {
-          "name": "Microsoft Emily Online (Natural) - English (Ireland)",
-          "short_name": "en-IE-EmilyNeural",
-          "gender": "Female",
-          "locale": "en-IE"
-        },
-        {
-          "name": "Microsoft Asilia Online (Natural) - English (Kenya)",
-          "short_name": "en-KE-AsiliaNeural",
-          "gender": "Female",
-          "locale": "en-KE"
-        },
-        {
-          "name": "Microsoft Chilemba Online (Natural) - English (Kenya)",
-          "short_name": "en-KE-ChilembaNeural",
-          "gender": "Male",
-          "locale": "en-KE"
-        },
-        {
-          "name": "Microsoft Mitchell Online (Natural) - English (New Zealand)",
-          "short_name": "en-NZ-MitchellNeural",
-          "gender": "Male",
-          "locale": "en-NZ"
-        },
-        {
-          "name": "Microsoft Molly Online (Natural) - English (New Zealand)",
-          "short_name": "en-NZ-MollyNeural",
-          "gender": "Female",
-          "locale": "en-NZ"
-        },
-        {
-          "name": "Microsoft Abeo Online (Natural) - English (Nigeria)",
-          "short_name": "en-NG-AbeoNeural",
-          "gender": "Male",
-          "locale": "en-NG"
-        },
-        {
-          "name": "Microsoft Ezinne Online (Natural) - English (Nigeria)",
-          "short_name": "en-NG-EzinneNeural",
-          "gender": "Female",
-          "locale": "en-NG"
-        },
-        {
-          "name": "Microsoft James Online (Natural) - English (Philippines)",
-          "short_name": "en-PH-JamesNeural",
-          "gender": "Male",
-          "locale": "en-PH"
-        },
-        {
-          "name": "Microsoft Rosa Online (Natural) - English (Philippines)",
-          "short_name": "en-PH-RosaNeural",
-          "gender": "Female",
-          "locale": "en-PH"
-        },
-        {
-          "name": "Microsoft Ava Online (Natural) - English (United States)",
-          "short_name": "en-US-AvaNeural",
-          "gender": "Female",
-          "locale": "en-US"
-        },
-        {
-          "name": "Microsoft Andrew Online (Natural) - English (United States)",
-          "short_name": "en-US-AndrewNeural",
-          "gender": "Male",
-          "locale": "en-US"
-        },
-        {
-          "name": "Microsoft Emma Online (Natural) - English (United States)",
-          "short_name": "en-US-EmmaNeural",
-          "gender": "Female",
-          "locale": "en-US"
-        },
-        {
-          "name": "Microsoft Brian Online (Natural) - English (United States)",
-          "short_name": "en-US-BrianNeural",
-          "gender": "Male",
-          "locale": "en-US"
-        },
-        {
-          "name": "Microsoft Luna Online (Natural) - English (Singapore)",
-          "short_name": "en-SG-LunaNeural",
-          "gender": "Female",
-          "locale": "en-SG"
-        },
-        {
-          "name": "Microsoft Wayne Online (Natural) - English (Singapore)",
-          "short_name": "en-SG-WayneNeural",
-          "gender": "Male",
-          "locale": "en-SG"
-        },
-        {
-          "name": "Microsoft Leah Online (Natural) - English (South Africa)",
-          "short_name": "en-ZA-LeahNeural",
-          "gender": "Female",
-          "locale": "en-ZA"
-        },
-        {
-          "name": "Microsoft Luke Online (Natural) - English (South Africa)",
-          "short_name": "en-ZA-LukeNeural",
-          "gender": "Male",
-          "locale": "en-ZA"
-        },
-        {
-          "name": "Microsoft Elimu Online (Natural) - English (Tanzania)",
-          "short_name": "en-TZ-ElimuNeural",
-          "gender": "Male",
-          "locale": "en-TZ"
-        },
-        {
-          "name": "Microsoft Imani Online (Natural) - English (Tanzania)",
-          "short_name": "en-TZ-ImaniNeural",
-          "gender": "Female",
-          "locale": "en-TZ"
-        },
-        {
-          "name": "Microsoft Libby Online (Natural) - English (United Kingdom)",
-          "short_name": "en-GB-LibbyNeural",
-          "gender": "Female",
-          "locale": "en-GB"
-        },
-        {
-          "name": "Microsoft Maisie Online (Natural) - English (United Kingdom)",
-          "short_name": "en-GB-MaisieNeural",
-          "gender": "Female",
-          "locale": "en-GB"
-        },
-        {
-          "name": "Microsoft Ryan Online (Natural) - English (United Kingdom)",
-          "short_name": "en-GB-RyanNeural",
-          "gender": "Male",
-          "locale": "en-GB"
-        },
-        {
-          "name": "Microsoft Sonia Online (Natural) - English (United Kingdom)",
-          "short_name": "en-GB-SoniaNeural",
-          "gender": "Female",
-          "locale": "en-GB"
-        },
-        {
-          "name": "Microsoft Thomas Online (Natural) - English (United Kingdom)",
-          "short_name": "en-GB-ThomasNeural",
-          "gender": "Male",
-          "locale": "en-GB"
-        },
-        {
-          "name": "Microsoft Ana Online (Natural) - English (United States)",
-          "short_name": "en-US-AnaNeural",
-          "gender": "Female",
-          "locale": "en-US"
-        },
-        {
-          "name": "Microsoft AndrewMultilingual Online (Natural) - English (United States)",
-          "short_name": "en-US-AndrewMultilingualNeural",
-          "gender": "Male",
-          "locale": "en-US"
-        },
-        {
-          "name": "Microsoft Charline Online (Natural) - French (Belgium)",
-          "short_name": "fr-BE-CharlineNeural",
-          "gender": "Female",
-          "locale": "fr-BE"
-        },
-        {
-          "name": "Microsoft Thierry Online (Natural) - French (Canada)",
-          "short_name": "fr-CA-ThierryNeural",
-          "gender": "Male",
-          "locale": "fr-CA"
-        },
-        {
-          "name": "Microsoft VivienneMultilingual Online (Natural) - French (France)",
-          "short_name": "fr-FR-VivienneMultilingualNeural",
-          "gender": "Female",
-          "locale": "fr-FR"
-        },
-        {
-          "name": "Microsoft Ariane Online (Natural) - French (Switzerland)",
-          "short_name": "fr-CH-ArianeNeural",
-          "gender": "Female",
-          "locale": "fr-CH"
-        },
-        {
-          "name": "Microsoft Ingrid Online (Natural) - German (Austria)",
-          "short_name": "de-AT-IngridNeural",
-          "gender": "Female",
-          "locale": "de-AT"
-        },
-        {
-          "name": "Microsoft SeraphinaMultilingual Online (Natural) - German (Germany)",
-          "short_name": "de-DE-SeraphinaMultilingualNeural",
-          "gender": "Female",
-          "locale": "de-DE"
-        },
-        {
-          "name": "Microsoft Jan Online (Natural) - German (Switzerland)",
-          "short_name": "de-CH-JanNeural",
-          "gender": "Male",
-          "locale": "de-CH"
-        },
-        {
-          "name": "Microsoft GiuseppeMultilingual Online (Natural) - Italian (Italy)",
-          "short_name": "it-IT-GiuseppeMultilingualNeural",
-          "gender": "Male",
-          "locale": "it-IT"
-        },
-        {
-          "name": "Microsoft Keita Online (Natural) - Japanese (Japan)",
-          "short_name": "ja-JP-KeitaNeural",
-          "gender": "Male",
-          "locale": "ja-JP"
-        },
-        {
-          "name": "Microsoft ThalitaMultilingual Online (Natural) - Portuguese (Brazil)",
-          "short_name": "pt-BR-ThalitaMultilingualNeural",
-          "gender": "Female",
-          "locale": "pt-BR"
-        },
-        {
-          "name": "Microsoft Duarte Online (Natural) - Portuguese (Portugal)",
-          "short_name": "pt-PT-DuarteNeural",
-          "gender": "Male",
-          "locale": "pt-PT"
-        },
-        {
-          "name": "Microsoft Dmitry Online (Natural) - Russian (Russia)",
-          "short_name": "ru-RU-DmitryNeural",
-          "gender": "Male",
-          "locale": "ru-RU"
-        },
-        {
-          "name": "Microsoft Elena Online (Natural) - Spanish (Argentina)",
-          "short_name": "es-AR-ElenaNeural",
-          "gender": "Female",
-          "locale": "es-AR"
-        },
-        {
-          "name": "Microsoft Marcelo Online (Natural) - Spanish (Bolivia)",
-          "short_name": "es-BO-MarceloNeural",
-          "gender": "Male",
-          "locale": "es-BO"
-        },
-        {
-          "name": "Microsoft Catalina Online (Natural) - Spanish (Chile)",
-          "short_name": "es-CL-CatalinaNeural",
-          "gender": "Female",
-          "locale": "es-CL"
-        },
-        {
-          "name": "Microsoft Gonzalo Online (Natural) - Spanish (Colombia)",
-          "short_name": "es-CO-GonzaloNeural",
-          "gender": "Male",
-          "locale": "es-CO"
-        },
-        {
-          "name": "Microsoft Ximena Online (Natural) - Spanish (Colombia)",
-          "short_name": "es-ES-XimenaNeural",
-          "gender": "Female",
-          "locale": "es-ES"
-        },
-        {
-          "name": "Microsoft Juan Online (Natural) - Spanish (Costa Rica)",
-          "short_name": "es-CR-JuanNeural",
-          "gender": "Male",
-          "locale": "es-CR"
-        },
-        {
-          "name": "Microsoft Belkys Online (Natural) - Spanish (Cuba)",
-          "short_name": "es-CU-BelkysNeural",
-          "gender": "Female",
-          "locale": "es-CU"
-        },
-        {
-          "name": "Microsoft Emilio Online (Natural) - Spanish (Dominican Republic)",
-          "short_name": "es-DO-EmilioNeural",
-          "gender": "Male",
-          "locale": "es-DO"
-        },
-        {
-          "name": "Microsoft Andrea Online (Natural) - Spanish (Ecuador)",
-          "short_name": "es-EC-AndreaNeural",
-          "gender": "Female",
-          "locale": "es-EC"
-        },
-        {
-          "name": "Microsoft Lorena Online (Natural) - Spanish (El Salvador)",
-          "short_name": "es-SV-LorenaNeural",
-          "gender": "Female",
-          "locale": "es-SV"
-        },
-        {
-          "name": "Microsoft Javier Online (Natural) - Spanish (Equatorial Guinea)",
-          "short_name": "es-GQ-JavierNeural",
-          "gender": "Male",
-          "locale": "es-GQ"
-        },
-        {
-          "name": "Microsoft Andres Online (Natural) - Spanish (Guatemala)",
-          "short_name": "es-GT-AndresNeural",
-          "gender": "Male",
-          "locale": "es-GT"
-        },
-        {
-          "name": "Microsoft Carlos Online (Natural) - Spanish (Honduras)",
-          "short_name": "es-HN-CarlosNeural",
-          "gender": "Male",
-          "locale": "es-HN"
-        },
-        {
-          "name": "Microsoft Dalia Online (Natural) - Spanish (Mexico)",
-          "short_name": "es-MX-DaliaNeural",
-          "gender": "Female",
-          "locale": "es-MX"
-        },
-        {
-          "name": "Microsoft Federico Online (Natural) - Spanish (Nicaragua)",
-          "short_name": "es-NI-FedericoNeural",
-          "gender": "Male",
-          "locale": "es-NI"
-        },
-        {
-          "name": "Microsoft Margarita Online (Natural) - Spanish (Panama)",
-          "short_name": "es-PA-MargaritaNeural",
-          "gender": "Female",
-          "locale": "es-PA"
-        },
-        {
-          "name": "Microsoft Mario Online (Natural) - Spanish (Paraguay)",
-          "short_name": "es-PY-MarioNeural",
-          "gender": "Male",
-          "locale": "es-PY"
-        },
-        {
-          "name": "Microsoft Alex Online (Natural) - Spanish (Peru)",
-          "short_name": "es-PE-AlexNeural",
-          "gender": "Male",
-          "locale": "es-PE"
-        },
-        {
-          "name": "Microsoft Karina Online (Natural) - Spanish (Puerto Rico)",
-          "short_name": "es-PR-KarinaNeural",
-          "gender": "Female",
-          "locale": "es-PR"
-        },
-        {
-          "name": "Microsoft Alonso Online (Natural) - Spanish (United States)",
-          "short_name": "es-US-AlonsoNeural",
-          "gender": "Male",
-          "locale": "es-US"
-        },
-        {
-          "name": "Microsoft Mateo Online (Natural) - Spanish (Uruguay)",
-          "short_name": "es-UY-MateoNeural",
-          "gender": "Male",
-          "locale": "es-UY"
-        },
-        {
-          "name": "Microsoft Paola Online (Natural) - Spanish (Venezuela)",
-          "short_name": "es-VE-PaolaNeural",
-          "gender": "Female",
-          "locale": "es-VE"
+          "code": "tr",
+          "name": "Turkish",
+          "tld": "com.tr"
         }
       ],
       "error": null
     },
     {
-      "test_name": "Generate Text",
+      "test_name": "Generate Text (Short - 2 minutes)",
       "endpoint": "text/generate",
       "method": "POST",
       "expected_status": 200,
       "actual_status": 200,
       "success": true,
       "response_data": {
-        "id": "72f59c41-2d5a-4d60-9914-687ec0e1804c",
-        "text": "Welcome to our discussion on the incredible benefits of artificial intelligence in healthcare. As technology continues to advance, AI is transforming the way we approach medical challenges, leading to faster diagnoses, personalized treatment plans, and improved patient outcomes. Let\u2019s dive into how this innovative technology is reshaping the healthcare landscape.\n\nFirst and foremost, one of the most exciting advantages of AI is its ability to analyze large amounts of medical data quickly and accurately. Imagine a system that can sift through thousands of patient records and research papers in mere seconds! This capability helps healthcare professionals spot patterns, identify diseases earlier, and ultimately make better-informed decisions. Studies have shown that AI can outperform human doctors in various diagnostic tasks, particularly in radiology, where it can detect conditions like tumors from imaging data with remarkable precision.\n\nNext, let\u2019s talk about personalized medicine. Every patient's situation is unique, and AI can help tailor treatment plans that cater to individual needs. By analyzing genetic information, lifestyle factors, and medical histories, AI-driven systems can recommend therapies that are more likely to be effective for specific patients. This not only enhances the chances of recovery but also minimizes the risk of side effects from treatments that may not be suitable.\n\nLastly, AI also plays a crucial role in streamlining administrative tasks. From scheduling appointments to managing billing processes, AI can alleviate the repetitive workload for healthcare staff, allowing them to focus more on patient care and less on paperwork. This can lead to a more efficient healthcare system overall.\n\nIn conclusion, the integration of artificial intelligence in healthcare is revolutionizing the way we diagnose, treat, and manage patient care. With faster data analysis, personalized treatment options, and improved administrative efficiency, AI is not just a tool of the future\u2014it\u2019s changing lives today. As we continue to embrace this technology, the potential for enhanced healthcare outcomes is truly exciting. Thank you for listening!",
-        "word_count": 317,
-        "estimated_duration": 126.8
+        "id": "b88d4041-347b-4dec-8379-e225a46f11c6",
+        "text": "Imagine a world where energy isn\u2019t just about burning fossil fuels or depleting our planet\u2019s resources. Welcome to the realm of renewable energy, a game changer for modern society. Today, we\u2019re diving into the benefits it brings to our daily lives and the environment around us.\n\nFirst off, let\u2019s talk about sustainability. Renewable energy sources like solar, wind, and hydro are naturally replenished. This means we can harness their power without fear of running out. Unlike fossil fuels, they won\u2019t be drained from the Earth, making them a long-term solution to our energy needs. This sustainable approach not only protects our planet but ensures that future generations will have access to clean energy.\n\nNext, consider the economic impact. The renewable energy sector has created millions of jobs and continues to grow. From manufacturing solar panels to wind turbine maintenance, the opportunities are diverse and abundant. Investing in renewable energy means investing in a resilient economy that\u2019s less dependent on fluctuating oil prices. Plus, as technology advances, the cost of renewable energy continues to drop, making it accessible for households and businesses alike.\n\nNow, let's not overlook the environmental benefits. Renewable energy sources generate far less pollution compared to traditional energy sources. This leads to cleaner air and water, reducing the health risks associated with fossil fuel consumption. By cutting down on greenhouse gas emissions, we\u2019re also taking significant steps toward combating climate change, which affects us all.\n\nIn conclusion, the shift toward renewable energy is not just a trend; it's a vital movement for a sustainable, prosperous future. Embracing these energy sources fosters economic growth, creates jobs, and protects our planet for years to come. As we advance a society that values clean energy, we take a powerful step toward a healthier world for everyone.",
+        "word_count": 295,
+        "estimated_duration": 118.0
       },
       "error": null
     },
     {
-      "test_name": "Synthesize Audio",
+      "test_name": "Generate Text (Long - 10 minutes)",
+      "endpoint": "text/generate",
+      "method": "POST",
+      "expected_status": 200,
+      "actual_status": 200,
+      "success": true,
+      "response_data": {
+        "id": "1c94884f-fffd-4f35-ab83-6f50f4319cc7",
+        "text": "Welcome to our comprehensive guide to artificial intelligence and machine learning! Today, we\u2019ll unravel the mysteries of AI and ML, breaking down complex concepts into easy-to-understand language. Whether you\u2019re a tech enthusiast or a complete beginner, I promise you\u2019ll walk away with valuable insights.\n\nSo, let\u2019s begin with a brief introduction to what artificial intelligence actually is. At its core, AI refers to the simulation of human intelligence in machines that are programmed to think and learn like humans. Remember the days when we used to dream about robots that could think for themselves? Well, we\u2019re living in that reality today, and it\u2019s fascinating!\n\nAI can generally be categorized into two types: narrow AI and general AI. Narrow AI is designed to perform a narrow task \u2014 think of things like voice assistants like Siri or Alexa, recommendation algorithms on Netflix, or even facial recognition systems. These systems excel in specific tasks but lack true understanding or consciousness. \n\nOn the other hand, general AI refers to a type of AI that can understand, learn, and apply intelligence across a broad range of tasks, much like a human. However, we\u2019ve still got a long way to go before we achieve this level of AI. The AI we interact with today is still primarily narrow, specializing in tasks rather than exhibiting human-like consciousness.\n\nNow, let\u2019s dive into machine learning, a subfield of artificial intelligence. Machine learning is all about teaching computers to learn from data, improving their performance over time without being explicitly programmed to do so. Picture it like this: instead of coding rules for every scenario, we feed machines data and let them deduce patterns and make decisions based on that data.\n\nYou could say machine learning is the driver behind many AI applications we encounter today. Take Facebook, for example. When it suggests friends to tag in your photos, it\u2019s using machine learning algorithms to analyze your past interactions and make intelligent suggestions based on patterns it has recognized.\n\nMachine learning comes in three primary types: supervised learning, unsupervised learning, and reinforcement learning. Let\u2019s break these down.\n\nStarting with supervised learning, here\u2019s how it works. In this type, the model is trained on a labeled dataset. Think of it as training a child by giving them the answer first. For example, if we\u2019re training an algorithm to recognize photos of cats, we would provide it with many images labeled \u201ccat\u201d and \u201cnot cat.\u201d The model learns from this data, finding patterns, and then can classify new images it hasn\u2019t seen before.\n\nNext up is unsupervised learning. Unlike supervised learning, here we give the algorithm data without any labels. It\u2019s like throwing them into a room filled with puzzles, and they have to figure out what the puzzles are about without any guidance. This approach is excellent for identifying patterns within data. Clustering is a common technique; it groups similar data points together. Imagine market segmentation in business \u2014 that\u2019s unsupervised learning in action!\n\nFinally, we have reinforcement learning, which takes a different approach altogether. This method is akin to teaching a dog new tricks using rewards. The algorithm learns through trial and error, receiving feedback based on its actions. Let\u2019s say we\u2019re training a robot to navigate a maze. If it reaches the end, it gets a treat; if it hits a wall, it doesn\u2019t. Over time, the robot learns the best path to take. This type of learning is increasingly used in robotics, gaming, and even self-driving cars!\n\nNow that we understand AI and machine learning, let\u2019s talk about some real-world applications. One of the most dynamic fields for AI is healthcare. Machine learning algorithms are revolutionizing how we diagnose diseases. Imagine a system that\u2019s trained to analyze medical images, identifying early signs of cancer that might escape the human eye. These algorithms can process vast amounts of data far more quickly and, in some cases, more accurately than humans.\n\nAnother area where AI shines is finance. Use cases range from fraud detection to personalized banking. With machine learning, algorithms can analyze transaction patterns and flag anomalies that might indicate fraudulent activity, keeping our financial systems secure and our money safe.\n\nBut it\u2019s not all sunshine and rainbows; there are ethical concerns we can't shout over. As AI technologies evolve, we must address issues such as privacy, bias in algorithms, and job displacement. For instance, if an AI system learns from historical data, it might unintentionally perpetuate existing biases. A common example is biased hiring algorithms that favor one demographic over others simply because of the data they were trained on. \n\nThis is where the concept of explainable AI comes into play. As AI becomes more prevalent in decision-making processes, understanding how these systems arrive at their conclusions becomes vital. Transparency is crucial to ensuring the responsible use of AI.\n\nAs we venture further into the future, we\u2019re also witnessing the emergence of generative AI. This is the technology behind tools that can create new, original content. From writing articles to generating images, generative AI models can produce impressive results. One famous example that has made waves in recent years is OpenAI\u2019s GPT-3, which can write text that sounds extraordinarily human-like. The implications of this are fascinating \u2014 and a little unsettling. Imagine an AI that can draft emails, create stories, or even code software \u2014 the possibilities are endless!\n\nHowever, generative AI also raises questions about authenticity and originality. As creators and consumers, we must understand the distinction between human-created and AI-generated content, especially in an era where misinformation can spread like wildfire.\n\nAs we slowly wrap up our discussion, let\u2019s touch on the future of AI and machine learning. Experts predict that AI will increasingly integrate into various aspects of our daily lives. We\u2019ll see advancements in voice recognition, natural language processing, and computer vision continuing to improve, making interactions with technology more seamless and intuitive.\n\nThe rise of AI will also heavily influence industries like transportation with the development of autonomous vehicles and logistics optimization. Imagine a world where goods are delivered automatically without the need for human intervention! That\u2019s not just science fiction anymore; it\u2019s edging closer to reality.\n\nIn the realm of education, AI can personalize learning experiences, ensuring students receive the support they need based on their unique learning styles and paces. In customer service, AI-powered chatbots are becoming more adept at managing inquiries, often handling questions and issues faster than humans.\n\nBefore we conclude, it\u2019s essential to highlight the importance of continually educating ourselves about AI and machine learning. With technology evolving rapidly, staying informed is vital. Many resources are available online, including free courses from platforms like Coursera and edX, where you can learn about these subjects at your own pace.\n\nAs we stand on the brink of an AI-driven revolution, we hold the power to shape the future. Society\u2019s approach to these technologies will determine how we leverage their benefits while mitigating their risks. Collaboration between technologists, ethicists, policymakers, and the public is crucial to ensuring that AI serves humanity positively and equitably.\n\nIn conclusion, artificial intelligence and machine learning are transforming our world at an astonishing pace. From revolutionizing healthcare to transforming industries, the potential applications are immense. However, as we embrace this exciting frontier, we must also navigate carefully through ethical considerations and societal implications. \n\nSo whether you're integrating AI into your business or just curious about the technology, remember that knowledge is a powerful tool. Keep learning, keep questioning, and let\u2019s shape a future where AI empowers humanity rather than limiting it. Thank you for joining me on this journey today, and I hope this guide has sparked your interest in the world of artificial intelligence and machine learning!",
+        "word_count": 1283,
+        "estimated_duration": 513.1999999999999
+      },
+      "error": null
+    },
+    {
+      "test_name": "Synthesize Audio (Normal Speed)",
       "endpoint": "audio/synthesize",
       "method": "POST",
       "expected_status": 200,
-      "actual_status": 500,
-      "success": false,
-      "response_data": null,
-      "error": {
-        "detail": "Error synthesizing audio: 403, message='Invalid response status', url='wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken=6A5AA1D4EAFF4E9FB37E23D68491D6F4&ConnectionId=d24b43b7d1664a9382b0d69c4afb499a'"
-      }
+      "actual_status": 200,
+      "success": true,
+      "response_data": {
+        "id": "f547ae24-aa5e-4107-bfbd-ae72277a2b51",
+        "audio_url": "/api/audio/download/f547ae24-aa5e-4107-bfbd-ae72277a2b51",
+        "text": "Imagine a world where energy isn\u2019t just about burning fossil fuels or depleting our planet\u2019s resourc...",
+        "language": "en",
+        "created_at": "2025-10-22T12:33:45.451863+00:00"
+      },
+      "error": null
+    },
+    {
+      "test_name": "Synthesize Audio (Slow Speed)",
+      "endpoint": "audio/synthesize",
+      "method": "POST",
+      "expected_status": 200,
+      "actual_status": 200,
+      "success": true,
+      "response_data": {
+        "id": "6a698f5d-cdcf-437d-a8b3-151cab04de67",
+        "audio_url": "/api/audio/download/6a698f5d-cdcf-437d-a8b3-151cab04de67",
+        "text": "Imagine a world where energy isn\u2019t just about burning fossil fuels or depleting our planet\u2019s resourc...",
+        "language": "en",
+        "created_at": "2025-10-22T12:33:47.750558+00:00"
+      },
+      "error": null
+    },
+    {
+      "test_name": "Synthesize Audio (ES)",
+      "endpoint": "audio/synthesize",
+      "method": "POST",
+      "expected_status": 200,
+      "actual_status": 200,
+      "success": true,
+      "response_data": {
+        "id": "20664349-4d63-4682-a9d7-81648d62c672",
+        "audio_url": "/api/audio/download/20664349-4d63-4682-a9d7-81648d62c672",
+        "text": "Hello, this is a test message in different languages.",
+        "language": "es",
+        "created_at": "2025-10-22T12:33:48.026958+00:00"
+      },
+      "error": null
+    },
+    {
+      "test_name": "Synthesize Audio (RU)",
+      "endpoint": "audio/synthesize",
+      "method": "POST",
+      "expected_status": 200,
+      "actual_status": 200,
+      "success": true,
+      "response_data": {
+        "id": "0619a586-f3a2-4d4e-8125-ed510dfce0e0",
+        "audio_url": "/api/audio/download/0619a586-f3a2-4d4e-8125-ed510dfce0e0",
+        "text": "Hello, this is a test message in different languages.",
+        "language": "ru",
+        "created_at": "2025-10-22T12:33:48.244898+00:00"
+      },
+      "error": null
+    },
+    {
+      "test_name": "Synthesize Audio (FR)",
+      "endpoint": "audio/synthesize",
+      "method": "POST",
+      "expected_status": 200,
+      "actual_status": 200,
+      "success": true,
+      "response_data": {
+        "id": "49336115-f427-4fcd-8001-21c0a3a15abd",
+        "audio_url": "/api/audio/download/49336115-f427-4fcd-8001-21c0a3a15abd",
+        "text": "Hello, this is a test message in different languages.",
+        "language": "fr",
+        "created_at": "2025-10-22T12:33:48.444795+00:00"
+      },
+      "error": null
+    },
+    {
+      "test_name": "Synthesize Long Text (2000+ words)",
+      "endpoint": "audio/synthesize",
+      "method": "POST",
+      "expected_status": 200,
+      "actual_status": 200,
+      "success": true,
+      "response_data": {
+        "id": "f7474c15-ad12-499a-a19c-5d0b731c37b0",
+        "audio_url": "/api/audio/download/f7474c15-ad12-499a-a19c-5d0b731c37b0",
+        "text": "\n        Artificial intelligence represents one of the most significant technological advances of ou...",
+        "language": "en",
+        "created_at": "2025-10-22T12:34:15.836333+00:00"
+      },
+      "error": null
+    },
+    {
+      "test_name": "Download Audio (f547ae24...)",
+      "endpoint": "audio/download/f547ae24-aa5e-4107-bfbd-ae72277a2b51",
+      "method": "GET",
+      "expected_status": 200,
+      "actual_status": 200,
+      "success": true,
+      "response_data": "\ufffd\ufffd\ufffd\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\ufffd\ufffd\ufffd\u0000&\ufffd\ufffd\u0000\u0001",
+      "error": null
+    },
+    {
+      "test_name": "Download Audio (6a698f5d...)",
+      "endpoint": "audio/download/6a698f5d-cdcf-437d-a8b3-151cab04de67",
+      "method": "GET",
+      "expected_status": 200,
+      "actual_status": 200,
+      "success": true,
+      "response_data": "\ufffd\ufffd\ufffd\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\ufffd\ufffd\ufffd\u0000$2\ufffd\u0004\u0001",
+      "error": null
+    },
+    {
+      "test_name": "Download Audio (20664349...)",
+      "endpoint": "audio/download/20664349-4d63-4682-a9d7-81648d62c672",
+      "method": "GET",
+      "expected_status": 200,
+      "actual_status": 200,
+      "success": true,
+      "response_data": "\ufffd\ufffd\ufffd\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\ufffd\ufffd\ufffd\u0000$\u0002\ufffd\ufffd\u0001",
+      "error": null
     },
     {
       "test_name": "Get Generation History",
@@ -565,7 +265,56 @@
       "expected_status": 200,
       "actual_status": 200,
       "success": true,
-      "response_data": [],
+      "response_data": [
+        {
+          "id": "f7474c15-ad12-499a-a19c-5d0b731c37b0",
+          "text": "\n        Artificial intelligence represents one of the most significant technological advances of ou...",
+          "audio_url": "/api/audio/download/f7474c15-ad12-499a-a19c-5d0b731c37b0",
+          "language": "en",
+          "slow": false,
+          "created_at": "2025-10-22T12:34:15.836333+00:00"
+        },
+        {
+          "id": "49336115-f427-4fcd-8001-21c0a3a15abd",
+          "text": "Hello, this is a test message in different languages.",
+          "audio_url": "/api/audio/download/49336115-f427-4fcd-8001-21c0a3a15abd",
+          "language": "fr",
+          "slow": false,
+          "created_at": "2025-10-22T12:33:48.444795+00:00"
+        },
+        {
+          "id": "0619a586-f3a2-4d4e-8125-ed510dfce0e0",
+          "text": "Hello, this is a test message in different languages.",
+          "audio_url": "/api/audio/download/0619a586-f3a2-4d4e-8125-ed510dfce0e0",
+          "language": "ru",
+          "slow": false,
+          "created_at": "2025-10-22T12:33:48.244898+00:00"
+        },
+        {
+          "id": "20664349-4d63-4682-a9d7-81648d62c672",
+          "text": "Hello, this is a test message in different languages.",
+          "audio_url": "/api/audio/download/20664349-4d63-4682-a9d7-81648d62c672",
+          "language": "es",
+          "slow": false,
+          "created_at": "2025-10-22T12:33:48.026958+00:00"
+        },
+        {
+          "id": "6a698f5d-cdcf-437d-a8b3-151cab04de67",
+          "text": "Imagine a world where energy isn\u2019t just about burning fossil fuels or depleting our planet\u2019s resourc...",
+          "audio_url": "/api/audio/download/6a698f5d-cdcf-437d-a8b3-151cab04de67",
+          "language": "en",
+          "slow": true,
+          "created_at": "2025-10-22T12:33:47.750558+00:00"
+        },
+        {
+          "id": "f547ae24-aa5e-4107-bfbd-ae72277a2b51",
+          "text": "Imagine a world where energy isn\u2019t just about burning fossil fuels or depleting our planet\u2019s resourc...",
+          "audio_url": "/api/audio/download/f547ae24-aa5e-4107-bfbd-ae72277a2b51",
+          "language": "en",
+          "slow": false,
+          "created_at": "2025-10-22T12:33:45.451863+00:00"
+        }
+      ],
       "error": null
     }
   ]
