@@ -92,12 +92,25 @@ const HomePage = () => {
       return;
     }
     
+    if (!selectedVoice) {
+      toast.error("Please select a voice");
+      return;
+    }
+    
     setIsSynthesizing(true);
     try {
+      const speedValue = speed[0];
+      const speedStr = speedValue > 0 ? '+' + speedValue + '%' : speedValue + '%';
+      
+      const pitchValue = pitch[0];
+      const pitchStr = pitchValue > 0 ? '+' + pitchValue + 'Hz' : pitchValue + 'Hz';
+      
       const response = await axios.post(API + '/audio/synthesize', {
         text: text,
-        language: language,
-        slow: slow
+        voice: selectedVoice,
+        rate: speedStr,
+        pitch: pitchStr,
+        language: language
       });
       
       setAudioUrl(process.env.REACT_APP_BACKEND_URL + response.data.audio_url);
@@ -109,6 +122,10 @@ const HomePage = () => {
     } finally {
       setIsSynthesizing(false);
     }
+  };
+  
+  const getVoicesByLanguage = () => {
+    return voices.filter(v => v.locale.startsWith(language.split('-')[0]));
   };
   
   return (
