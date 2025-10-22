@@ -185,7 +185,7 @@ Generate ONLY the narration text without any meta-commentary or formatting marke
 
 @api_router.post("/audio/synthesize", response_model=AudioSynthesizeResponse)
 async def synthesize_audio(request: AudioSynthesizeRequest):
-    """Synthesize audio from text using edge-tts"""
+    """Synthesize audio from text using gTTS"""
     try:
         # Create unique ID
         audio_id = str(uuid.uuid4())
@@ -197,23 +197,33 @@ async def synthesize_audio(request: AudioSynthesizeRequest):
         # Generate audio file path
         audio_file = audio_dir / f"{audio_id}.mp3"
         
-        # Create edge-tts communicate instance
-        communicate = edge_tts.Communicate(
+        # For long texts, gTTS might have limitations. Let's handle in chunks if needed
+        # gTTS can handle up to ~5000 characters per request reliably
+        text_length = len(request.text)
+        logger.info(f"Generating audio for text of length: {text_length} characters")
+        
+        # Create gTTS instance
+        # Note: gTTS uses language codes like 'en', 'es', 'fr', etc.
+        # and tld parameter for accent variations
+        tts = gTTS(
             text=request.text,
-            voice=request.voice,
-            rate=request.rate
+            lang=request.language,
+            slow=request.slow
         )
         
-        # Save audio to file
-        await communicate.save(str(audio_file))
+        # Save audio to file (this runs synchronously)
+        # Run in thread pool to avoid blocking
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, tts.save, str(audio_file))
+        
+        logger.info(f"Audio file saved: {audio_file}")
         
         # Save to database
         audio_doc = {
             "id": audio_id,
             "text": request.text,
-            "voice": request.voice,
-            "rate": request.rate,
             "language": request.language,
+            "slow": request.slow,
             "audio_path": str(audio_file),
             "created_at": datetime.now(timezone.utc).isoformat()
         }
@@ -224,7 +234,7 @@ async def synthesize_audio(request: AudioSynthesizeRequest):
             id=audio_id,
             audio_url=f"/api/audio/download/{audio_id}",
             text=request.text[:100] + "..." if len(request.text) > 100 else request.text,
-            voice=request.voice,
+            language=request.language,
             created_at=audio_doc["created_at"]
         )
         
