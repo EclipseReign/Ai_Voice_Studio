@@ -1,0 +1,57 @@
+{
+  "timestamp": "2025-10-22T10:56:09.610081",
+  "total_tests": 4,
+  "passed_tests": 3,
+  "success_rate": "75.0%",
+  "test_results": [
+    {
+      "test_name": "Root API Endpoint",
+      "endpoint": "",
+      "method": "GET",
+      "expected_status": 200,
+      "actual_status": 200,
+      "success": true,
+      "response_data": {
+        "message": "Text-to-Speech API"
+      },
+      "error": null
+    },
+    {
+      "test_name": "Get Available Voices",
+      "endpoint": "voices",
+      "method": "GET",
+      "expected_status": 200,
+      "actual_status": 500,
+      "success": false,
+      "response_data": null,
+      "error": {
+        "detail": "Error fetching voices: 401, message='Unauthorized', url='https://api.msedgeservices.com/tts/cognitiveservices/voices/list?Ocp-Apim-Subscription-Key=6A5AA1D4EAFF4E9FB37E23D68491D6F4&Sec-MS-GEC=7016A5B328D5C2423A8EBC71DA08C9AD07D0D51BCECA27503439138830726148&Sec-MS-GEC-Version=1-140.0.3485.14'"
+      }
+    },
+    {
+      "test_name": "Generate Text",
+      "endpoint": "text/generate",
+      "method": "POST",
+      "expected_status": 200,
+      "actual_status": 200,
+      "success": true,
+      "response_data": {
+        "id": "321c7745-7c03-409e-b76c-1646198b0293",
+        "text": "Welcome to our exploration of the incredible benefits of artificial intelligence in healthcare. In recent years, AI has emerged as a game-changer, revolutionizing how we approach medical treatment, patient care, and healthcare management. So, let\u2019s dive into this fascinating world and discover how AI is improving lives.\n\nFirst up, one of the most significant advantages of AI is its ability to analyze vast amounts of data quickly and accurately. With electronic health records and countless research studies generated every day, AI algorithms can spot patterns and trends that even the most experienced doctors might miss. This means faster diagnoses, tailored treatment plans, and ultimately, better outcomes for patients. Imagine a world where AI helps identify potential health issues even before they develop, giving patients the chance to address problems early.\n\nAnother remarkable aspect is AI's role in enhancing medical imaging. Machines powered by AI can analyze X-rays, MRIs, and CT scans in a fraction of the time it would take a human radiologist. These algorithms can detect anomalies and diseases like cancer with remarkable accuracy. This not only boosts efficiency but also allows healthcare professionals to focus more on patient interaction, spending less time on paperwork and more time on what really matters - caring for patients.\n\nMoreover, AI solutions are becoming invaluable in drug discovery. By predicting how different compounds interact with biological systems, AI can significantly reduce the time and cost it takes to bring new medications to market. This means that potentially life-saving treatments can reach patients more quickly than ever before.\n\nAs we look to the future, it\u2019s clear that artificial intelligence is not here to replace healthcare professionals but to enhance their capabilities. With AI as our ally, we\u2019re moving toward a healthier, more efficient healthcare system\u2014one that prioritizes patient outcomes and enhances the overall experience. So, let\u2019s embrace the potential of AI and look forward to the brighter future it promises in healthcare.",
+        "word_count": 319,
+        "estimated_duration": 127.6
+      },
+      "error": null
+    },
+    {
+      "test_name": "Get Generation History",
+      "endpoint": "history",
+      "method": "GET",
+      "expected_status": 200,
+      "actual_status": 200,
+      "success": true,
+      "response_data": [],
+      "error": null
+    }
+  ]
+}
