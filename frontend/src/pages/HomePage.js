@@ -69,14 +69,14 @@ const HomePage = () => {
     
     setIsGeneratingText(true);
     try {
-      const response = await axios.post(`${API}/text/generate`, {
+      const response = await axios.post(API + '/text/generate', {
         prompt: prompt,
         duration_minutes: duration,
         language: language
       });
       
       setGeneratedText(response.data.text);
-      toast.success(`Generated ${response.data.word_count} words!");
+      toast.success('Generated ' + response.data.word_count + ' words!');
     } catch (error) {
       console.error("Error generating text:", error);
       toast.error("Failed to generate text");
