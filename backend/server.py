@@ -69,8 +69,8 @@ class GenerationHistory(BaseModel):
     id: str
     text: str
     audio_url: Optional[str] = None
-    voice: Optional[str] = None
     language: str
+    slow: Optional[bool] = False
     created_at: str
 
 # Helper function to estimate speaking duration
