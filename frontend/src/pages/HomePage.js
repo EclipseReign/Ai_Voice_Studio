@@ -128,7 +128,7 @@ const HomePage = () => {
     
     setIsSynthesizing(true);
     setAudioProgress(0);
-    setAudioProgressMessage("Начало генерации аудио...");
+    setAudioProgressMessage("Подготовка...");
     setAudioUrl(null);
     
     try {
@@ -137,47 +137,42 @@ const HomePage = () => {
       
       console.log("Synthesizing with voice:", selectedVoice, "rate:", rate);
       
-      // Use SSE endpoint for progress tracking
-      const eventSource = new EventSource(
-        `${API}/audio/synthesize-with-progress?${new URLSearchParams({
-          text: text,
-          voice: selectedVoice,
-          rate: rate,
-          language: language
-        })}`
-      );
+      // Estimate segments and time
+      const estimatedSegments = Math.ceil(text.length / 500);
+      const estimatedTime = Math.ceil(estimatedSegments / 2); // Rough estimate: 2 segments per second with parallel processing
       
-      eventSource.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        
-        if (data.type === 'progress' || data.type === 'info') {
-          setAudioProgress(data.progress);
-          setAudioProgressMessage(data.message);
-        } else if (data.type === 'complete') {
-          setAudioProgress(100);
-          setAudioProgressMessage("Готово!");
-          setAudioUrl(API + data.audio_url);
-          toast.success("Аудио успешно сгенерировано!");
-          eventSource.close();
-          setIsSynthesizing(false);
-          fetchHistory();
-        } else if (data.type === 'error') {
-          toast.error("Ошибка: " + data.message);
-          eventSource.close();
-          setIsSynthesizing(false);
-        }
-      };
+      setAudioProgressMessage(`Генерация аудио (${estimatedSegments} сегментов, ~${estimatedTime} сек)...`);
       
-      eventSource.onerror = (error) => {
-        console.error("SSE Error:", error);
-        toast.error("Ошибка соединения");
-        eventSource.close();
-        setIsSynthesizing(false);
-      };
+      // Simulate progress
+      const progressInterval = setInterval(() => {
+        setAudioProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + Math.random() * 10;
+        });
+      }, 500);
+      
+      // Use parallel endpoint for faster generation
+      const response = await axios.post(API + '/audio/synthesize-parallel', {
+        text: text,
+        voice: selectedVoice,
+        rate: rate,
+        language: language
+      });
+      
+      clearInterval(progressInterval);
+      setAudioProgress(100);
+      setAudioProgressMessage("Готово!");
+      setAudioUrl(API + response.data.audio_url);
+      toast.success("Аудио успешно сгенерировано!");
+      fetchHistory();
       
     } catch (error) {
       console.error("Error synthesizing audio:", error);
       toast.error("Не удалось сгенерировать аудио");
+    } finally {
       setIsSynthesizing(false);
     }
   };
