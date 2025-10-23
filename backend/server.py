@@ -477,17 +477,20 @@ async def generate_text(request: TextGenerateRequest):
         logger.error(f"Error generating text: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error generating text: {str(e)}")
 
-# Helper function to split text into sentences for parallel processing
-def split_text_into_segments(text: str, max_segment_length: int = 500) -> List[str]:
-    """Split text into segments for parallel audio generation"""
-    # Split by sentences (., !, ?)
+# Helper function to split text into segments
+def split_text_into_segments(text: str, max_segment_length: int = 1500) -> list:
+    """
+    Split text into segments by sentences while trying to keep segment lengths reasonable
+    Increased default to 1500 chars for better performance (fewer segments)
+    """
+    # Split by sentences (periods, exclamation marks, question marks)
     sentences = re.split(r'(?<=[.!?])\s+', text)
     
     segments = []
     current_segment = ""
     
     for sentence in sentences:
-        # If adding this sentence exceeds max length, save current segment
+        # If adding this sentence would exceed max length, start a new segment
         if current_segment and len(current_segment) + len(sentence) > max_segment_length:
             segments.append(current_segment.strip())
             current_segment = sentence
@@ -500,21 +503,16 @@ def split_text_into_segments(text: str, max_segment_length: int = 500) -> List[s
     
     return segments
 
-# Helper function to synthesize a single audio segment
-async def synthesize_audio_segment(
+# Helper function to synthesize a single audio segment (optimized - no voice loading)
+async def synthesize_audio_segment_fast(
     text: str,
-    voice_key: str,
+    voice: PiperVoice,
     rate: float,
     segment_idx: int,
     temp_dir: Path
 ) -> Path:
-    """Synthesize audio for a single text segment"""
+    """Synthesize audio for a single text segment using pre-loaded voice"""
     try:
-        # Load voice
-        voices_data = await fetch_available_voices()
-        model_path, config_path = await download_voice_model(voice_key, voices_data)
-        voice = get_or_load_voice(voice_key, model_path, config_path)
-        
         # Generate audio file path
         segment_file = temp_dir / f"segment_{segment_idx:04d}.wav"
         
