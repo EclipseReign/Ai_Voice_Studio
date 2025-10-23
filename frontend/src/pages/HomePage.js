@@ -80,45 +80,37 @@ const HomePage = () => {
     setGeneratedText("");
     
     try {
-      // Use SSE endpoint for progress tracking
-      const eventSource = new EventSource(
-        `${API}/text/generate-with-progress?${new URLSearchParams({
-          prompt: prompt,
-          duration_minutes: duration,
-          language: language
-        })}`
-      );
+      // Simulate progress for text generation
+      const progressInterval = setInterval(() => {
+        setTextProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + Math.random() * 15;
+        });
+      }, 1000);
       
-      eventSource.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        
-        if (data.type === 'progress' || data.type === 'info') {
-          setTextProgress(data.progress);
-          setTextProgressMessage(data.message);
-        } else if (data.type === 'complete') {
-          setTextProgress(100);
-          setTextProgressMessage("Готово!");
-          setGeneratedText(data.text);
-          toast.success(`Сгенерировано ${data.word_count} слов!`);
-          eventSource.close();
-          setIsGeneratingText(false);
-        } else if (data.type === 'error') {
-          toast.error("Ошибка: " + data.message);
-          eventSource.close();
-          setIsGeneratingText(false);
-        }
-      };
+      // Set message based on duration
+      const estimatedTime = Math.ceil(duration / 10); // Rough estimate: 1 minute per 10 minutes of content
+      setTextProgressMessage(`Генерация текста... (~${estimatedTime} мин)`);
       
-      eventSource.onerror = (error) => {
-        console.error("SSE Error:", error);
-        toast.error("Ошибка соединения");
-        eventSource.close();
-        setIsGeneratingText(false);
-      };
+      const response = await axios.post(API + '/text/generate', {
+        prompt: prompt,
+        duration_minutes: duration,
+        language: language
+      });
+      
+      clearInterval(progressInterval);
+      setTextProgress(100);
+      setTextProgressMessage("Готово!");
+      setGeneratedText(response.data.text);
+      toast.success(`Сгенерировано ${response.data.word_count} слов!`);
       
     } catch (error) {
       console.error("Error generating text:", error);
       toast.error("Не удалось сгенерировать текст");
+    } finally {
       setIsGeneratingText(false);
     }
   };
