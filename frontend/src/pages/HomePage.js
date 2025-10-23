@@ -125,39 +125,67 @@ const HomePage = () => {
   
   const handleSynthesize = async (text) => {
     if (!text.trim()) {
-      toast.error("Please provide text to synthesize");
+      toast.error("Пожалуйста, введите текст для озвучки");
       return;
     }
     
     if (!selectedVoice) {
-      toast.error("Please select a voice");
+      toast.error("Пожалуйста, выберите голос");
       return;
     }
     
     setIsSynthesizing(true);
+    setAudioProgress(0);
+    setAudioProgressMessage("Начало генерации аудио...");
+    setAudioUrl(null);
+    
     try {
-      // Convert speed percentage to rate multiplier
-      // speed range: -50 to 100 -> rate range: 0.5 to 2.0
       const speedValue = speed[0];
       const rate = 1.0 + (speedValue / 100);
       
       console.log("Synthesizing with voice:", selectedVoice, "rate:", rate);
       
-      const response = await axios.post(API + '/audio/synthesize', {
-        text: text,
-        voice: selectedVoice,
-        rate: rate,
-        language: language
-      });
+      // Use SSE endpoint for progress tracking
+      const eventSource = new EventSource(
+        `${API}/audio/synthesize-with-progress?${new URLSearchParams({
+          text: text,
+          voice: selectedVoice,
+          rate: rate,
+          language: language
+        })}`
+      );
       
-      setAudioUrl(process.env.REACT_APP_BACKEND_URL + response.data.audio_url);
-      toast.success("Audio generated successfully!");
-      fetchHistory();
+      eventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        
+        if (data.type === 'progress' || data.type === 'info') {
+          setAudioProgress(data.progress);
+          setAudioProgressMessage(data.message);
+        } else if (data.type === 'complete') {
+          setAudioProgress(100);
+          setAudioProgressMessage("Готово!");
+          setAudioUrl(API + data.audio_url);
+          toast.success("Аудио успешно сгенерировано!");
+          eventSource.close();
+          setIsSynthesizing(false);
+          fetchHistory();
+        } else if (data.type === 'error') {
+          toast.error("Ошибка: " + data.message);
+          eventSource.close();
+          setIsSynthesizing(false);
+        }
+      };
+      
+      eventSource.onerror = (error) => {
+        console.error("SSE Error:", error);
+        toast.error("Ошибка соединения");
+        eventSource.close();
+        setIsSynthesizing(false);
+      };
+      
     } catch (error) {
       console.error("Error synthesizing audio:", error);
-      const errorMsg = error.response?.data?.detail || "Failed to generate audio";
-      toast.error(errorMsg);
-    } finally {
+      toast.error("Не удалось сгенерировать аудио");
       setIsSynthesizing(false);
     }
   };
