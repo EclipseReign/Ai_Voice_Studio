@@ -671,7 +671,7 @@ async def synthesize_audio_with_progress(request: AudioSynthesizeRequest):
                 all_segment_files.extend(batch_files)
                 
                 completed_segments += len(batch_segments)
-                progress = int((completed_segments / total_segments) * 90)  # 90% for generation
+                progress = int(10 + (completed_segments / total_segments) * 80)  # 10-90% for generation
                 
                 yield f"data: {json.dumps({'type': 'progress', 'progress': progress, 'message': f'Сегмент {completed_segments}/{total_segments}'})}\n\n"
             
