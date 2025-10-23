@@ -531,6 +531,95 @@ async def synthesize_audio_parallel(request: AudioSynthesizeRequest):
         logger.error(f"Error in parallel audio synthesis: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error synthesizing audio: {str(e)}")
 
+# SSE endpoint for audio synthesis with progress tracking
+@api_router.post("/audio/synthesize-with-progress")
+async def synthesize_audio_with_progress(request: AudioSynthesizeRequest):
+    """Synthesize audio with real-time progress updates via SSE"""
+    
+    async def generate_progress():
+        try:
+            audio_id = str(uuid.uuid4())
+            audio_dir = Path("/app/backend/audio_files")
+            audio_dir.mkdir(exist_ok=True)
+            
+            temp_dir = audio_dir / f"temp_{audio_id}"
+            temp_dir.mkdir(exist_ok=True)
+            
+            # Split text into segments
+            segments = split_text_into_segments(request.text, max_segment_length=500)
+            total_segments = len(segments)
+            
+            yield f"data: {json.dumps({'type': 'info', 'message': f'Разбито на {total_segments} сегментов', 'progress': 0})}\n\n"
+            
+            # Generate segments in parallel batches (to avoid overwhelming the system)
+            batch_size = 10  # Process 10 segments at a time
+            completed_segments = 0
+            all_segment_files = []
+            
+            for batch_start in range(0, total_segments, batch_size):
+                batch_end = min(batch_start + batch_size, total_segments)
+                batch_segments = segments[batch_start:batch_end]
+                
+                # Generate batch in parallel
+                tasks = []
+                for idx, segment in enumerate(batch_segments):
+                    global_idx = batch_start + idx
+                    task = synthesize_audio_segment(
+                        text=segment,
+                        voice_key=request.voice,
+                        rate=request.rate,
+                        segment_idx=global_idx,
+                        temp_dir=temp_dir
+                    )
+                    tasks.append(task)
+                
+                # Wait for batch to complete
+                batch_files = await asyncio.gather(*tasks)
+                all_segment_files.extend(batch_files)
+                
+                completed_segments += len(batch_segments)
+                progress = int((completed_segments / total_segments) * 90)  # 90% for generation
+                
+                yield f"data: {json.dumps({'type': 'progress', 'progress': progress, 'message': f'Сегмент {completed_segments}/{total_segments}'})}\n\n"
+            
+            # Combine segments
+            yield f"data: {json.dumps({'type': 'info', 'message': 'Объединение аудио...', 'progress': 90})}\n\n"
+            
+            final_audio = AudioSegment.empty()
+            for segment_file in sorted(all_segment_files):
+                segment_audio = AudioSegment.from_wav(str(segment_file))
+                final_audio += segment_audio
+            
+            final_file = audio_dir / f"{audio_id}.wav"
+            final_audio.export(str(final_file), format="wav")
+            
+            # Clean up temp files
+            for file in temp_dir.glob("*.wav"):
+                file.unlink()
+            temp_dir.rmdir()
+            
+            # Save to database
+            audio_doc = {
+                "id": audio_id,
+                "text": request.text,
+                "voice": request.voice,
+                "rate": request.rate,
+                "language": request.language,
+                "audio_path": str(final_file),
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            
+            await db.audio_generations.insert_one(audio_doc)
+            
+            # Send completion
+            yield f"data: {json.dumps({'type': 'complete', 'progress': 100, 'audio_id': audio_id, 'audio_url': f'/api/audio/download/{audio_id}'})}\n\n"
+            
+        except Exception as e:
+            logger.error(f"Error in SSE audio synthesis: {str(e)}", exc_info=True)
+            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+    
+    return StreamingResponse(generate_progress(), media_type="text/event-stream")
+
 @api_router.post("/audio/synthesize", response_model=AudioSynthesizeResponse)
 async def synthesize_audio(request: AudioSynthesizeRequest):
     """Synthesize audio from text using Piper TTS"""
