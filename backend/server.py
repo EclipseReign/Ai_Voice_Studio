@@ -393,6 +393,144 @@ async def generate_text(request: TextGenerateRequest):
         logger.error(f"Error generating text: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error generating text: {str(e)}")
 
+# Helper function to split text into sentences for parallel processing
+def split_text_into_segments(text: str, max_segment_length: int = 500) -> List[str]:
+    """Split text into segments for parallel audio generation"""
+    # Split by sentences (., !, ?)
+    sentences = re.split(r'(?<=[.!?])\s+', text)
+    
+    segments = []
+    current_segment = ""
+    
+    for sentence in sentences:
+        # If adding this sentence exceeds max length, save current segment
+        if current_segment and len(current_segment) + len(sentence) > max_segment_length:
+            segments.append(current_segment.strip())
+            current_segment = sentence
+        else:
+            current_segment += " " + sentence if current_segment else sentence
+    
+    # Add remaining segment
+    if current_segment:
+        segments.append(current_segment.strip())
+    
+    return segments
+
+# Helper function to synthesize a single audio segment
+async def synthesize_audio_segment(
+    text: str,
+    voice_key: str,
+    rate: float,
+    segment_idx: int,
+    temp_dir: Path
+) -> Path:
+    """Synthesize audio for a single text segment"""
+    try:
+        # Load voice
+        voices_data = await fetch_available_voices()
+        model_path, config_path = await download_voice_model(voice_key, voices_data)
+        voice = get_or_load_voice(voice_key, model_path, config_path)
+        
+        # Generate audio file path
+        segment_file = temp_dir / f"segment_{segment_idx:04d}.wav"
+        
+        # Synthesize in thread pool
+        def synthesize():
+            syn_config = SynthesisConfig(
+                length_scale=1.0 / rate,
+                noise_scale=0.667,
+                noise_w_scale=0.8
+            )
+            
+            with wave.open(str(segment_file), 'wb') as wav_out:
+                voice.synthesize_wav(text, wav_out, syn_config=syn_config)
+        
+        await asyncio.to_thread(synthesize)
+        
+        return segment_file
+        
+    except Exception as e:
+        logger.error(f"Error synthesizing segment {segment_idx}: {str(e)}")
+        raise
+
+# New endpoint with parallel processing and progress tracking
+@api_router.post("/audio/synthesize-parallel", response_model=AudioSynthesizeResponse)
+async def synthesize_audio_parallel(request: AudioSynthesizeRequest):
+    """Synthesize audio from text using parallel processing for faster generation"""
+    try:
+        audio_id = str(uuid.uuid4())
+        audio_dir = Path("/app/backend/audio_files")
+        audio_dir.mkdir(exist_ok=True)
+        
+        # Create temp directory for segments
+        temp_dir = audio_dir / f"temp_{audio_id}"
+        temp_dir.mkdir(exist_ok=True)
+        
+        text_length = len(request.text)
+        logger.info(f"Starting parallel audio generation for {text_length} characters")
+        
+        # Split text into segments
+        segments = split_text_into_segments(request.text, max_segment_length=500)
+        logger.info(f"Split text into {len(segments)} segments for parallel processing")
+        
+        # Generate all segments in parallel
+        tasks = []
+        for idx, segment in enumerate(segments):
+            task = synthesize_audio_segment(
+                text=segment,
+                voice_key=request.voice,
+                rate=request.rate,
+                segment_idx=idx,
+                temp_dir=temp_dir
+            )
+            tasks.append(task)
+        
+        # Wait for all segments to complete
+        segment_files = await asyncio.gather(*tasks)
+        logger.info(f"All {len(segment_files)} segments generated, combining...")
+        
+        # Combine all audio segments into one file
+        final_audio = AudioSegment.empty()
+        for segment_file in sorted(segment_files):
+            segment_audio = AudioSegment.from_wav(str(segment_file))
+            final_audio += segment_audio
+        
+        # Export combined audio
+        final_file = audio_dir / f"{audio_id}.wav"
+        final_audio.export(str(final_file), format="wav")
+        
+        logger.info(f"Combined audio saved: {final_file}")
+        
+        # Clean up temp directory
+        for file in temp_dir.glob("*.wav"):
+            file.unlink()
+        temp_dir.rmdir()
+        
+        # Save to database
+        audio_doc = {
+            "id": audio_id,
+            "text": request.text,
+            "voice": request.voice,
+            "rate": request.rate,
+            "language": request.language,
+            "audio_path": str(final_file),
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        await db.audio_generations.insert_one(audio_doc)
+        
+        return AudioSynthesizeResponse(
+            id=audio_id,
+            audio_url=f"/api/audio/download/{audio_id}",
+            text=request.text[:100] + "..." if len(request.text) > 100 else request.text,
+            voice=request.voice,
+            created_at=audio_doc["created_at"]
+        )
+        
+    except Exception as e:
+        logger.error(f"Error in parallel audio synthesis: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error synthesizing audio: {str(e)}")
+
 @api_router.post("/audio/synthesize", response_model=AudioSynthesizeResponse)
 async def synthesize_audio(request: AudioSynthesizeRequest):
     """Synthesize audio from text using Piper TTS"""
