@@ -640,11 +640,11 @@ async def synthesize_audio_with_progress(
             # Load voice once (optimization)
             yield f"data: {json.dumps({'type': 'info', 'message': 'Загрузка модели голоса...', 'progress': 5})}\n\n"
             voices_data = await fetch_available_voices()
-            model_path, config_path = await download_voice_model(request.voice, voices_data)
-            voice = get_or_load_voice(request.voice, model_path, config_path)
+            model_path, config_path = await download_voice_model(voice, voices_data)
+            voice_obj = get_or_load_voice(voice, model_path, config_path)
             
             # Split text into segments (using larger segments for better performance)
-            segments = split_text_into_segments(request.text)
+            segments = split_text_into_segments(text)
             total_segments = len(segments)
             
             yield f"data: {json.dumps({'type': 'info', 'message': f'Разбито на {total_segments} сегментов', 'progress': 10})}\n\n"
@@ -664,8 +664,8 @@ async def synthesize_audio_with_progress(
                     global_idx = batch_start + idx
                     task = synthesize_audio_segment_fast(
                         text=segment,
-                        voice=voice,
-                        rate=request.rate,
+                        voice=voice_obj,
+                        rate=rate,
                         segment_idx=global_idx,
                         temp_dir=temp_dir
                     )
@@ -699,10 +699,10 @@ async def synthesize_audio_with_progress(
             # Save to database
             audio_doc = {
                 "id": audio_id,
-                "text": request.text,
-                "voice": request.voice,
-                "rate": request.rate,
-                "language": request.language,
+                "text": text,
+                "voice": voice,
+                "rate": rate,
+                "language": language,
                 "audio_path": str(final_file),
                 "created_at": datetime.now(timezone.utc).isoformat()
             }
