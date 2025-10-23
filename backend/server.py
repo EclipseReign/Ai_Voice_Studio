@@ -311,6 +311,90 @@ async def get_voices():
         logger.error(f"Error fetching voices: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error fetching voices: {str(e)}")
 
+# Text generation with progress tracking via SSE
+@api_router.post("/text/generate-with-progress")
+async def generate_text_with_progress(request: TextGenerateRequest):
+    """Generate text with real-time progress updates via SSE"""
+    
+    async def generate_progress():
+        try:
+            text_id = str(uuid.uuid4())
+            target_words = calculate_word_count(request.duration_minutes)
+            chunk_size = 1200
+            
+            yield f"data: {json.dumps({'type': 'info', 'message': f'Генерация текста ({target_words} слов)', 'progress': 0})}\n\n"
+            
+            if target_words <= chunk_size:
+                # Short text
+                yield f"data: {json.dumps({'type': 'progress', 'progress': 50, 'message': 'Генерация текста...'})}\n\n"
+                
+                generated_text = await generate_text_chunk(
+                    request.prompt, 
+                    target_words, 
+                    request.language, 
+                    is_complete=True
+                )
+                
+                yield f"data: {json.dumps({'type': 'progress', 'progress': 100, 'message': 'Текст готов'})}\n\n"
+            else:
+                # Long text with chunks
+                num_chunks = (target_words + chunk_size - 1) // chunk_size
+                chunks = []
+                
+                yield f"data: {json.dumps({'type': 'info', 'message': f'Генерация {num_chunks} частей', 'progress': 0})}\n\n"
+                
+                for i in range(num_chunks):
+                    remaining_words = target_words - sum(len(chunk.split()) for chunk in chunks)
+                    chunk_words = min(chunk_size, remaining_words)
+                    
+                    if chunk_words <= 0:
+                        break
+                    
+                    is_first = (i == 0)
+                    is_last = (i == num_chunks - 1)
+                    
+                    chunk_text = await generate_text_chunk(
+                        request.prompt,
+                        chunk_words,
+                        request.language,
+                        is_complete=False,
+                        is_first=is_first,
+                        is_last=is_last,
+                        previous_content=" ".join(chunks) if chunks else None
+                    )
+                    
+                    chunks.append(chunk_text)
+                    progress = int(((i + 1) / num_chunks) * 100)
+                    
+                    yield f"data: {json.dumps({'type': 'progress', 'progress': progress, 'message': f'Часть {i+1}/{num_chunks}'})}\n\n"
+                
+                generated_text = " ".join(chunks)
+            
+            word_count = len(generated_text.split())
+            estimated_duration = estimate_duration(generated_text)
+            
+            # Save to database
+            generation_doc = {
+                "id": text_id,
+                "text": generated_text,
+                "prompt": request.prompt,
+                "language": request.language,
+                "word_count": word_count,
+                "duration_minutes": request.duration_minutes,
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            
+            await db.text_generations.insert_one(generation_doc)
+            
+            # Send completion
+            yield f"data: {json.dumps({'type': 'complete', 'progress': 100, 'text_id': text_id, 'text': generated_text, 'word_count': word_count, 'estimated_duration': estimated_duration})}\n\n"
+            
+        except Exception as e:
+            logger.error(f"Error in SSE text generation: {str(e)}", exc_info=True)
+            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+    
+    return StreamingResponse(generate_progress(), media_type="text/event-stream")
+
 @api_router.post("/text/generate", response_model=TextGenerateResponse)
 async def generate_text(request: TextGenerateRequest):
     """Generate text based on prompt and duration using LLM"""
