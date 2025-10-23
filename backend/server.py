@@ -632,14 +632,20 @@ async def synthesize_audio_with_progress(request: AudioSynthesizeRequest):
             temp_dir = audio_dir / f"temp_{audio_id}"
             temp_dir.mkdir(exist_ok=True)
             
-            # Split text into segments
-            segments = split_text_into_segments(request.text, max_segment_length=500)
+            # Load voice once (optimization)
+            yield f"data: {json.dumps({'type': 'info', 'message': 'Загрузка модели голоса...', 'progress': 5})}\n\n"
+            voices_data = await fetch_available_voices()
+            model_path, config_path = await download_voice_model(request.voice, voices_data)
+            voice = get_or_load_voice(request.voice, model_path, config_path)
+            
+            # Split text into segments (using larger segments for better performance)
+            segments = split_text_into_segments(request.text)
             total_segments = len(segments)
             
-            yield f"data: {json.dumps({'type': 'info', 'message': f'Разбито на {total_segments} сегментов', 'progress': 0})}\n\n"
+            yield f"data: {json.dumps({'type': 'info', 'message': f'Разбито на {total_segments} сегментов', 'progress': 10})}\n\n"
             
-            # Generate segments in parallel batches (to avoid overwhelming the system)
-            batch_size = 10  # Process 10 segments at a time
+            # Generate segments in parallel batches (increased batch size for better performance)
+            batch_size = 20  # Process 20 segments at a time (increased from 10)
             completed_segments = 0
             all_segment_files = []
             
@@ -647,13 +653,13 @@ async def synthesize_audio_with_progress(request: AudioSynthesizeRequest):
                 batch_end = min(batch_start + batch_size, total_segments)
                 batch_segments = segments[batch_start:batch_end]
                 
-                # Generate batch in parallel
+                # Generate batch in parallel using pre-loaded voice
                 tasks = []
                 for idx, segment in enumerate(batch_segments):
                     global_idx = batch_start + idx
-                    task = synthesize_audio_segment(
+                    task = synthesize_audio_segment_fast(
                         text=segment,
-                        voice_key=request.voice,
+                        voice=voice,
                         rate=request.rate,
                         segment_idx=global_idx,
                         temp_dir=temp_dir
