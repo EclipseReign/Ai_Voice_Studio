@@ -206,6 +206,9 @@ frontend:
       - working: "NA"
         agent: "main"
         comment: "Tab with prompt input, duration slider, language select. Generate text button, editable textarea, synthesize button"
+      - working: "NA"
+        agent: "main"
+        comment: "✨ ДОБАВЛЕНЫ ПРОГРЕСС-БАРЫ: Добавлены визуальные индикаторы прогресса для генерации текста и аудио. Показывается процент выполнения, текстовые сообщения о статусе, оценка времени и количество сегментов. UI переведен на русский. Использует новый параллельный endpoint для аудио. Нужно протестировать отображение прогресса."
 
   - task: "Manual text input mode"
     implemented: true
