@@ -137,42 +137,56 @@ const HomePage = () => {
       
       console.log("Synthesizing with voice:", selectedVoice, "rate:", rate);
       
-      // Estimate segments and time
-      const estimatedSegments = Math.ceil(text.length / 500);
-      const estimatedTime = Math.ceil(estimatedSegments / 2); // Rough estimate: 2 segments per second with parallel processing
+      // Use SSE endpoint for real-time progress
+      const eventSource = new EventSource(
+        `${API}/audio/synthesize-with-progress?${new URLSearchParams({
+          text: text,
+          voice: selectedVoice,
+          rate: rate.toString(),
+          language: language
+        })}`
+      );
       
-      setAudioProgressMessage(`Генерация аудио (${estimatedSegments} сегментов, ~${estimatedTime} сек)...`);
-      
-      // Simulate progress
-      const progressInterval = setInterval(() => {
-        setAudioProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          
+          if (data.type === 'progress') {
+            setAudioProgress(data.progress);
+            setAudioProgressMessage(data.message);
+          } else if (data.type === 'info') {
+            setAudioProgressMessage(data.message);
+            if (data.progress !== undefined) {
+              setAudioProgress(data.progress);
+            }
+          } else if (data.type === 'complete') {
+            setAudioProgress(100);
+            setAudioProgressMessage("Готово!");
+            setAudioUrl(API + data.audio_url);
+            toast.success("Аудио успешно сгенерировано!");
+            fetchHistory();
+            eventSource.close();
+            setIsSynthesizing(false);
+          } else if (data.type === 'error') {
+            toast.error("Ошибка генерации: " + data.message);
+            eventSource.close();
+            setIsSynthesizing(false);
           }
-          return prev + Math.random() * 10;
-        });
-      }, 500);
+        } catch (e) {
+          console.error("Error parsing SSE message:", e);
+        }
+      };
       
-      // Use parallel endpoint for faster generation
-      const response = await axios.post(API + '/audio/synthesize-parallel', {
-        text: text,
-        voice: selectedVoice,
-        rate: rate,
-        language: language
-      });
-      
-      clearInterval(progressInterval);
-      setAudioProgress(100);
-      setAudioProgressMessage("Готово!");
-      setAudioUrl(API + response.data.audio_url);
-      toast.success("Аудио успешно сгенерировано!");
-      fetchHistory();
+      eventSource.onerror = (error) => {
+        console.error("SSE error:", error);
+        eventSource.close();
+        toast.error("Не удалось сгенерировать аудио");
+        setIsSynthesizing(false);
+      };
       
     } catch (error) {
       console.error("Error synthesizing audio:", error);
       toast.error("Не удалось сгенерировать аудио");
-    } finally {
       setIsSynthesizing(false);
     }
   };
