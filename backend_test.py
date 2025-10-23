@@ -851,16 +851,33 @@ class PiperTTSAPITester:
         db_verification_short = self.test_database_verification(short_text_result)
         db_verification_long = self.test_database_verification(long_text_result)
         
-        # Test 4: Synthesize audio with English voice
+        # NEW TESTS: PARALLEL AUDIO GENERATION OPTIMIZATION
+        print("\n" + "🔥" * 20)
+        print("🔥 TESTING NEW PARALLEL AUDIO GENERATION OPTIMIZATION")
+        print("🔥" * 20)
+        
+        # Test 4: NEW Parallel audio synthesis - Short Russian text
+        parallel_short_result = self.test_parallel_audio_synthesis_short_russian()
+        
+        # Test 5: NEW Parallel audio synthesis - Medium text (~1000 chars)
+        parallel_medium_result = self.test_parallel_audio_synthesis_medium_text()
+        
+        # Test 6: NEW Speed comparison - Parallel vs Regular
+        speed_comparison_result = self.test_speed_comparison_parallel_vs_regular()
+        
+        # REGULAR AUDIO TESTS (for comparison)
+        print("\n🔄 REGULAR AUDIO SYNTHESIS TESTS (for comparison)")
+        
+        # Test 7: Synthesize audio with English voice
         audio_id_english = self.test_audio_synthesis_english()
         
-        # Test 5: Synthesize audio with Russian voice
+        # Test 8: Synthesize audio with Russian voice
         audio_id_russian = self.test_audio_synthesis_russian()
         
-        # Test 6: Test speed variations (slow and fast)
+        # Test 9: Test speed variations (slow and fast)
         speed_audio_ids = self.test_audio_synthesis_speed_variations()
         
-        # Test 7: Synthesize long text (~500 words)
+        # Test 10: Synthesize long text (~500 words)
         long_audio_id = self.test_audio_synthesis_long_text()
         
         # Wait for audio processing
@@ -868,16 +885,16 @@ class PiperTTSAPITester:
             print("\n⏳ Waiting for audio processing...")
             time.sleep(5)  # Longer wait for Piper processing
         
-        # Test 8: Download audio files (WAV format)
+        # Test 11: Download audio files (WAV format)
         download_success_count = 0
-        for audio_id in self.generated_audio_ids[:3]:  # Test first 3 downloads
+        for audio_id in self.generated_audio_ids[:5]:  # Test first 5 downloads
             if self.test_audio_download(audio_id):
                 download_success_count += 1
         
-        # Test 9: Get history
+        # Test 12: Get history
         self.test_history_endpoint()
         
-        # Test 10: Verify audio files exist on disk (WAV format)
+        # Test 13: Verify audio files exist on disk (WAV format)
         files_verified = self.verify_audio_files_exist()
         
         # Print results
@@ -886,6 +903,29 @@ class PiperTTSAPITester:
         print(f"🎵 Audio files generated: {len(self.generated_audio_ids)}")
         print(f"📥 Downloads tested: {download_success_count}")
         print(f"📁 Files verified on disk: {files_verified}")
+        
+        # PARALLEL AUDIO OPTIMIZATION SUMMARY
+        print("\n🔥 PARALLEL AUDIO OPTIMIZATION RESULTS:")
+        if parallel_short_result:
+            print(f"   ✅ Short text parallel synthesis: SUCCESS ({parallel_short_result['time']:.2f}s)")
+        else:
+            print(f"   ❌ Short text parallel synthesis: FAILED")
+            
+        if parallel_medium_result:
+            print(f"   ✅ Medium text parallel synthesis: SUCCESS ({parallel_medium_result['time']:.2f}s)")
+        else:
+            print(f"   ❌ Medium text parallel synthesis: FAILED")
+            
+        if speed_comparison_result:
+            speedup = speed_comparison_result['speedup']
+            if speedup > 1.5:
+                print(f"   ✅ Speed improvement: {speedup:.2f}x faster (EXCELLENT)")
+            elif speedup > 1.0:
+                print(f"   ⚠️  Speed improvement: {speedup:.2f}x faster (MODERATE)")
+            else:
+                print(f"   ❌ Speed improvement: {speedup:.2f}x (SLOWER than regular)")
+        else:
+            print(f"   ❌ Speed comparison: FAILED")
         
         if self.tests_passed < self.tests_run:
             print("\n❌ Failed Tests:")
