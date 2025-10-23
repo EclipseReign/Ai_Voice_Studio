@@ -414,15 +414,25 @@ const HomePage = () => {
                         {isSynthesizing ? (
                           <>
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Generating Audio...
+                            Генерация аудио...
                           </>
                         ) : (
                           <>
                             <Volume2 className="w-4 h-4 mr-2" />
-                            Synthesize Audio
+                            Озвучить текст
                           </>
                         )}
                       </Button>
+                      
+                      {isSynthesizing && (
+                        <div className="space-y-2 mt-4">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">{audioProgressMessage}</span>
+                            <span className="font-medium">{audioProgress}%</span>
+                          </div>
+                          <Progress value={audioProgress} className="h-2" />
+                        </div>
+                      )}
                     </div>
                   </TabsContent>
                 </Tabs>
