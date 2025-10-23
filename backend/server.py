@@ -560,20 +560,33 @@ async def synthesize_audio_parallel(request: AudioSynthesizeRequest):
         segments = split_text_into_segments(request.text)
         logger.info(f"Split text into {len(segments)} segments for parallel processing")
         
-        # Generate all segments in parallel using pre-loaded voice
-        tasks = []
-        for idx, segment in enumerate(segments):
-            task = synthesize_audio_segment_fast(
-                text=segment,
-                voice=voice,
-                rate=request.rate,
-                segment_idx=idx,
-                temp_dir=temp_dir
-            )
-            tasks.append(task)
+        # Generate segments in batches to avoid memory issues
+        batch_size = 15  # Process 15 segments at a time
+        all_segment_files = []
         
-        # Wait for all segments to complete
-        segment_files = await asyncio.gather(*tasks)
+        for batch_start in range(0, len(segments), batch_size):
+            batch_end = min(batch_start + batch_size, len(segments))
+            batch_segments = segments[batch_start:batch_end]
+            
+            # Generate batch in parallel using pre-loaded voice
+            tasks = []
+            for idx, segment in enumerate(batch_segments):
+                global_idx = batch_start + idx
+                task = synthesize_audio_segment_fast(
+                    text=segment,
+                    voice=voice,
+                    rate=request.rate,
+                    segment_idx=global_idx,
+                    temp_dir=temp_dir
+                )
+                tasks.append(task)
+            
+            # Wait for batch to complete
+            batch_files = await asyncio.gather(*tasks)
+            all_segment_files.extend(batch_files)
+            logger.info(f"Batch {batch_start//batch_size + 1} complete: {len(batch_files)} segments")
+        
+        segment_files = all_segment_files
         logger.info(f"All {len(segment_files)} segments generated, combining...")
         
         # Combine all audio segments into one file
