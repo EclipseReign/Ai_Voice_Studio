@@ -146,7 +146,7 @@ backend:
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
@@ -154,6 +154,9 @@ backend:
       - working: true
         agent: "main"
         comment: "SWITCHED TO PIPER TTS due to edge-tts 403 errors. Piper is local, free, high-quality neural TTS. Successfully tested English and Russian voices. Endpoint: POST /api/audio/synthesize with text, voice, rate, language. Generates WAV files. Supports 100+ voices across many languages."
+      - working: "NA"
+        agent: "main"
+        comment: "⚡ MAJOR OPTIMIZATION: Добавлена параллельная генерация аудио. Новый endpoint: POST /api/audio/synthesize-parallel. Текст разбивается на сегменты по предложениям (~500 символов), каждый сегмент генерируется параллельно. Сегменты склеиваются с помощью pydub без разрывов. Ожидается ускорение в 3-5 раз для длинных текстов. Нужно протестировать качество склейки и скорость."
 
   - task: "Voices list endpoint"
     implemented: true
