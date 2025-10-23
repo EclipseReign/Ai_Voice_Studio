@@ -518,6 +518,250 @@ class PiperTTSAPITester:
         
         return None
 
+    def test_parallel_audio_synthesis_short_russian(self):
+        """Test NEW parallel audio synthesis with short Russian text (2-3 sentences)"""
+        print("\n🔥 CRITICAL TEST: Parallel Audio Generation - Short Text")
+        
+        # Find Russian voice
+        ru_voice = None
+        for voice in self.available_voices:
+            if 'irina' in voice.get('short_name', '').lower():
+                ru_voice = voice.get('short_name')
+                break
+        
+        if not ru_voice:
+            # Fallback to any Russian voice
+            for voice in self.available_voices:
+                if voice.get('locale', '').startswith('ru-'):
+                    ru_voice = voice.get('short_name')
+                    break
+        
+        if not ru_voice:
+            print("❌ No Russian voice found, cannot test parallel synthesis")
+            return None
+            
+        # Test text as specified in review request
+        test_text = "Искусственный интеллект изменяет мир. Он помогает людям решать сложные задачи. Будущее уже здесь."
+        
+        print(f"   Voice: {ru_voice}")
+        print(f"   Text: {test_text}")
+        print(f"   Text length: {len(test_text)} characters")
+        
+        start_time = time.time()
+        
+        success, response = self.run_test(
+            "Parallel Audio Synthesis (Short Russian Text)",
+            "POST",
+            "audio/synthesize-parallel",
+            200,
+            data={
+                "text": test_text,
+                "voice": ru_voice,
+                "rate": 1.0,
+                "language": "ru-RU"
+            },
+            timeout=120
+        )
+        
+        parallel_time = time.time() - start_time
+        
+        if success and response:
+            audio_id = response.get('id')
+            print(f"   ✅ Parallel synthesis completed in {parallel_time:.2f} seconds")
+            print(f"   Audio ID: {audio_id}")
+            print(f"   Audio URL: {response.get('audio_url')}")
+            if audio_id:
+                self.generated_audio_ids.append(audio_id)
+            return {'audio_id': audio_id, 'time': parallel_time, 'response': response}
+        else:
+            print(f"   ❌ Parallel synthesis failed after {parallel_time:.2f} seconds")
+        
+        return None
+
+    def test_parallel_audio_synthesis_medium_text(self):
+        """Test parallel audio synthesis with medium text (~1000 characters, 5-7 segments)"""
+        print("\n🔥 CRITICAL TEST: Parallel Audio Generation - Medium Text (~1000 chars)")
+        
+        # First generate text via API to get realistic content
+        print("   Step 1: Generating medium text (2 minutes duration)...")
+        
+        text_success, text_response = self.run_test(
+            "Generate Medium Text for Parallel Audio Test",
+            "POST",
+            "text/generate",
+            200,
+            data={
+                "prompt": "История развития компьютерных технологий",
+                "duration_minutes": 2,
+                "language": "ru-RU"
+            },
+            timeout=90
+        )
+        
+        if not text_success or not text_response:
+            print("   ❌ Failed to generate text, using fallback text")
+            # Fallback text ~1000 characters
+            generated_text = """
+            Компьютерные технологии прошли невероятный путь развития за последние десятилетия. От огромных машин, занимавших целые комнаты, до миниатюрных устройств, помещающихся в кармане, прогресс был поразительным. Первые компьютеры использовались исключительно для научных расчетов и военных целей. Сегодня они стали неотъемлемой частью нашей повседневной жизни. Интернет революционизировал способы общения и обмена информацией. Социальные сети объединили людей по всему миру. Мобильные технологии сделали доступ к информации мгновенным. Искусственный интеллект открывает новые горизонты возможностей. Машинное обучение помогает решать сложные задачи. Будущее технологий обещает еще более удивительные открытия и инновации.
+            """
+        else:
+            generated_text = text_response.get('text', '')
+            print(f"   ✅ Generated text: {len(generated_text)} characters, {len(generated_text.split())} words")
+        
+        # Truncate to ~1000 characters if too long
+        if len(generated_text) > 1200:
+            generated_text = generated_text[:1000] + "."
+        
+        print(f"   Step 2: Testing parallel synthesis with {len(generated_text)} characters")
+        
+        # Find Russian voice
+        ru_voice = None
+        for voice in self.available_voices:
+            if 'irina' in voice.get('short_name', '').lower():
+                ru_voice = voice.get('short_name')
+                break
+        
+        if not ru_voice:
+            for voice in self.available_voices:
+                if voice.get('locale', '').startswith('ru-'):
+                    ru_voice = voice.get('short_name')
+                    break
+        
+        if not ru_voice:
+            print("   ❌ No Russian voice found")
+            return None
+        
+        start_time = time.time()
+        
+        success, response = self.run_test(
+            "Parallel Audio Synthesis (Medium Text ~1000 chars)",
+            "POST",
+            "audio/synthesize-parallel",
+            200,
+            data={
+                "text": generated_text,
+                "voice": ru_voice,
+                "rate": 1.0,
+                "language": "ru-RU"
+            },
+            timeout=180
+        )
+        
+        parallel_time = time.time() - start_time
+        
+        if success and response:
+            audio_id = response.get('id')
+            print(f"   ✅ Parallel synthesis completed in {parallel_time:.2f} seconds")
+            print(f"   Audio ID: {audio_id}")
+            print(f"   Text length: {len(generated_text)} characters")
+            if audio_id:
+                self.generated_audio_ids.append(audio_id)
+            return {'audio_id': audio_id, 'time': parallel_time, 'text_length': len(generated_text)}
+        else:
+            print(f"   ❌ Parallel synthesis failed after {parallel_time:.2f} seconds")
+        
+        return None
+
+    def test_speed_comparison_parallel_vs_regular(self):
+        """Compare speed between parallel and regular audio synthesis"""
+        print("\n🔥 SPEED COMPARISON: Parallel vs Regular Audio Synthesis")
+        
+        # Find Russian voice
+        ru_voice = None
+        for voice in self.available_voices:
+            if 'irina' in voice.get('short_name', '').lower():
+                ru_voice = voice.get('short_name')
+                break
+        
+        if not ru_voice:
+            for voice in self.available_voices:
+                if voice.get('locale', '').startswith('ru-'):
+                    ru_voice = voice.get('short_name')
+                    break
+        
+        if not ru_voice:
+            print("   ❌ No Russian voice found for speed comparison")
+            return None
+        
+        # Test text with multiple sentences (good for parallel processing)
+        test_text = """
+        Технологии искусственного интеллекта развиваются с невероятной скоростью. Машинное обучение позволяет компьютерам анализировать огромные объемы данных. Нейронные сети моделируют работу человеческого мозга. Глубокое обучение открывает новые возможности в распознавании образов. Обработка естественного языка помогает машинам понимать человеческую речь. Компьютерное зрение позволяет анализировать изображения и видео. Роботика интегрирует ИИ в физический мир. Автономные системы принимают решения без участия человека.
+        """
+        
+        print(f"   Test text: {len(test_text)} characters, {len(test_text.split())} words")
+        
+        # Test 1: Regular synthesis
+        print("\n   Testing REGULAR synthesis...")
+        start_time = time.time()
+        
+        regular_success, regular_response = self.run_test(
+            "Regular Audio Synthesis (Speed Test)",
+            "POST",
+            "audio/synthesize",
+            200,
+            data={
+                "text": test_text,
+                "voice": ru_voice,
+                "rate": 1.0,
+                "language": "ru-RU"
+            },
+            timeout=180
+        )
+        
+        regular_time = time.time() - start_time
+        
+        # Test 2: Parallel synthesis
+        print("\n   Testing PARALLEL synthesis...")
+        start_time = time.time()
+        
+        parallel_success, parallel_response = self.run_test(
+            "Parallel Audio Synthesis (Speed Test)",
+            "POST",
+            "audio/synthesize-parallel",
+            200,
+            data={
+                "text": test_text,
+                "voice": ru_voice,
+                "rate": 1.0,
+                "language": "ru-RU"
+            },
+            timeout=180
+        )
+        
+        parallel_time = time.time() - start_time
+        
+        # Compare results
+        if regular_success and parallel_success:
+            speedup = regular_time / parallel_time if parallel_time > 0 else 0
+            print(f"\n   📊 SPEED COMPARISON RESULTS:")
+            print(f"   Regular synthesis:  {regular_time:.2f} seconds")
+            print(f"   Parallel synthesis: {parallel_time:.2f} seconds")
+            print(f"   Speedup factor:     {speedup:.2f}x")
+            
+            if speedup > 1.5:
+                print(f"   ✅ Parallel synthesis is {speedup:.1f}x faster!")
+            elif speedup > 1.0:
+                print(f"   ⚠️  Parallel synthesis is only {speedup:.1f}x faster (expected >1.5x)")
+            else:
+                print(f"   ❌ Parallel synthesis is SLOWER than regular!")
+            
+            # Store audio IDs
+            if regular_response and regular_response.get('id'):
+                self.generated_audio_ids.append(regular_response['id'])
+            if parallel_response and parallel_response.get('id'):
+                self.generated_audio_ids.append(parallel_response['id'])
+            
+            return {
+                'regular_time': regular_time,
+                'parallel_time': parallel_time,
+                'speedup': speedup,
+                'regular_id': regular_response.get('id') if regular_response else None,
+                'parallel_id': parallel_response.get('id') if parallel_response else None
+            }
+        else:
+            print("   ❌ Speed comparison failed - one or both synthesis methods failed")
+            return None
+
     def test_audio_download(self, audio_id):
         """Test audio download endpoint"""
         if not audio_id:
