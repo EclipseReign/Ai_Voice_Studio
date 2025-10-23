@@ -619,8 +619,13 @@ async def synthesize_audio_parallel(request: AudioSynthesizeRequest):
         raise HTTPException(status_code=500, detail=f"Error synthesizing audio: {str(e)}")
 
 # SSE endpoint for audio synthesis with progress tracking
-@api_router.post("/audio/synthesize-with-progress")
-async def synthesize_audio_with_progress(request: AudioSynthesizeRequest):
+@api_router.get("/audio/synthesize-with-progress")
+async def synthesize_audio_with_progress(
+    text: str,
+    voice: str,
+    rate: float,
+    language: str
+):
     """Synthesize audio with real-time progress updates via SSE"""
     
     async def generate_progress():
