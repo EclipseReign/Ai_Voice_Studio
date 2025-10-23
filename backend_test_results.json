@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-10-22T19:09:00.619946",
+  "timestamp": "2025-10-23T08:59:15.981928",
   "total_tests": 2,
   "passed_tests": 0,
   "success_rate": "0.0%",
@@ -12,7 +12,7 @@
       "actual_status": "ERROR",
       "success": false,
       "response_data": null,
-      "error": "HTTPSConnectionPool(host='text-voice-gen.preview.emergentagent.com', port=443): Read timed out. (read timeout=30)"
+      "error": "HTTPSConnectionPool(host='quickmedia-creator.preview.emergentagent.com', port=443): Read timed out. (read timeout=30)"
     },
     {
       "test_name": "Get Available Voices (Piper TTS)",
@@ -22,7 +22,7 @@
       "actual_status": "ERROR",
       "success": false,
       "response_data": null,
-      "error": "HTTPSConnectionPool(host='text-voice-gen.preview.emergentagent.com', port=443): Read timed out. (read timeout=60)"
+      "error": "HTTPSConnectionPool(host='quickmedia-creator.preview.emergentagent.com', port=443): Read timed out. (read timeout=60)"
     }
   ]
 }
