@@ -296,15 +296,25 @@ const HomePage = () => {
                         {isGeneratingText ? (
                           <>
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Generating Text...
+                            Генерация текста...
                           </>
                         ) : (
                           <>
                             <Sparkles className="w-4 h-4 mr-2" />
-                            Generate Text
+                            Сгенерировать текст
                           </>
                         )}
                       </Button>
+                      
+                      {isGeneratingText && (
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">{textProgressMessage}</span>
+                            <span className="font-medium">{textProgress}%</span>
+                          </div>
+                          <Progress value={textProgress} className="h-2" />
+                        </div>
+                      )}
                       
                       {generatedText && (
                         <div className="space-y-4">
