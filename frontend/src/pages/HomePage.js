@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { Loader2, Sparkles, Mic, Download, Clock, Volume2 } from "lucide-react";
 
@@ -20,6 +21,12 @@ const HomePage = () => {
   const [duration, setDuration] = useState(1);
   const [generatedText, setGeneratedText] = useState("");
   const [isGeneratingText, setIsGeneratingText] = useState(false);
+  
+  // Progress tracking
+  const [textProgress, setTextProgress] = useState(0);
+  const [textProgressMessage, setTextProgressMessage] = useState("");
+  const [audioProgress, setAudioProgress] = useState(0);
+  const [audioProgressMessage, setAudioProgressMessage] = useState("");
   
   // Manual input state
   const [manualText, setManualText] = useState("");
