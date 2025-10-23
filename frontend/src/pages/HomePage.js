@@ -70,24 +70,55 @@ const HomePage = () => {
   
   const handleGenerateText = async () => {
     if (!prompt.trim()) {
-      toast.error("Please enter a prompt");
+      toast.error("Пожалуйста, введите промпт");
       return;
     }
     
     setIsGeneratingText(true);
+    setTextProgress(0);
+    setTextProgressMessage("Начало генерации...");
+    setGeneratedText("");
+    
     try {
-      const response = await axios.post(API + '/text/generate', {
-        prompt: prompt,
-        duration_minutes: duration,
-        language: language
-      });
+      // Use SSE endpoint for progress tracking
+      const eventSource = new EventSource(
+        `${API}/text/generate-with-progress?${new URLSearchParams({
+          prompt: prompt,
+          duration_minutes: duration,
+          language: language
+        })}`
+      );
       
-      setGeneratedText(response.data.text);
-      toast.success('Generated ' + response.data.word_count + ' words!');
+      eventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        
+        if (data.type === 'progress' || data.type === 'info') {
+          setTextProgress(data.progress);
+          setTextProgressMessage(data.message);
+        } else if (data.type === 'complete') {
+          setTextProgress(100);
+          setTextProgressMessage("Готово!");
+          setGeneratedText(data.text);
+          toast.success(`Сгенерировано ${data.word_count} слов!`);
+          eventSource.close();
+          setIsGeneratingText(false);
+        } else if (data.type === 'error') {
+          toast.error("Ошибка: " + data.message);
+          eventSource.close();
+          setIsGeneratingText(false);
+        }
+      };
+      
+      eventSource.onerror = (error) => {
+        console.error("SSE Error:", error);
+        toast.error("Ошибка соединения");
+        eventSource.close();
+        setIsGeneratingText(false);
+      };
+      
     } catch (error) {
       console.error("Error generating text:", error);
-      toast.error("Failed to generate text");
-    } finally {
+      toast.error("Не удалось сгенерировать текст");
       setIsGeneratingText(false);
     }
   };
