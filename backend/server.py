@@ -312,8 +312,12 @@ async def get_voices():
         raise HTTPException(status_code=500, detail=f"Error fetching voices: {str(e)}")
 
 # Text generation with progress tracking via SSE
-@api_router.post("/text/generate-with-progress")
-async def generate_text_with_progress(request: TextGenerateRequest):
+@api_router.get("/text/generate-with-progress")
+async def generate_text_with_progress(
+    prompt: str,
+    duration_minutes: int,
+    language: str = "en-US"
+):
     """Generate text with real-time progress updates via SSE"""
     
     async def generate_progress():
