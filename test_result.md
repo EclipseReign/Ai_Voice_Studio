@@ -181,6 +181,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ ALL AUDIO FIXES WORKING PERFECTLY! TESTED: 1) Real duration calculation: All audio files show correct duration (2.32s, 11.37s, 20.56s) instead of 0:00. 2) Progress reaches 100%: No more stuck at 90%, all tests reached 100% completion. 3) Download functionality: All audio files download successfully with proper WAV format and file sizes (102KB, 501KB, 907KB). 4) SSE endpoint working: Real-time progress updates via /api/audio/synthesize-with-progress. Generation speed excellent (0.37s-3.55s for various text lengths). User's reported audio issues are completely resolved."
+      - working: "NA"
+        agent: "main"
+        comment: "⚡ ОПТИМИЗАЦИЯ И УЛУЧШЕНИЯ: 1) Увеличен размер сегментов с 2000 до 3000 символов (меньше сегментов), 2) Увеличен batch_size с 25 до 50 (больше параллелизма), 3) Добавлены логические паузы на знаках препинания: после .!? (длинная пауза '...') и после ,;: (короткая пауза '..'). Ожидается ускорение генерации в 4 раза (50 минут: с 20 минут → ~5 минут). Требуется тестирование."
 
   - task: "Voices list endpoint"
     implemented: true
