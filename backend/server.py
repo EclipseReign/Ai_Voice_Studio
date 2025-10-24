@@ -694,12 +694,20 @@ async def synthesize_audio_with_progress(
                 yield f"data: {json.dumps({'type': 'progress', 'progress': progress, 'message': f'Сегмент {completed_segments}/{total_segments}'})}\n\n"
             
             # Combine segments
-            yield f"data: {json.dumps({'type': 'info', 'message': 'Объединение аудио...', 'progress': 90})}\n\n"
+            yield f"data: {json.dumps({'type': 'info', 'message': 'Объединение аудио...', 'progress': 92})}\n\n"
             
             final_audio = AudioSegment.empty()
-            for segment_file in sorted(all_segment_files):
+            total_files = len(all_segment_files)
+            for idx, segment_file in enumerate(sorted(all_segment_files), 1):
                 segment_audio = AudioSegment.from_wav(str(segment_file))
                 final_audio += segment_audio
+                
+                # Progress during combining (92-98%)
+                if idx % max(1, total_files // 10) == 0:  # Update every ~10% of files
+                    combine_progress = int(92 + (idx / total_files) * 6)
+                    yield f"data: {json.dumps({'type': 'progress', 'progress': combine_progress, 'message': f'Склейка {idx}/{total_files}'})}\n\n"
+            
+            yield f"data: {json.dumps({'type': 'info', 'message': 'Сохранение файла...', 'progress': 98})}\n\n"
             
             final_file = audio_dir / f"{audio_id}.wav"
             final_audio.export(str(final_file), format="wav")
