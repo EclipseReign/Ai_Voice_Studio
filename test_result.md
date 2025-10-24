@@ -294,6 +294,7 @@ metadata:
 test_plan:
   current_focus:
     - "Text generation via LLM"
+    - "Audio download endpoint"
   stuck_tasks:
     - "Text generation via LLM"
   test_all: false
