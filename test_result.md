@@ -291,8 +291,8 @@ metadata:
 test_plan:
   current_focus:
     - "Text generation via LLM"
-    - "Audio synthesis with Piper TTS"
-  stuck_tasks: []
+  stuck_tasks:
+    - "Text generation via LLM"
   test_all: false
   test_priority: "high_first"
 
