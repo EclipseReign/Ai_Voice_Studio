@@ -500,11 +500,18 @@ async def generate_text(request: TextGenerateRequest):
         raise HTTPException(status_code=500, detail=f"Error generating text: {str(e)}")
 
 # Helper function to split text into segments
-def split_text_into_segments(text: str, max_segment_length: int = 2000) -> list:
+def split_text_into_segments(text: str, max_segment_length: int = 3000) -> list:
     """
     Split text into segments by sentences while trying to keep segment lengths reasonable
-    Increased default to 2000 chars for better performance (fewer segments = faster)
+    Increased default to 3000 chars for better performance (fewer segments = faster)
+    Also adds pauses at punctuation marks for more natural speech
     """
+    # Add pauses at punctuation for natural speech rhythm
+    # Add longer pause after sentence-ending punctuation (.!?)
+    text = re.sub(r'([.!?])\s+', r'\1 ... ', text)  # Add pause after sentences
+    # Add shorter pause after commas, semicolons, colons
+    text = re.sub(r'([,;:])\s+', r'\1 .. ', text)  # Add pause after internal punctuation
+    
     # Split by sentences (periods, exclamation marks, question marks)
     sentences = re.split(r'(?<=[.!?])\s+', text)
     
