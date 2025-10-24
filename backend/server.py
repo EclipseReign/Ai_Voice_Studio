@@ -106,6 +106,19 @@ def calculate_word_count(duration_minutes: int) -> int:
     """Calculate target word count for desired duration"""
     return duration_minutes * 150  # 150 words per minute
 
+# Helper function to get audio duration from WAV file
+def get_audio_duration(wav_path: Path) -> float:
+    """Get duration of WAV audio file in seconds"""
+    try:
+        with wave.open(str(wav_path), 'rb') as wav_file:
+            frames = wav_file.getnframes()
+            rate = wav_file.getframerate()
+            duration = frames / float(rate)
+            return duration
+    except Exception as e:
+        logger.error(f"Error getting audio duration: {str(e)}")
+        return 0.0
+
 # Helper function to generate text chunks
 async def generate_text_chunk(
     prompt: str, 
