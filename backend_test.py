@@ -520,65 +520,94 @@ class PiperTTSAPITester:
         
         return None
 
-    def test_parallel_audio_synthesis_short_russian(self):
-        """Test NEW parallel audio synthesis with short Russian text (2-3 sentences)"""
-        print("\n🔥 CRITICAL TEST: Parallel Audio Generation - Short Text")
+    def test_sse_audio_synthesis_with_progress(self, text, voice, rate=1.0, language="ru-RU"):
+        """Test SSE endpoint for audio synthesis with real-time progress"""
+        print(f"\n🔥 CRITICAL TEST: SSE Audio Generation with Progress")
+        print(f"   Voice: {voice}")
+        print(f"   Text length: {len(text)} characters")
+        print(f"   Rate: {rate}")
         
-        # Find Russian voice
-        ru_voice = None
-        for voice in self.available_voices:
-            if 'irina' in voice.get('short_name', '').lower():
-                ru_voice = voice.get('short_name')
-                break
-        
-        if not ru_voice:
-            # Fallback to any Russian voice
-            for voice in self.available_voices:
-                if voice.get('locale', '').startswith('ru-'):
-                    ru_voice = voice.get('short_name')
-                    break
-        
-        if not ru_voice:
-            print("❌ No Russian voice found, cannot test parallel synthesis")
-            return None
-            
-        # Test text as specified in review request
-        test_text = "Искусственный интеллект изменяет мир. Он помогает людям решать сложные задачи. Будущее уже здесь."
-        
-        print(f"   Voice: {ru_voice}")
-        print(f"   Text: {test_text}")
-        print(f"   Text length: {len(test_text)} characters")
+        # Use httpx for SSE support
+        url = f"{self.base_url}/audio/synthesize-with-progress"
+        params = {
+            "text": text,
+            "voice": voice,
+            "rate": rate,
+            "language": language
+        }
         
         start_time = time.time()
+        progress_events = []
+        final_result = None
         
-        success, response = self.run_test(
-            "Parallel Audio Synthesis (Short Russian Text)",
-            "POST",
-            "audio/synthesize-parallel",
-            200,
-            data={
-                "text": test_text,
-                "voice": ru_voice,
-                "rate": 1.0,
-                "language": "ru-RU"
-            },
-            timeout=120
-        )
-        
-        parallel_time = time.time() - start_time
-        
-        if success and response:
-            audio_id = response.get('id')
-            print(f"   ✅ Parallel synthesis completed in {parallel_time:.2f} seconds")
-            print(f"   Audio ID: {audio_id}")
-            print(f"   Audio URL: {response.get('audio_url')}")
-            if audio_id:
-                self.generated_audio_ids.append(audio_id)
-            return {'audio_id': audio_id, 'time': parallel_time, 'response': response}
-        else:
-            print(f"   ❌ Parallel synthesis failed after {parallel_time:.2f} seconds")
-        
-        return None
+        try:
+            with httpx.stream("GET", url, params=params, timeout=300) as response:
+                if response.status_code != 200:
+                    print(f"❌ SSE request failed with status {response.status_code}")
+                    return None
+                
+                print("   📡 SSE connection established, receiving events...")
+                
+                for line in response.iter_lines():
+                    if line.startswith("data: "):
+                        try:
+                            data = json.loads(line[6:])  # Remove "data: " prefix
+                            event_type = data.get('type')
+                            progress = data.get('progress', 0)
+                            message = data.get('message', '')
+                            
+                            progress_events.append(data)
+                            
+                            if event_type == 'info':
+                                print(f"   📋 {progress}% - {message}")
+                            elif event_type == 'progress':
+                                print(f"   ⏳ {progress}% - {message}")
+                            elif event_type == 'complete':
+                                print(f"   ✅ {progress}% - Complete!")
+                                final_result = data
+                                break
+                            elif event_type == 'error':
+                                print(f"   ❌ Error: {message}")
+                                return None
+                                
+                        except json.JSONDecodeError as e:
+                            print(f"   ⚠️  Failed to parse SSE data: {line}")
+                            continue
+                
+                total_time = time.time() - start_time
+                
+                if final_result:
+                    audio_id = final_result.get('audio_id')
+                    audio_url = final_result.get('audio_url')
+                    
+                    print(f"   ✅ SSE synthesis completed in {total_time:.2f} seconds")
+                    print(f"   Audio ID: {audio_id}")
+                    print(f"   Audio URL: {audio_url}")
+                    print(f"   Progress events received: {len(progress_events)}")
+                    
+                    # Verify progress sequence
+                    progress_values = [event.get('progress', 0) for event in progress_events if 'progress' in event]
+                    if progress_values:
+                        print(f"   Progress sequence: {progress_values[:5]}...{progress_values[-5:] if len(progress_values) > 5 else ''}")
+                        is_increasing = all(progress_values[i] <= progress_values[i+1] for i in range(len(progress_values)-1))
+                        print(f"   ✅ Progress is monotonic: {is_increasing}")
+                    
+                    if audio_id:
+                        self.generated_audio_ids.append(audio_id)
+                    
+                    return {
+                        'audio_id': audio_id,
+                        'time': total_time,
+                        'progress_events': len(progress_events),
+                        'final_progress': final_result.get('progress', 0)
+                    }
+                else:
+                    print(f"   ❌ SSE synthesis failed - no completion event received")
+                    return None
+                    
+        except Exception as e:
+            print(f"   ❌ SSE synthesis failed with error: {str(e)}")
+            return None
 
     def test_parallel_audio_synthesis_medium_text(self):
         """Test parallel audio synthesis with medium text (~1000 characters, 5-7 segments)"""
