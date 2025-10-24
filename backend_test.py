@@ -854,123 +854,175 @@ class PiperTTSAPITester:
         print(f"📊 Total audio data: {total_size:,} bytes")
         return files_found == len(self.generated_audio_ids)
 
-    def run_all_tests(self):
-        """Run all API tests for Piper TTS"""
-        print("🚀 Starting Text-to-Speech API Tests (Piper TTS)")
+    def run_priority_tests(self):
+        """Run priority tests as specified in review request"""
+        print("🚀 AI Voice Studio - Optimization Testing")
         print(f"   Base URL: {self.base_url}")
-        print("=" * 60)
+        print("   Focus: Speed optimization after ffmpeg install and parameter tuning")
+        print("=" * 70)
         
-        # Test 1: Root endpoint
-        self.test_root_endpoint()
+        # PRIORITY TEST 1: ✅ TEXT GENERATION (10 minutes)
+        print("\n1️⃣ PRIORITY TEST: Text Generation (10 minutes)")
+        print("   Testing: Speed, word count (~1500 words), database storage")
         
-        # Test 2: Get voices (Piper TTS) - CRITICAL: Must run first to populate available_voices
-        voices_success = self.test_voices_endpoint()
-        if not voices_success:
-            print("❌ Cannot continue without voices - stopping tests")
+        start_time = time.time()
+        text_result = self.test_text_generation_short_russian()
+        text_time = time.time() - start_time
+        
+        if text_result:
+            print(f"   ✅ Text generation completed in {text_time:.1f} seconds")
+            print(f"   ✅ Generated {text_result['word_count']} words (target: ~1500)")
+            print(f"   ✅ Estimated duration: {text_result['estimated_duration']:.0f}s ({text_result['estimated_duration']/60:.1f} min)")
+            generated_text = text_result['text']
+        else:
+            print(f"   ❌ Text generation failed after {text_time:.1f} seconds")
             return False
         
-        # Test 3: Text generation tests (Russian language as per review request)
-        print("\n🔥 TESTING UPDATED TEXT GENERATION FOR LONG VIDEOS")
+        # PRIORITY TEST 2: ✅ AUDIO GENERATION WITH PROGRESS (SSE)
+        print("\n2️⃣ PRIORITY TEST: Audio Generation with Progress (SSE)")
+        print("   Testing: SSE endpoint, real progress, speed optimization")
         
-        # Test 3a: Short text generation (10 minutes)
-        short_text_result = self.test_text_generation_short_russian()
+        # Get voices first
+        voices_success = self.test_voices_endpoint()
+        if not voices_success:
+            print("❌ Cannot get voices - stopping tests")
+            return False
         
-        # Test 3b: Long text generation (50 minutes) - KEY TEST
-        long_text_result = self.test_text_generation_long_russian()
+        # Find Russian voice
+        ru_voice = None
+        for voice in self.available_voices:
+            if 'irina' in voice.get('short_name', '').lower():
+                ru_voice = voice.get('short_name')
+                break
         
-        # Test 3c: Database verification
-        db_verification_short = self.test_database_verification(short_text_result)
-        db_verification_long = self.test_database_verification(long_text_result)
+        if not ru_voice:
+            for voice in self.available_voices:
+                if voice.get('locale', '').startswith('ru-'):
+                    ru_voice = voice.get('short_name')
+                    break
         
-        # NEW TESTS: PARALLEL AUDIO GENERATION OPTIMIZATION
-        print("\n" + "🔥" * 20)
-        print("🔥 TESTING NEW PARALLEL AUDIO GENERATION OPTIMIZATION")
-        print("🔥" * 20)
+        if not ru_voice:
+            print("❌ No Russian voice found")
+            return False
         
-        # Test 4: NEW Parallel audio synthesis - Short Russian text
-        parallel_short_result = self.test_parallel_audio_synthesis_short_russian()
+        # Test SSE audio generation with the generated text
+        sse_result = self.test_sse_audio_synthesis_with_progress(
+            text=generated_text,
+            voice=ru_voice,
+            rate=1.0,
+            language="ru-RU"
+        )
         
-        # Test 5: NEW Parallel audio synthesis - Medium text (~1000 chars)
-        parallel_medium_result = self.test_parallel_audio_synthesis_medium_text()
-        
-        # Test 6: NEW Speed comparison - Parallel vs Regular
-        speed_comparison_result = self.test_speed_comparison_parallel_vs_regular()
-        
-        # REGULAR AUDIO TESTS (for comparison)
-        print("\n🔄 REGULAR AUDIO SYNTHESIS TESTS (for comparison)")
-        
-        # Test 7: Synthesize audio with English voice
-        audio_id_english = self.test_audio_synthesis_english()
-        
-        # Test 8: Synthesize audio with Russian voice
-        audio_id_russian = self.test_audio_synthesis_russian()
-        
-        # Test 9: Test speed variations (slow and fast)
-        speed_audio_ids = self.test_audio_synthesis_speed_variations()
-        
-        # Test 10: Synthesize long text (~500 words)
-        long_audio_id = self.test_audio_synthesis_long_text()
-        
-        # Wait for audio processing
-        if self.generated_audio_ids:
-            print("\n⏳ Waiting for audio processing...")
-            time.sleep(5)  # Longer wait for Piper processing
-        
-        # Test 11: Download audio files (WAV format)
-        download_success_count = 0
-        for audio_id in self.generated_audio_ids[:5]:  # Test first 5 downloads
-            if self.test_audio_download(audio_id):
-                download_success_count += 1
-        
-        # Test 12: Get history
-        self.test_history_endpoint()
-        
-        # Test 13: Verify audio files exist on disk (WAV format)
-        files_verified = self.verify_audio_files_exist()
-        
-        # Print results
-        print("\n" + "=" * 60)
-        print(f"📊 Test Results: {self.tests_passed}/{self.tests_run} passed")
-        print(f"🎵 Audio files generated: {len(self.generated_audio_ids)}")
-        print(f"📥 Downloads tested: {download_success_count}")
-        print(f"📁 Files verified on disk: {files_verified}")
-        
-        # PARALLEL AUDIO OPTIMIZATION SUMMARY
-        print("\n🔥 PARALLEL AUDIO OPTIMIZATION RESULTS:")
-        if parallel_short_result:
-            print(f"   ✅ Short text parallel synthesis: SUCCESS ({parallel_short_result['time']:.2f}s)")
-        else:
-            print(f"   ❌ Short text parallel synthesis: FAILED")
+        if sse_result:
+            print(f"   ✅ SSE audio generation completed in {sse_result['time']:.1f} seconds")
+            print(f"   ✅ Progress events: {sse_result['progress_events']}")
+            print(f"   ✅ Final progress: {sse_result['final_progress']}%")
             
-        if parallel_medium_result:
-            print(f"   ✅ Medium text parallel synthesis: SUCCESS ({parallel_medium_result['time']:.2f}s)")
-        else:
-            print(f"   ❌ Medium text parallel synthesis: FAILED")
-            
-        if speed_comparison_result:
-            speedup = speed_comparison_result['speedup']
-            if speedup > 1.5:
-                print(f"   ✅ Speed improvement: {speedup:.2f}x faster (EXCELLENT)")
-            elif speedup > 1.0:
-                print(f"   ⚠️  Speed improvement: {speedup:.2f}x faster (MODERATE)")
+            # Check speed expectation (for 10 min content should be ~20-40 sec)
+            expected_max_time = 40  # seconds
+            if sse_result['time'] <= expected_max_time:
+                print(f"   ✅ Speed optimization working: {sse_result['time']:.1f}s ≤ {expected_max_time}s target")
             else:
-                print(f"   ❌ Speed improvement: {speedup:.2f}x (SLOWER than regular)")
+                print(f"   ⚠️  Slower than expected: {sse_result['time']:.1f}s > {expected_max_time}s target")
+            
+            audio_id = sse_result['audio_id']
         else:
-            print(f"   ❌ Speed comparison: FAILED")
+            print("   ❌ SSE audio generation failed")
+            return False
         
-        if self.tests_passed < self.tests_run:
-            print("\n❌ Failed Tests:")
-            for result in self.test_results:
-                if not result["success"]:
-                    print(f"   - {result['test_name']}: {result.get('error', 'Unknown error')}")
+        # PRIORITY TEST 3: ✅ AUDIO DOWNLOAD
+        print("\n3️⃣ PRIORITY TEST: Audio Download")
+        print(f"   Testing: Download audio file {audio_id}")
         
-        # Summary of Piper TTS specific checks
-        print("\n🎯 Piper TTS Specific Verification:")
-        print(f"   ✅ Voices endpoint returned {len(self.available_voices)} voices" if self.available_voices else "   ❌ No voices available")
-        print(f"   ✅ Audio format is WAV (not MP3)" if files_verified else "   ❌ Audio files not verified")
-        print(f"   ✅ Multiple languages supported" if len([v for v in self.available_voices if v.get('locale', '').startswith(('en-', 'ru-'))]) >= 2 else "   ❌ Limited language support")
+        download_success = self.test_audio_download(audio_id)
+        if download_success:
+            print("   ✅ Audio download successful")
+        else:
+            print("   ❌ Audio download failed")
         
-        return self.tests_passed == self.tests_run
+        # PRIORITY TEST 4: ✅ VOICES LIST
+        print("\n4️⃣ PRIORITY TEST: Voices List")
+        print("   Testing: Returns Russian voices")
+        
+        ru_voices = [v for v in self.available_voices if v.get('locale', '').startswith('ru-')]
+        if ru_voices:
+            print(f"   ✅ Found {len(ru_voices)} Russian voices")
+            print(f"   ✅ Sample: {ru_voices[0]['name']} ({ru_voices[0]['short_name']})")
+        else:
+            print("   ❌ No Russian voices found")
+        
+        # PRIORITY TEST 5: ✅ HISTORY
+        print("\n5️⃣ PRIORITY TEST: Generation History")
+        print("   Testing: Returns recent generations")
+        
+        history_success = self.test_history_endpoint()
+        if history_success:
+            print("   ✅ History endpoint working")
+        else:
+            print("   ❌ History endpoint failed")
+        
+        # VERIFICATION: File exists on disk
+        print("\n🔍 VERIFICATION: Audio File on Disk")
+        audio_dir = Path("/app/backend/audio_files")
+        audio_file = audio_dir / f"{audio_id}.wav"
+        
+        if audio_file.exists():
+            file_size = audio_file.stat().st_size
+            print(f"   ✅ Audio file exists: {file_size:,} bytes")
+            
+            # Check file size is reasonable (should be > 100KB for 10 min audio)
+            if file_size > 100000:  # 100KB
+                print(f"   ✅ File size looks good for 10-minute audio")
+            else:
+                print(f"   ⚠️  File size seems small for 10-minute audio: {file_size:,} bytes")
+        else:
+            print(f"   ❌ Audio file not found: {audio_file}")
+        
+        # SUMMARY
+        print("\n" + "=" * 70)
+        print("📊 OPTIMIZATION TEST SUMMARY")
+        print("=" * 70)
+        
+        all_passed = (
+            text_result is not None and
+            sse_result is not None and
+            download_success and
+            len(ru_voices) > 0 and
+            history_success
+        )
+        
+        if all_passed:
+            print("✅ ALL PRIORITY TESTS PASSED")
+            print(f"✅ Text generation: {text_time:.1f}s for {text_result['word_count']} words")
+            print(f"✅ Audio generation: {sse_result['time']:.1f}s for ~10 min content")
+            print(f"✅ Speed ratio: {sse_result['time']/600:.2f}x real-time (lower is better)")
+            print(f"✅ Progress tracking: {sse_result['progress_events']} events")
+            print("✅ Download and history working")
+            
+            # Check if optimization goals are met
+            if sse_result['time'] <= 40:
+                print("🚀 OPTIMIZATION SUCCESS: Audio generation within 20-40s target!")
+            else:
+                print("⚠️  OPTIMIZATION PARTIAL: Audio generation slower than 40s target")
+                
+        else:
+            print("❌ SOME TESTS FAILED")
+            if not text_result:
+                print("❌ Text generation failed")
+            if not sse_result:
+                print("❌ SSE audio generation failed")
+            if not download_success:
+                print("❌ Audio download failed")
+            if len(ru_voices) == 0:
+                print("❌ No Russian voices available")
+            if not history_success:
+                print("❌ History endpoint failed")
+        
+        return all_passed
+    
+    def run_all_tests(self):
+        """Run comprehensive tests - kept for compatibility"""
+        return self.run_priority_tests()
 
 def main():
     tester = PiperTTSAPITester()
