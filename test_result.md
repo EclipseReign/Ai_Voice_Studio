@@ -577,3 +577,41 @@ agent_communication:
       - /app/frontend/src/pages/HomePage.js: переключено на EventSource + SSE
       
       Нужно протестировать генерацию 50-минутного аудио и замерить время.
+  - agent: "testing"
+    message: |
+      🔍 CRITICAL FIXES TESTING COMPLETED - MIXED RESULTS
+      
+      TESTED USER'S REPORTED ISSUES:
+      1. ❌ Text generation for 1 minute producing 1531 words instead of 150
+      2. ❌ Audio showing 0:00 duration and not downloadable
+      3. ❌ Progress bars stuck at 90%
+      
+      TEST RESULTS:
+      
+      ✅ AUDIO FIXES WORKING PERFECTLY (Issues 2 & 3 RESOLVED):
+      - Real duration calculation: All audio shows correct duration (2.32s, 11.37s, 20.56s)
+      - Progress reaches 100%: No more stuck at 90%, all tests completed successfully
+      - Download working: All files download with proper WAV format and sizes
+      - SSE endpoint working: Real-time progress via /api/audio/synthesize-with-progress
+      - Generation speed excellent: 0.37s-3.55s for various text lengths
+      
+      ❌ TEXT GENERATION STILL HAS CRITICAL ISSUE (Issue 1 NOT RESOLVED):
+      - 1 minute: Generated 275 words (183% of target 150 words) - SEVERE OVERGENERATION
+      - 2 minutes: Generated 372 words (124% of target 300 words) - OVERGENERATION  
+      - 5 minutes: Generated 784 words (105% of target 750 words) - ACCEPTABLE
+      
+      ROOT CAUSE IDENTIFIED:
+      - LLM compensation factor (1.2x) causes severe overgeneration for short texts
+      - For 1 min: asks LLM for 180 words, gets 275+ words
+      - Problem is worse for shorter durations, acceptable for longer ones
+      
+      BACKEND ENDPOINTS TESTED:
+      ✅ GET /api/text/generate-with-progress - SSE working, but word count wrong
+      ✅ GET /api/audio/synthesize-with-progress - SSE working perfectly
+      ✅ GET /api/audio/download/{id} - Download working perfectly
+      ✅ GET /api/voices - Working correctly
+      ✅ GET /api/history - Working correctly
+      
+      URGENT ACTION NEEDED:
+      Main agent must fix the LLM compensation factor for short text generation.
+      Suggested fix: Remove or reduce compensation factor for durations ≤5 minutes.
