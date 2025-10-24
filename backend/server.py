@@ -131,9 +131,14 @@ async def generate_text_chunk(
 ) -> str:
     """Generate a chunk of text using LLM"""
     
-    # Increase target words by 20% to compensate for LLM undergeneration
-    # LLM typically generates 10-20% fewer words than requested
-    adjusted_words = int(target_words * 1.2)
+    # Compensation for LLM undergeneration
+    # Use different compensation based on text length
+    # Short texts (≤5 minutes = ≤750 words): minimal compensation (1.05x)
+    # Long texts (>5 minutes): higher compensation (1.15x)
+    if target_words <= 750:
+        adjusted_words = int(target_words * 1.05)  # Only 5% extra for short texts
+    else:
+        adjusted_words = int(target_words * 1.15)  # 15% extra for long texts
     
     # Create LLM chat instance
     chat = LlmChat(
