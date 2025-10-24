@@ -323,7 +323,7 @@ async def generate_text_with_progress(
     async def generate_progress():
         try:
             text_id = str(uuid.uuid4())
-            target_words = calculate_word_count(request.duration_minutes)
+            target_words = calculate_word_count(duration_minutes)
             chunk_size = 1200
             
             yield f"data: {json.dumps({'type': 'info', 'message': f'Генерация текста ({target_words} слов)', 'progress': 0})}\n\n"
@@ -333,9 +333,9 @@ async def generate_text_with_progress(
                 yield f"data: {json.dumps({'type': 'progress', 'progress': 50, 'message': 'Генерация текста...'})}\n\n"
                 
                 generated_text = await generate_text_chunk(
-                    request.prompt, 
+                    prompt, 
                     target_words, 
-                    request.language, 
+                    language, 
                     is_complete=True
                 )
                 
@@ -358,9 +358,9 @@ async def generate_text_with_progress(
                     is_last = (i == num_chunks - 1)
                     
                     chunk_text = await generate_text_chunk(
-                        request.prompt,
+                        prompt,
                         chunk_words,
-                        request.language,
+                        language,
                         is_complete=False,
                         is_first=is_first,
                         is_last=is_last,
@@ -381,10 +381,10 @@ async def generate_text_with_progress(
             generation_doc = {
                 "id": text_id,
                 "text": generated_text,
-                "prompt": request.prompt,
-                "language": request.language,
+                "prompt": prompt,
+                "language": language,
                 "word_count": word_count,
-                "duration_minutes": request.duration_minutes,
+                "duration_minutes": duration_minutes,
                 "created_at": datetime.now(timezone.utc).isoformat()
             }
             
