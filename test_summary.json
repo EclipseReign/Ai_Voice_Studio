@@ -1,0 +1,38 @@
+{
+  "test_1_text_generation": {
+    "target_words": 150,
+    "actual_words_range": "124-126",
+    "accuracy": "83-84%",
+    "old_problem_fixed": true,
+    "old_problem_words": 1531,
+    "current_issue": "Slightly under target but much better than before",
+    "status": "MOSTLY_FIXED"
+  },
+  "test_2_audio_generation": {
+    "target_duration": "60s",
+    "actual_duration": "67.3s",
+    "accuracy": "112%",
+    "acceptable_range": "50-70s",
+    "old_problem_fixed": true,
+    "old_problem_duration": "240s+",
+    "status": "FIXED"
+  },
+  "test_3_audio_download": {
+    "status_code": 200,
+    "content_type": "audio/wav",
+    "file_size": "2,969,644 bytes",
+    "status": "FIXED"
+  },
+  "additional_tests": {
+    "2_minutes": {
+      "target_words": 300,
+      "actual_words": 216,
+      "accuracy": "72%"
+    },
+    "5_minutes": {
+      "target_words": 750,
+      "actual_words": 624,
+      "accuracy": "83.2%"
+    }
+  }
+}
