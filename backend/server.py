@@ -20,6 +20,7 @@ from piper import PiperVoice
 from piper.config import SynthesisConfig
 from pydub import AudioSegment
 import re
+import struct
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
