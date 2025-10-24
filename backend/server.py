@@ -650,7 +650,7 @@ async def synthesize_audio_parallel(request: AudioSynthesizeRequest):
         
         return AudioSynthesizeResponse(
             id=audio_id,
-            audio_url=f"/api/audio/download/{audio_id}",
+            audio_url=f"/audio/download/{audio_id}",
             text=request.text[:100] + "..." if len(request.text) > 100 else request.text,
             voice=request.voice,
             created_at=audio_doc["created_at"]
@@ -833,7 +833,7 @@ async def synthesize_audio(request: AudioSynthesizeRequest):
         
         return AudioSynthesizeResponse(
             id=audio_id,
-            audio_url=f"/api/audio/download/{audio_id}",
+            audio_url=f"/audio/download/{audio_id}",
             text=request.text[:100] + "..." if len(request.text) > 100 else request.text,
             voice=request.voice,
             created_at=audio_doc["created_at"]
