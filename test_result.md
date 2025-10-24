@@ -142,7 +142,7 @@ backend:
 
   - task: "Audio synthesis with Piper TTS"
     implemented: true
-    working: true
+    working: "NA"
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
