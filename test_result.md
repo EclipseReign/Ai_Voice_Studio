@@ -299,10 +299,8 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Text generation via LLM"
-    - "Audio download endpoint"
-  stuck_tasks:
-    - "Text generation via LLM"
+    - "Critical user issues testing completed"
+  stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
