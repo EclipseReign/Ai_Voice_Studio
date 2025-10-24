@@ -118,11 +118,11 @@ user_problem_statement: |
 backend:
   - task: "Text generation via LLM"
     implemented: true
-    working: false
+    working: "NA"
     file: "/app/backend/server.py"
-    stuck_count: 1
+    stuck_count: 2
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
