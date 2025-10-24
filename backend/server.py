@@ -887,7 +887,7 @@ async def get_history():
             history.append(GenerationHistory(
                 id=gen["id"],
                 text=gen["text"][:100] + "..." if len(gen["text"]) > 100 else gen["text"],
-                audio_url=f"/api/audio/download/{gen['id']}",
+                audio_url=f"/audio/download/{gen['id']}",
                 voice=gen.get("voice"),
                 language=gen.get("language", "en-US"),
                 created_at=gen["created_at"]
