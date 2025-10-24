@@ -118,11 +118,11 @@ user_problem_statement: |
 backend:
   - task: "Text generation via LLM"
     implemented: true
-    working: "NA"
+    working: false
     file: "/app/backend/server.py"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
@@ -142,6 +142,9 @@ backend:
       - working: "NA"
         agent: "main"
         comment: "🔧 КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Пользователь сообщил, что для 1 минуты генерируется 1531 слово (10 минут) вместо 150 слов. ПРОБЛЕМА: Фронтенд использовал старый POST endpoint /api/text/generate вместо SSE endpoint /api/text/generate-with-progress. РЕШЕНИЕ: 1) Переключен фронтенд на SSE endpoint с реальным прогрессом через EventSource, 2) Изменён backend endpoint с POST на GET с query параметрами. Теперь для 1 минуты должно генерироваться ровно 150 слов (один чанк, без разбивки). Требуется повторное тестирование на коротких (1-2 минуты) и длинных (50 минут) длительностях."
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL ISSUE CONFIRMED: Text generation still overproducing words for short durations. TESTED: 1 min = 275 words (183% of target 150), 2 min = 372 words (124% of target 300), 5 min = 784 words (105% of target 750). PROBLEM: LLM compensation factor (1.2x) causes severe overgeneration for short texts. SSE endpoint working correctly, but word count accuracy is poor for 1-2 minute durations. NEEDS FIX: Adjust or remove compensation factor for short texts (≤5 minutes). Long texts (5+ min) have acceptable accuracy."
 
   - task: "Audio synthesis with Piper TTS"
     implemented: true
