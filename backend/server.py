@@ -131,20 +131,18 @@ async def generate_text_chunk(
 ) -> str:
     """Generate a chunk of text using LLM"""
     
-    # Compensation for LLM undergeneration
-    # Use different compensation based on text length
-    # Short texts (≤5 minutes = ≤750 words): minimal compensation (1.05x)
-    # Long texts (>5 minutes): higher compensation (1.15x)
+    # For short texts (≤5 minutes = ≤750 words): use EXACT target, no compensation
+    # For long texts (>5 minutes): slight compensation (1.1x) because LLM tends to underproduce
     if target_words <= 750:
-        adjusted_words = int(target_words * 1.05)  # Only 5% extra for short texts
+        adjusted_words = target_words  # No compensation for short texts - be precise!
     else:
-        adjusted_words = int(target_words * 1.15)  # 15% extra for long texts
+        adjusted_words = int(target_words * 1.1)  # Only 10% extra for long texts
     
-    # Create LLM chat instance
+    # Create LLM chat instance with strict system message
     chat = LlmChat(
         api_key=os.environ.get('EMERGENT_LLM_KEY'),
         session_id=str(uuid.uuid4()),
-        system_message="You are a professional narrator and content writer. Create engaging, natural-flowing narration scripts suitable for audio. Write in a continuous narrative style without section headers or labels. Always write the full requested length."
+        system_message="You are a professional narrator and content writer. Create engaging, natural-flowing narration scripts suitable for audio. Write in a continuous narrative style without section headers or labels. IMPORTANT: Write EXACTLY the requested word count - no more, no less. Be precise with length."
     ).with_model("openai", "gpt-4o-mini")
     
     # Build prompt based on chunk position
@@ -152,21 +150,22 @@ async def generate_text_chunk(
         # Single complete text
         user_prompt = f"""Create a narration script about: {prompt}
 
-Write AT LEAST {adjusted_words} words in {language}. This is important - make sure to write enough content to reach this word count.
+CRITICAL REQUIREMENT: Write EXACTLY {adjusted_words} words in {language}. Not more, not less. This is very important for timing.
 Style: Natural, conversational narration suitable for audio storytelling.
 Write as a continuous narrative without any section labels, headers, or markers like "Introduction", "Conclusion", etc.
-Just tell the story or explain the topic in an engaging, flowing way with lots of details and examples."""
+Just tell the story or explain the topic in an engaging, flowing way.
+Be concise and precise - hit exactly {adjusted_words} words."""
     
     elif is_first:
         # First chunk of multi-part text
         user_prompt = f"""Begin a narration script about: {prompt}
 
-This is the opening of a longer narration. Write AT LEAST {adjusted_words} words in {language}.
+This is the opening of a longer narration. Write EXACTLY {adjusted_words} words in {language}.
 Style: Natural, conversational narration suitable for audio.
 Start the story/topic naturally without labels like "Introduction".
 Write in a continuous narrative flow that will continue in the next part.
-Include plenty of details and context to reach the target word count.
-End at a natural pause point, but don't conclude the topic."""
+End at a natural pause point, but don't conclude the topic.
+Be precise - exactly {adjusted_words} words."""
     
     elif is_last:
         # Last chunk
@@ -175,11 +174,11 @@ End at a natural pause point, but don't conclude the topic."""
 
 Previous content ended with: "...{context_preview}"
 
-Write AT LEAST {adjusted_words} words in {language} to conclude this narration.
+Write EXACTLY {adjusted_words} words in {language} to conclude this narration.
 Continue naturally from where the previous part ended.
 Wrap up the topic naturally without using labels like "Conclusion" or "In conclusion".
-Include final details and examples to reach the target word count.
-Just bring the narrative to a natural, satisfying end."""
+Just bring the narrative to a natural, satisfying end.
+Be precise - exactly {adjusted_words} words."""
     
     else:
         # Middle chunk
@@ -188,11 +187,11 @@ Just bring the narrative to a natural, satisfying end."""
 
 Previous content ended with: "...{context_preview}"
 
-Write AT LEAST {adjusted_words} words in {language} to continue this narration.
+Write EXACTLY {adjusted_words} words in {language} to continue this narration.
 Continue naturally from where the previous part ended.
 Maintain the same tone and style.
-Include more details, examples, and elaboration to reach the target word count.
-End at a natural pause point, but don't conclude - there's more to come."""
+End at a natural pause point, but don't conclude - there's more to come.
+Be precise - exactly {adjusted_words} words."""
     
     # Generate text
     user_message = UserMessage(text=user_prompt)
