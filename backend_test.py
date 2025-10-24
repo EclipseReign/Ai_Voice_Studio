@@ -1021,8 +1021,8 @@ class PiperTTSAPITester:
             print("❌ SOME TESTS FAILED")
             if not text_result:
                 print("❌ Text generation failed")
-            if not sse_result:
-                print("❌ SSE audio generation failed")
+            if not parallel_success:
+                print("❌ Parallel audio generation failed")
             if not download_success:
                 print("❌ Audio download failed")
             if len(ru_voices) == 0:
