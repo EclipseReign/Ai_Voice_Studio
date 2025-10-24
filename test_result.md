@@ -214,6 +214,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ CONFIRMED WORKING: Re-tested audio download with latest fixes. Status 200, Content-Type audio/wav, file size 2,969,644 bytes. Download functionality fully operational. User's reported download issue is completely resolved."
+      - working: "NA"
+        agent: "main"
+        comment: "🔧 ИСПРАВЛЕНИЕ HISTORY DOWNLOAD: Пользователь сообщил что файлы скачиваются только через history, основная загрузка показывает 404. Проблема в двойном /api префиксе (/api/api/audio/download/). Исправлено в /app/frontend/src/pages/HomePage.js строка 593: изменено process.env.REACT_APP_BACKEND_URL на API. Требуется повторное тестирование скачивания из history."
 
   - task: "History endpoint"
     implemented: true
