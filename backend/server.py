@@ -692,8 +692,8 @@ async def synthesize_audio_with_progress(
             
             yield f"data: {json.dumps({'type': 'info', 'message': f'Разбито на {total_segments} сегментов', 'progress': 10})}\n\n"
             
-            # Generate segments in parallel batches (optimized for memory usage)
-            batch_size = 50  # Process 50 segments at a time (increased for faster generation)
+            # Generate segments in parallel batches (optimized for maximum speed)
+            batch_size = 100  # Process 100 segments at a time (maximum parallelization for speed)
             completed_segments = 0
             all_segment_files = []
             
