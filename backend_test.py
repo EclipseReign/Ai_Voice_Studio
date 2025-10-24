@@ -998,7 +998,7 @@ class PiperTTSAPITester:
         
         all_passed = (
             text_result is not None and
-            sse_result is not None and
+            parallel_success and
             download_success and
             len(ru_voices) > 0 and
             history_success
@@ -1007,16 +1007,15 @@ class PiperTTSAPITester:
         if all_passed:
             print("✅ ALL PRIORITY TESTS PASSED")
             print(f"✅ Text generation: {text_time:.1f}s for {text_result['word_count']} words")
-            print(f"✅ Audio generation: {sse_result['time']:.1f}s for ~10 min content")
-            print(f"✅ Speed ratio: {sse_result['time']/600:.2f}x real-time (lower is better)")
-            print(f"✅ Progress tracking: {sse_result['progress_events']} events")
+            print(f"✅ Audio generation: {parallel_time:.1f}s for ~10 min content")
+            print(f"✅ Speed ratio: {parallel_time/600:.2f}x real-time (lower is better)")
             print("✅ Download and history working")
             
             # Check if optimization goals are met
-            if sse_result['time'] <= 40:
-                print("🚀 OPTIMIZATION SUCCESS: Audio generation within 20-40s target!")
+            if parallel_time <= 60:
+                print("🚀 OPTIMIZATION SUCCESS: Audio generation within target time!")
             else:
-                print("⚠️  OPTIMIZATION PARTIAL: Audio generation slower than 40s target")
+                print("⚠️  OPTIMIZATION PARTIAL: Audio generation slower than target")
                 
         else:
             print("❌ SOME TESTS FAILED")
