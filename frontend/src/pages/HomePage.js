@@ -46,16 +46,37 @@ const HomePage = () => {
     fetchHistory();
   }, []);
   
+  // Update selected voice when language changes
+  useEffect(() => {
+    if (voices.length > 0) {
+      const voicesForLang = getVoicesByLanguage();
+      if (voicesForLang.length > 0) {
+        // Only update if current voice is not in the new language
+        const currentVoiceInList = voicesForLang.find(v => v.short_name === selectedVoice);
+        if (!currentVoiceInList) {
+          setSelectedVoice(voicesForLang[0].short_name);
+        }
+      }
+    }
+  }, [language, voices]);
+  
   const fetchVoices = async () => {
     try {
       const response = await axios.get(API + '/voices');
       setVoices(response.data);
       if (response.data.length > 0) {
-        setSelectedVoice(response.data[0].short_name);
+        // Set first voice for current language
+        const langCode = language.split('-')[0].toLowerCase();
+        const voicesForLang = response.data.filter(v => v.locale.toLowerCase().startsWith(langCode));
+        if (voicesForLang.length > 0) {
+          setSelectedVoice(voicesForLang[0].short_name);
+        } else {
+          setSelectedVoice(response.data[0].short_name);
+        }
       }
     } catch (error) {
       console.error("Error fetching voices:", error);
-      toast.error("Failed to load voices");
+      toast.error("Не удалось загрузить голоса");
     }
   };
   
