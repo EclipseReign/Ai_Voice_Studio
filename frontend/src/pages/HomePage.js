@@ -38,6 +38,7 @@ const HomePage = () => {
   const [speed, setSpeed] = useState([0]);
   const [isSynthesizing, setIsSynthesizing] = useState(false);
   const [audioUrl, setAudioUrl] = useState(null);
+  const [audioDuration, setAudioDuration] = useState(0);
   const [history, setHistory] = useState([]);
   
   // Fetch voices on mount
