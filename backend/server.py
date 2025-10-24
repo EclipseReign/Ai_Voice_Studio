@@ -561,7 +561,7 @@ async def synthesize_audio_parallel(request: AudioSynthesizeRequest):
         logger.info(f"Split text into {len(segments)} segments for parallel processing")
         
         # Generate segments in batches to avoid memory issues
-        batch_size = 15  # Process 15 segments at a time
+        batch_size = 25  # Process 25 segments at a time (optimized for speed)
         all_segment_files = []
         
         for batch_start in range(0, len(segments), batch_size):
