@@ -666,8 +666,9 @@ async def synthesize_audio_with_progress(
     async def generate_progress():
         try:
             audio_id = str(uuid.uuid4())
-            audio_dir = Path("/app/backend/audio_files")
-            audio_dir.mkdir(exist_ok=True)
+            BASE_DIR = Path(__file__).resolve().parent
+            audio_dir = Path(os.getenv("AUDIO_OUTPUT_DIR", BASE_DIR / "audio_files"))
+            audio_dir.mkdir(parents=True, exist_ok=True)
             
             temp_dir = audio_dir / f"temp_{audio_id}"
             temp_dir.mkdir(exist_ok=True)
