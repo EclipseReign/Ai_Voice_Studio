@@ -17,7 +17,7 @@ import urllib.parse
 class CriticalFixesTester:
     def __init__(self):
         # Use the frontend environment variable for backend URL
-        self.base_url = "https://audiofix-2.preview.emergentagent.com/api"
+        self.base_url = "https://audio-duration-bug.preview.emergentagent.com/api"
         self.test_results = []
         
     def log_result(self, test_name, success, details=None, error=None):
