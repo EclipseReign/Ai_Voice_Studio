@@ -204,6 +204,7 @@ const HomePage = () => {
             setAudioProgress(100);
             setAudioProgressMessage("Готово!");
             setAudioUrl(API + data.audio_url);
+            setAudioDuration(data.duration || 0);
             toast.success("Аудио успешно сгенерировано!");
             fetchHistory();
             eventSource.close();
