@@ -101,37 +101,56 @@ const HomePage = () => {
     setGeneratedText("");
     
     try {
-      // Simulate progress for text generation
-      const progressInterval = setInterval(() => {
-        setTextProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
+      // Use SSE endpoint for real-time progress
+      const eventSource = new EventSource(
+        `${API}/text/generate-with-progress?` + new URLSearchParams({
+          prompt: prompt,
+          duration_minutes: duration,
+          language: language
+        })
+      );
+      
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          
+          if (data.type === 'info') {
+            setTextProgressMessage(data.message);
+            if (data.progress !== undefined) {
+              setTextProgress(data.progress);
+            }
+          } else if (data.type === 'progress') {
+            setTextProgress(data.progress);
+            if (data.message) {
+              setTextProgressMessage(data.message);
+            }
+          } else if (data.type === 'complete') {
+            setTextProgress(100);
+            setTextProgressMessage("Готово!");
+            setGeneratedText(data.text);
+            toast.success(`Сгенерировано ${data.word_count} слов!`);
+            eventSource.close();
+            setIsGeneratingText(false);
+          } else if (data.type === 'error') {
+            toast.error(data.message || "Ошибка генерации текста");
+            eventSource.close();
+            setIsGeneratingText(false);
           }
-          return prev + Math.random() * 15;
-        });
-      }, 1000);
+        } catch (error) {
+          console.error("Error parsing SSE data:", error);
+        }
+      };
       
-      // Set message based on duration
-      const estimatedTime = Math.ceil(duration / 10); // Rough estimate: 1 minute per 10 minutes of content
-      setTextProgressMessage(`Генерация текста... (~${estimatedTime} мин)`);
-      
-      const response = await axios.post(API + '/text/generate', {
-        prompt: prompt,
-        duration_minutes: duration,
-        language: language
-      });
-      
-      clearInterval(progressInterval);
-      setTextProgress(100);
-      setTextProgressMessage("Готово!");
-      setGeneratedText(response.data.text);
-      toast.success(`Сгенерировано ${response.data.word_count} слов!`);
+      eventSource.onerror = (error) => {
+        console.error("SSE error:", error);
+        toast.error("Ошибка соединения");
+        eventSource.close();
+        setIsGeneratingText(false);
+      };
       
     } catch (error) {
       console.error("Error generating text:", error);
       toast.error("Не удалось сгенерировать текст");
-    } finally {
       setIsGeneratingText(false);
     }
   };
