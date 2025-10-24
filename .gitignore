@@ -19,9 +19,15 @@ node_modules/
 # Testing
 /coverage
 
+# Audio files and TTS models
 backend/audio_files/
 backend/audio_files/**
 backend/audio_files/temp_*/
+backend/piper_models/
+backend/piper_models/**
+*.onnx
+*.wav
+*.mp3
 
 # Next.js
 /.next/
