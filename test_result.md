@@ -145,6 +145,9 @@ backend:
       - working: false
         agent: "testing"
         comment: "❌ CRITICAL ISSUE CONFIRMED: Text generation still overproducing words for short durations. TESTED: 1 min = 275 words (183% of target 150), 2 min = 372 words (124% of target 300), 5 min = 784 words (105% of target 750). PROBLEM: LLM compensation factor (1.2x) causes severe overgeneration for short texts. SSE endpoint working correctly, but word count accuracy is poor for 1-2 minute durations. NEEDS FIX: Adjust or remove compensation factor for short texts (≤5 minutes). Long texts (5+ min) have acceptable accuracy."
+      - working: "NA"
+        agent: "main"
+        comment: "🔧 ИСПРАВЛЕНИЕ ДЛИТЕЛЬНОСТИ ДЛЯ КОРОТКИХ ТЕКСТОВ: Пользователь сообщил что для 1 минуты получает 4 минуты аудио. РЕШЕНИЕ: 1) Убран compensation factor ПОЛНОСТЬЮ для коротких текстов (≤750 слов / ≤5 минут) - теперь используется точная цель без добавок. 2) Для длинных текстов (>5 минут) compensation снижен с 1.15x до 1.1x (только 10% вместо 15%). 3) Изменены промпты с 'AT LEAST X words' на 'EXACTLY X words' для точности. 4) Усилен system message с требованием точности длины. 5) Перезапущены frontend и backend для очистки кэша. ОЖИДАЕМЫЙ РЕЗУЛЬТАТ: 1 минута = 150 слов ровно = ~1 минута аудио. Требуется тестирование."
 
   - task: "Audio synthesis with Piper TTS"
     implemented: true
