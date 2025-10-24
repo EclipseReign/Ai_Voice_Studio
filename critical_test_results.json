@@ -1,0 +1,48 @@
+{
+  "timestamp": 1761329989.6970255,
+  "success": false,
+  "results": [
+    {
+      "test": "ТЕСТ #1: Генерация текста на 1 минуту",
+      "success": false,
+      "details": {
+        "word_count": 125,
+        "target": "150 слов",
+        "acceptable_range": "140-160 слов",
+        "generation_time": "6.0s",
+        "text_id": "54899b2a-d0f1-4309-b08c-fe2454c8f91d",
+        "text_preview": "История космоса начинается с Великого взрыва, который произошел около 13,8 миллиардов лет назад. Это..."
+      },
+      "timestamp": 1761329931.3534026
+    },
+    {
+      "test": "ТЕСТ #2: Генерация аудио и длительность",
+      "success": true,
+      "details": {
+        "audio_id": "9da869a1-a182-4e68-b467-a872b5725ae1",
+        "audio_duration": "67.3s",
+        "target_duration": "60s",
+        "acceptable_range": "50-70s",
+        "synthesis_time": "11.0s",
+        "progress_reached_100": true,
+        "duration_valid": true
+      },
+      "timestamp": 1761329942.3217204
+    },
+    {
+      "test": "ТЕСТ #3: Скачивание аудио",
+      "success": true,
+      "details": {
+        "audio_id": "9da869a1-a182-4e68-b467-a872b5725ae1",
+        "status_code": 200,
+        "content_type": "audio/wav",
+        "file_size": "2,969,644 bytes",
+        "url": "https://audio-duration-bug.preview.emergentagent.com/api/audio/download/9da869a1-a182-4e68-b467-a872b5725ae1",
+        "status_ok": true,
+        "content_type_ok": true,
+        "file_size_ok": true
+      },
+      "timestamp": 1761329942.3984766
+    }
+  ]
+}
