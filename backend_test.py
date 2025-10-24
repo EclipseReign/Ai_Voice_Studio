@@ -7,7 +7,7 @@ from datetime import datetime
 from pathlib import Path
 
 class PiperTTSAPITester:
-    def __init__(self, base_url="https://audio-gen-speedup.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://audio-fix-8.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.tests_run = 0
         self.tests_passed = 0
