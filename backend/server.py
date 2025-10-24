@@ -712,7 +712,7 @@ async def synthesize_audio_with_progress(
                 yield f"data: {json.dumps({'type': 'progress', 'progress': progress, 'message': f'Сегмент {completed_segments}/{total_segments}'})}\n\n"
             
             # Combine segments
-            yield f"data: {json.dumps({'type': 'info', 'message': 'Объединение аудио...', 'progress': 92})}\n\n"
+            yield f"data: {json.dumps({'type': 'info', 'message': 'Объединение аудио...', 'progress': 90})}\n\n"
             
             final_audio = AudioSegment.empty()
             total_files = len(all_segment_files)
@@ -720,15 +720,17 @@ async def synthesize_audio_with_progress(
                 segment_audio = AudioSegment.from_wav(str(segment_file))
                 final_audio += segment_audio
                 
-                # Progress during combining (92-98%)
-                if idx % max(1, total_files // 10) == 0:  # Update every ~10% of files
-                    combine_progress = int(92 + (idx / total_files) * 6)
-                    yield f"data: {json.dumps({'type': 'progress', 'progress': combine_progress, 'message': f'Склейка {idx}/{total_files}'})}\n\n"
+                # Progress during combining (90-98%)
+                combine_progress = int(90 + (idx / total_files) * 8)
+                yield f"data: {json.dumps({'type': 'progress', 'progress': combine_progress, 'message': f'Склейка {idx}/{total_files}'})}\n\n"
             
             yield f"data: {json.dumps({'type': 'info', 'message': 'Сохранение файла...', 'progress': 98})}\n\n"
             
             final_file = audio_dir / f"{audio_id}.wav"
             final_audio.export(str(final_file), format="wav")
+            
+            # Get real audio duration
+            audio_duration = get_audio_duration(final_file)
             
             # Clean up temp files
             for file in temp_dir.glob("*.wav"):
@@ -743,13 +745,14 @@ async def synthesize_audio_with_progress(
                 "rate": rate,
                 "language": language,
                 "audio_path": str(final_file),
+                "duration": audio_duration,
                 "created_at": datetime.now(timezone.utc).isoformat()
             }
             
             await db.audio_generations.insert_one(audio_doc)
             
             # Send completion
-            yield f"data: {json.dumps({'type': 'complete', 'progress': 100, 'audio_id': audio_id, 'audio_url': f'/api/audio/download/{audio_id}'})}\n\n"
+            yield f"data: {json.dumps({'type': 'complete', 'progress': 100, 'audio_id': audio_id, 'audio_url': f'/api/audio/download/{audio_id}', 'duration': audio_duration})}\n\n"
             
         except Exception as e:
             logger.error(f"Error in SSE audio synthesis: {str(e)}", exc_info=True)
