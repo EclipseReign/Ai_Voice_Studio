@@ -5,6 +5,8 @@ import time
 import os
 from datetime import datetime
 from pathlib import Path
+import httpx
+import asyncio
 
 class PiperTTSAPITester:
     def __init__(self, base_url="https://audio-fix-8.preview.emergentagent.com/api"):
