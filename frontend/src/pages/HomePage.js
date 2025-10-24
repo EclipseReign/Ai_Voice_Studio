@@ -555,6 +555,11 @@ const HomePage = () => {
               <Card className="backdrop-blur-sm bg-white/80 border-slate-200 shadow-xl" data-testid="audio-player-card">
                 <CardHeader>
                   <CardTitle>Generated Audio</CardTitle>
+                  {audioDuration > 0 && (
+                    <p className="text-sm text-slate-600">
+                      Длительность: {Math.floor(audioDuration / 60)}:{String(Math.floor(audioDuration % 60)).padStart(2, '0')}
+                    </p>
+                  )}
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <audio controls className="w-full" data-testid="audio-player" key={audioUrl}>
