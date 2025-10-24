@@ -764,7 +764,7 @@ async def synthesize_audio_with_progress(
             await db.audio_generations.insert_one(audio_doc)
             
             # Send completion
-            yield f"data: {json.dumps({'type': 'complete', 'progress': 100, 'audio_id': audio_id, 'audio_url': f'/api/audio/download/{audio_id}', 'duration': audio_duration})}\n\n"
+            yield f"data: {json.dumps({'type': 'complete', 'progress': 100, 'audio_id': audio_id, 'audio_url': f'/audio/download/{audio_id}', 'duration': audio_duration})}\n\n"
             
         except Exception as e:
             logger.error(f"Error in SSE audio synthesis: {str(e)}", exc_info=True)
