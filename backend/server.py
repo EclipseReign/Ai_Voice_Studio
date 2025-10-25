@@ -664,6 +664,7 @@ async def generate_text_with_progress(
             # Save to database
             generation_doc = {
                 "id": text_id,
+                "user_id": current_user.id,
                 "text": generated_text,
                 "prompt": prompt,
                 "language": language,
