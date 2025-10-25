@@ -26,11 +26,18 @@ const HomePage = () => {
   const [generatedText, setGeneratedText] = useState("");
   const [isGeneratingText, setIsGeneratingText] = useState(false);
   
-  // Progress tracking
+  // Progress tracking (enhanced with ETA and speed)
   const [textProgress, setTextProgress] = useState(0);
   const [textProgressMessage, setTextProgressMessage] = useState("");
   const [audioProgress, setAudioProgress] = useState(0);
   const [audioProgressMessage, setAudioProgressMessage] = useState("");
+  const [audioEta, setAudioEta] = useState("");
+  const [audioSpeed, setAudioSpeed] = useState(0);
+  const [audioStage, setAudioStage] = useState("");
+  const [completedSegments, setCompletedSegments] = useState(0);
+  const [totalSegments, setTotalSegments] = useState(0);
+  const [queuePosition, setQueuePosition] = useState(0);
+  const [generationTime, setGenerationTime] = useState(0);
   
   // Manual input state
   const [manualText, setManualText] = useState("");
