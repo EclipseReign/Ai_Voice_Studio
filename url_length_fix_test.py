@@ -23,7 +23,7 @@ from datetime import datetime
 from pathlib import Path
 
 class URLLengthFixTester:
-    def __init__(self, base_url="https://audiorender-issue.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://voice-enhance-5.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.session = requests.Session()
         # Add admin credentials for testing (from test_result.md)
