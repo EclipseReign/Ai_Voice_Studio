@@ -37,7 +37,7 @@
         "status_code": 200,
         "content_type": "audio/wav",
         "file_size": "2,969,644 bytes",
-        "url": "https://google-oauth-app.preview.emergentagent.com/api/audio/download/9da869a1-a182-4e68-b467-a872b5725ae1",
+        "url": "https://sub-status-display.preview.emergentagent.com/api/audio/download/9da869a1-a182-4e68-b467-a872b5725ae1",
         "status_ok": true,
         "content_type_ok": true,
         "file_size_ok": true

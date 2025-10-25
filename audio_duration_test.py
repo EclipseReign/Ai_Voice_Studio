@@ -10,7 +10,7 @@ import urllib.parse
 
 def test_audio_generation_sse(text, voice="ru_RU-irina-medium"):
     """Test audio generation via SSE"""
-    base_url = "https://google-oauth-app.preview.emergentagent.com/api"
+    base_url = "https://sub-status-display.preview.emergentagent.com/api"
     url = f"{base_url}/audio/synthesize-with-progress"
     
     params = {
@@ -100,7 +100,7 @@ def test_audio_download(audio_id):
     if not audio_id:
         return False
         
-    base_url = "https://google-oauth-app.preview.emergentagent.com/api"
+    base_url = "https://sub-status-display.preview.emergentagent.com/api"
     url = f"{base_url}/audio/download/{audio_id}"
     
     try:
