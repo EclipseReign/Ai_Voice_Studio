@@ -206,6 +206,13 @@ const HomePage = () => {
     setAudioProgress(0);
     setAudioProgressMessage("Подготовка...");
     setAudioUrl(null);
+    setAudioEta("");
+    setAudioSpeed(0);
+    setAudioStage("");
+    setCompletedSegments(0);
+    setTotalSegments(0);
+    setQueuePosition(0);
+    setGenerationTime(0);
     
     try {
       const speedValue = speed[0];
@@ -256,9 +263,38 @@ const HomePage = () => {
             try {
               const data = JSON.parse(line.slice(6));
               
-              if (data.type === 'progress') {
+              if (data.type === 'queue') {
+                // In queue
+                setAudioProgress(0);
+                setAudioProgressMessage(data.message);
+                setQueuePosition(data.queue_position || 0);
+              } else if (data.type === 'stage') {
+                // New stage started
+                setAudioStage(data.stage);
+                setAudioProgressMessage(data.message);
+                setAudioProgress(data.progress);
+                if (data.total_segments) {
+                  setTotalSegments(data.total_segments);
+                }
+              } else if (data.type === 'progress') {
+                // Progress update
                 setAudioProgress(data.progress);
                 setAudioProgressMessage(data.message);
+                if (data.stage) {
+                  setAudioStage(data.stage);
+                }
+                if (data.completed_segments !== undefined) {
+                  setCompletedSegments(data.completed_segments);
+                }
+                if (data.total_segments !== undefined) {
+                  setTotalSegments(data.total_segments);
+                }
+                if (data.eta) {
+                  setAudioEta(data.eta);
+                }
+                if (data.speed !== undefined) {
+                  setAudioSpeed(data.speed);
+                }
               } else if (data.type === 'info') {
                 setAudioProgressMessage(data.message);
                 if (data.progress !== undefined) {
@@ -266,21 +302,24 @@ const HomePage = () => {
                 }
               } else if (data.type === 'complete') {
                 setAudioProgress(100);
-                setAudioProgressMessage("Готово!");
+                setAudioProgressMessage(data.message || "Готово!");
                 setAudioUrl(API + data.audio_url);
                 setAudioDuration(data.duration || 0);
-                toast.success("Аудио успешно сгенерировано!");
+                setGenerationTime(data.generation_time || 0);
+                if (data.speed) {
+                  setAudioSpeed(data.speed);
+                }
+                toast.success(data.message || "Аудио успешно сгенерировано!");
                 fetchHistory();
                 setIsSynthesizing(false);
                 // Refresh subscription to update usage count
                 await refreshSubscription();
               } else if (data.type === 'error') {
-                toast.error("Ошибка генерации: " + data.message);
+                toast.error(data.message);
                 setIsSynthesizing(false);
-                await refreshSubscription();
               }
             } catch (e) {
-              console.error("Error parsing SSE message:", e);
+              console.error("Error parsing SSE data:", e);
             }
           }
         }
