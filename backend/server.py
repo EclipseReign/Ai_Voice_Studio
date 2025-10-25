@@ -948,12 +948,23 @@ async def synthesize_audio_with_progress(
     text: str,
     voice: str,
     rate: float,
-    language: str
+    language: str,
+    current_user: User = Depends(get_current_user)
 ):
-    """Synthesize audio with real-time progress updates via SSE"""
+    """Synthesize audio with real-time progress updates via SSE (requires auth)"""
     
     async def generate_progress():
         try:
+            # Check if user can generate
+            can_generate_info = await check_can_generate(current_user.id)
+            
+            if not can_generate_info["can_generate"]:
+                yield f"data: {json.dumps({'type': 'error', 'message': f'Достигнут дневной лимит ({can_generate_info[\"limit\"]} генераций). Обновитесь до Pro для безлимитного доступа.'})}\n\n"
+                return
+            
+            # Log usage
+            await log_usage(current_user.id, "audio_generation")
+            
             audio_id = str(uuid.uuid4())
             BASE_DIR = Path(__file__).resolve().parent
             audio_dir = Path(os.getenv("AUDIO_OUTPUT_DIR", BASE_DIR / "audio_files"))
