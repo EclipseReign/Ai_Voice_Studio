@@ -274,11 +274,11 @@ const AdminDashboard = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        user.subscription_plan === 'pro'
+                        user.tier === 'pro'
                           ? 'bg-purple-100 text-purple-800'
                           : 'bg-gray-100 text-gray-800'
                       }`}>
-                        {user.subscription_plan === 'pro' ? '✨ Pro' : 'Free'}
+                        {user.tier === 'pro' ? '✨ Pro' : 'Free'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
