@@ -1046,6 +1046,7 @@ async def synthesize_audio_with_progress(
             # Save to database
             audio_doc = {
                 "id": audio_id,
+                "user_id": current_user.id,
                 "text": text,
                 "voice": voice,
                 "rate": rate,
