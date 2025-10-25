@@ -51,6 +51,11 @@ VOICES_CACHE_FILE = PIPER_MODELS_DIR / "voices_cache.json"
 # Cache for loaded Piper voices
 loaded_voices: Dict[str, PiperVoice] = {}
 
+# Thread pool executor for maximum parallelization
+max_workers = max(multiprocessing.cpu_count() * 2, 16)  # Use 2x CPU cores or minimum 16 threads
+executor = ThreadPoolExecutor(max_workers=max_workers)
+logger.info(f"Initialized ThreadPoolExecutor with {max_workers} workers")
+
 # Models
 class Voice(BaseModel):
     name: str
