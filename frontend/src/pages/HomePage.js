@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { Loader2, Sparkles, Mic, Download, Clock, Volume2, User, LogOut } from "lucide-react";
 
 const HomePage = () => {
-  const { user, subscription, logout, isAdmin } = useAuth();
+  const { user, subscription, logout, isAdmin, refreshSubscription } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("ai-generate");
   
