@@ -207,18 +207,23 @@ const HomePage = () => {
       console.log("Synthesizing with voice:", selectedVoice, "rate:", rate);
       
       // Use fetch with streaming for SSE (supports credentials)
+      // Using POST method to support large texts (up to 1 hour audio)
+      // GET method has URL length limits (~8000 chars) which is insufficient for long texts
       const response = await fetch(
-        `${API}/audio/synthesize-with-progress?${new URLSearchParams({
-          text: text,
-          voice: selectedVoice,
-          rate: rate.toString(),
-          language: language
-        })}`,
+        `${API}/audio/synthesize-with-progress`,
         {
+          method: 'POST',
           credentials: 'include', // Send cookies
           headers: {
-            'Accept': 'text/event-stream'
-          }
+            'Accept': 'text/event-stream',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            text: text,
+            voice: selectedVoice,
+            rate: rate,
+            language: language
+          })
         }
       );
 
