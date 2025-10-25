@@ -67,7 +67,9 @@ const HomePage = () => {
   
   const fetchVoices = async () => {
     try {
-      const response = await axios.get(API + '/voices');
+      const response = await axios.get(API + '/voices', {
+        withCredentials: true
+      });
       setVoices(response.data);
       if (response.data.length > 0) {
         // Set first voice for current language
