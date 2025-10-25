@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 
 const AdminDashboard = () => {
-  const { user, isAdmin, logout } = useAuth();
+  const { user, isAdmin, logout, refreshSubscription } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
