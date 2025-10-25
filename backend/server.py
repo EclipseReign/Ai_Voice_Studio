@@ -1063,16 +1063,20 @@ async def synthesize_audio_parallel(request: AudioSynthesizeRequest):
         logger.error(f"Error in parallel audio synthesis: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error synthesizing audio: {str(e)}")
 
-# SSE endpoint for audio synthesis with progress tracking
+# SSE endpoint for audio synthesis with progress tracking (OPTIMIZED with Queue & ETA)
 @api_router.post("/audio/synthesize-with-progress")
 async def synthesize_audio_with_progress(
     request: AudioSynthesizeRequest,
     current_user: User = Depends(get_current_user)
 ):
     """Synthesize audio with real-time progress updates via SSE (requires auth)
+    Features: Queue management, ETA, speed tracking, fair share, Pro priority
     Uses POST method to support large texts (up to 1 hour audio) that exceed URL length limits"""
     
     async def generate_progress():
+        job_id = str(uuid.uuid4())
+        generation_start_time = None
+        
         try:
             # Check if user can generate
             can_generate_info = await check_can_generate(current_user.id)
@@ -1093,96 +1097,167 @@ async def synthesize_audio_with_progress(
             temp_dir = audio_dir / f"temp_{audio_id}"
             temp_dir.mkdir(exist_ok=True)
             
-            # Load voice once (optimization)
-            yield f"data: {json.dumps({'type': 'info', 'message': 'Загрузка модели голоса...', 'progress': 5})}\n\n"
-            voices_data = await fetch_available_voices()
-            model_path, config_path = await download_voice_model(request.voice, voices_data)
-            voice_obj = get_or_load_voice(request.voice, model_path, config_path)
+            # Get user subscription tier
+            subscription = await get_subscription_status(current_user.id)
+            is_pro = subscription.tier == "pro"
             
-            # Split text into segments (using larger segments for better performance)
+            # Split text early to get segment count for queue
             segments = split_text_into_segments(request.text)
             total_segments = len(segments)
             
-            yield f"data: {json.dumps({'type': 'info', 'message': f'Разбито на {total_segments} сегментов', 'progress': 10})}\n\n"
+            # Estimate audio duration for ETA calculation
+            estimated_audio_duration = estimate_duration(request.text, request.rate)
+            estimated_audio_minutes = estimated_audio_duration / 60
             
-            # Generate segments in parallel batches (optimized for maximum speed)
-            # Process all segments at once for maximum parallelization
-            batch_size = max(total_segments, 200)  # Process all segments or at least 200 at a time
-            completed_segments = 0
-            all_segment_files = []
+            # Create queue job
+            queue_job = QueueJob(
+                job_id=job_id,
+                user_id=current_user.id,
+                is_pro=is_pro,
+                segments_count=total_segments
+            )
             
-            for batch_start in range(0, total_segments, batch_size):
-                batch_end = min(batch_start + batch_size, total_segments)
-                batch_segments = segments[batch_start:batch_end]
+            # Add to queue
+            queue_position = await queue_manager.add_job(queue_job)
+            
+            if queue_position > 1:
+                yield f"data: {json.dumps({'type': 'queue', 'message': f'В очереди (позиция {queue_position})', 'progress': 0, 'queue_position': queue_position})}\n\n"
+            
+            # Wait for our turn
+            while not await queue_manager.can_start_job(queue_job):
+                await asyncio.sleep(1)
+                queue_position = await queue_manager.get_queue_position(job_id)
+                if queue_position and queue_position > 0:
+                    yield f"data: {json.dumps({'type': 'queue', 'message': f'В очереди (позиция {queue_position})', 'progress': 0, 'queue_position': queue_position})}\n\n"
+            
+            # Start job
+            await queue_manager.start_job(queue_job)
+            generation_start_time = time.time()
+            
+            try:
+                # Stage 1: Load voice model (0-5%)
+                yield f"data: {json.dumps({'type': 'stage', 'stage': 'loading_model', 'message': 'Загрузка модели голоса...', 'progress': 0, 'total_segments': total_segments, 'estimated_audio_minutes': round(estimated_audio_minutes, 1)})}\n\n"
                 
-                # Generate batch in parallel using pre-loaded voice
-                tasks = []
-                for idx, segment in enumerate(batch_segments):
-                    global_idx = batch_start + idx
-                    task = synthesize_audio_segment_fast(
-                        text=segment,
-                        voice=voice_obj,
-                        rate=request.rate,
-                        segment_idx=global_idx,
-                        temp_dir=temp_dir
-                    )
-                    tasks.append(task)
+                voices_data = await fetch_available_voices()
+                model_path, config_path = await download_voice_model(request.voice, voices_data)
+                voice_obj = get_or_load_voice(request.voice, model_path, config_path)
                 
-                # Wait for batch to complete
-                batch_files = await asyncio.gather(*tasks)
-                all_segment_files.extend(batch_files)
+                yield f"data: {json.dumps({'type': 'progress', 'progress': 5, 'message': 'Модель загружена', 'stage': 'loading_model'})}\n\n"
                 
-                completed_segments += len(batch_segments)
-                progress = int(10 + (completed_segments / total_segments) * 80)  # 10-90% for generation
+                # Stage 2: Generate audio segments (5-85%)
+                yield f"data: {json.dumps({'type': 'stage', 'stage': 'generating_segments', 'message': f'Генерация {total_segments} сегментов...', 'progress': 5, 'total_segments': total_segments})}\n\n"
                 
-                yield f"data: {json.dumps({'type': 'progress', 'progress': progress, 'message': f'Сегмент {completed_segments}/{total_segments}'})}\n\n"
-            
-            # Combine segments
-            yield f"data: {json.dumps({'type': 'info', 'message': 'Объединение аудио...', 'progress': 90})}\n\n"
-            
-            final_audio = AudioSegment.empty()
-            total_files = len(all_segment_files)
-            for idx, segment_file in enumerate(sorted(all_segment_files), 1):
-                segment_audio = AudioSegment.from_wav(str(segment_file))
-                final_audio += segment_audio
+                # Get batch size based on user tier and current load
+                batch_size = queue_manager.get_batch_size_for_user(is_pro)
+                completed_segments = 0
+                all_segment_files = []
                 
-                # Progress during combining (90-98%)
-                combine_progress = int(90 + (idx / total_files) * 8)
-                yield f"data: {json.dumps({'type': 'progress', 'progress': combine_progress, 'message': f'Склейка {idx}/{total_files}'})}\n\n"
-            
-            yield f"data: {json.dumps({'type': 'info', 'message': 'Сохранение файла...', 'progress': 98})}\n\n"
-            
-            final_file = audio_dir / f"{audio_id}.wav"
-            final_audio.export(str(final_file), format="wav")
-            
-            # Get real audio duration
-            audio_duration = get_audio_duration(final_file)
-            
-            # Clean up temp files
-            for file in temp_dir.glob("*.wav"):
-                file.unlink()
-            temp_dir.rmdir()
-            
-            # Save to database
-            audio_doc = {
-                "id": audio_id,
-                "user_id": current_user.id,
-                "text": request.text,
-                "voice": request.voice,
-                "rate": request.rate,
-                "language": request.language,
-                "audio_path": str(final_file),
-                "duration": audio_duration,
-                "created_at": datetime.now(timezone.utc).isoformat()
-            }
-            
-            await db.audio_generations.insert_one(audio_doc)
-            
-            # Send completion
-            yield f"data: {json.dumps({'type': 'complete', 'progress': 100, 'audio_id': audio_id, 'audio_url': f'/audio/download/{audio_id}', 'duration': audio_duration})}\n\n"
+                segments_start_time = time.time()
+                
+                for batch_start in range(0, total_segments, batch_size):
+                    batch_end = min(batch_start + batch_size, total_segments)
+                    batch_segments = segments[batch_start:batch_end]
+                    
+                    # Generate batch in parallel
+                    tasks = []
+                    for idx, segment in enumerate(batch_segments):
+                        global_idx = batch_start + idx
+                        task = synthesize_audio_segment_fast(
+                            text=segment,
+                            voice=voice_obj,
+                            rate=request.rate,
+                            segment_idx=global_idx,
+                            temp_dir=temp_dir
+                        )
+                        tasks.append(task)
+                    
+                    # Wait for batch to complete
+                    batch_files = await asyncio.gather(*tasks)
+                    all_segment_files.extend(batch_files)
+                    
+                    completed_segments += len(batch_segments)
+                    progress = int(5 + (completed_segments / total_segments) * 80)  # 5-85% for generation
+                    
+                    # Calculate ETA and speed
+                    elapsed = time.time() - segments_start_time
+                    if completed_segments > 0:
+                        time_per_segment = elapsed / completed_segments
+                        remaining_segments = total_segments - completed_segments
+                        eta_seconds = time_per_segment * remaining_segments
+                        
+                        # Calculate generation speed (audio_minutes per second)
+                        audio_generated_minutes = (completed_segments / total_segments) * estimated_audio_minutes
+                        speed = audio_generated_minutes / elapsed if elapsed > 0 else 0
+                        
+                        eta_formatted = f"{int(eta_seconds // 60)}м {int(eta_seconds % 60)}с" if eta_seconds >= 60 else f"{int(eta_seconds)}с"
+                        
+                        yield f"data: {json.dumps({'type': 'progress', 'progress': progress, 'message': f'Сегмент {completed_segments}/{total_segments}', 'stage': 'generating_segments', 'completed_segments': completed_segments, 'total_segments': total_segments, 'eta': eta_formatted, 'speed': round(speed, 2), 'elapsed': round(elapsed, 1)})}\n\n"
+                    else:
+                        yield f"data: {json.dumps({'type': 'progress', 'progress': progress, 'message': f'Сегмент {completed_segments}/{total_segments}', 'stage': 'generating_segments', 'completed_segments': completed_segments, 'total_segments': total_segments})}\n\n"
+                
+                # Stage 3: Combine audio segments (85-98%)
+                yield f"data: {json.dumps({'type': 'stage', 'stage': 'combining', 'message': 'Объединение аудио...', 'progress': 85})}\n\n"
+                
+                final_audio = AudioSegment.empty()
+                total_files = len(all_segment_files)
+                
+                for idx, segment_file in enumerate(sorted(all_segment_files), 1):
+                    segment_audio = AudioSegment.from_wav(str(segment_file))
+                    final_audio += segment_audio
+                    
+                    # Progress during combining (85-98%)
+                    combine_progress = int(85 + (idx / total_files) * 13)
+                    
+                    # Show progress every 10 files or on last file
+                    if idx % max(1, total_files // 10) == 0 or idx == total_files:
+                        yield f"data: {json.dumps({'type': 'progress', 'progress': combine_progress, 'message': f'Склейка {idx}/{total_files}', 'stage': 'combining'})}\n\n"
+                
+                # Stage 4: Save file (98-100%)
+                yield f"data: {json.dumps({'type': 'stage', 'stage': 'saving', 'message': 'Сохранение файла...', 'progress': 98})}\n\n"
+                
+                final_file = audio_dir / f"{audio_id}.wav"
+                final_audio.export(str(final_file), format="wav")
+                
+                # Get real audio duration
+                audio_duration = get_audio_duration(final_file)
+                
+                # Clean up temp files
+                for file in temp_dir.glob("*.wav"):
+                    file.unlink()
+                temp_dir.rmdir()
+                
+                # Calculate total generation time and final speed
+                total_generation_time = time.time() - generation_start_time
+                final_speed = (audio_duration / 60) / total_generation_time if total_generation_time > 0 else 0
+                
+                # Save to database
+                audio_doc = {
+                    "id": audio_id,
+                    "user_id": current_user.id,
+                    "text": request.text,
+                    "voice": request.voice,
+                    "rate": request.rate,
+                    "language": request.language,
+                    "audio_path": str(final_file),
+                    "duration": audio_duration,
+                    "generation_time": total_generation_time,
+                    "generation_speed": final_speed,
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
+                
+                await db.audio_generations.insert_one(audio_doc)
+                
+                # Send completion with stats
+                yield f"data: {json.dumps({'type': 'complete', 'progress': 100, 'audio_id': audio_id, 'audio_url': f'/audio/download/{audio_id}', 'duration': audio_duration, 'generation_time': round(total_generation_time, 1), 'speed': round(final_speed, 2), 'message': f'Готово! ({round(audio_duration/60, 1)} мин за {round(total_generation_time, 1)}с, скорость {round(final_speed, 1)}x)'})}\n\n"
+                
+            finally:
+                # Always finish job in queue
+                await queue_manager.finish_job(job_id)
             
         except Exception as e:
             logger.error(f"Error in SSE audio synthesis: {str(e)}", exc_info=True)
+            if generation_start_time:
+                await queue_manager.finish_job(job_id)
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
     
     return StreamingResponse(generate_progress(), media_type="text/event-stream")
