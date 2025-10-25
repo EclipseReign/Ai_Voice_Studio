@@ -56,6 +56,10 @@ const AdminDashboard = () => {
       setGrantEmail('');
       setGrantDuration(1);
       fetchData();
+      // Refresh subscription if admin granted Pro to themselves
+      if (user?.email === grantEmail) {
+        await refreshSubscription();
+      }
     } catch (error) {
       alert(error.response?.data?.detail || 'Ошибка предоставления Pro');
     }
