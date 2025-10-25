@@ -9,9 +9,16 @@ const AuthCallback = () => {
   const { checkExistingSession } = useAuth();
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+  const processedRef = React.useRef(false);
 
   useEffect(() => {
     const handleCallback = async () => {
+      // Prevent double execution in React StrictMode
+      if (processedRef.current) {
+        return;
+      }
+      processedRef.current = true;
+
       try {
         // Get authorization code from URL query params
         const code = searchParams.get('code');
