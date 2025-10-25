@@ -589,12 +589,23 @@ async def get_voices():
 async def generate_text_with_progress(
     prompt: str,
     duration_minutes: int,
-    language: str = "en-US"
+    language: str = "en-US",
+    current_user: User = Depends(get_current_user)
 ):
-    """Generate text with real-time progress updates via SSE"""
+    """Generate text with real-time progress updates via SSE (requires auth)"""
     
     async def generate_progress():
         try:
+            # Check if user can generate
+            can_generate_info = await check_can_generate(current_user.id)
+            
+            if not can_generate_info["can_generate"]:
+                yield f"data: {json.dumps({'type': 'error', 'message': f'Достигнут дневной лимит ({can_generate_info[\"limit\"]} генераций). Обновитесь до Pro для безлимитного доступа.'})}\n\n"
+                return
+            
+            # Log usage
+            await log_usage(current_user.id, "text_generation")
+            
             text_id = str(uuid.uuid4())
             target_words = calculate_word_count(duration_minutes)
             chunk_size = 1200
