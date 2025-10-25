@@ -1,5 +1,5 @@
-from fastapi import FastAPI, APIRouter, HTTPException, BackgroundTasks
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi import FastAPI, APIRouter, HTTPException, BackgroundTasks, Depends, Response, Request
+from fastapi.responses import FileResponse, StreamingResponse, JSONResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -23,6 +23,34 @@ import re
 import struct
 from concurrent.futures import ThreadPoolExecutor
 import multiprocessing
+
+# Import auth and subscription modules
+from auth import (
+    get_current_user, 
+    get_current_user_optional, 
+    require_admin,
+    get_session_from_emergent,
+    create_or_update_user,
+    create_session,
+    verify_email_token
+)
+from subscription import (
+    get_subscription_status,
+    check_can_generate,
+    log_usage,
+    create_paypal_subscription,
+    cancel_subscription,
+    grant_pro_subscription,
+    revoke_pro_subscription
+)
+from models import (
+    User, 
+    UserResponse, 
+    SubscriptionResponse, 
+    PayPalSubscriptionRequest,
+    AdminGrantProRequest,
+    AdminStatsResponse
+)
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
