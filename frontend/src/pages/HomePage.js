@@ -296,11 +296,11 @@ const HomePage = () => {
               <h1 className="text-xl font-bold text-gray-900">🎙️ AI Voice Studio</h1>
               {subscription && (
                 <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                  subscription.plan === 'pro'
+                  subscription.tier === 'pro'
                     ? 'bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border border-purple-200'
                     : 'bg-gray-100 text-gray-700'
                 }`}>
-                  {subscription.plan === 'pro' ? '✨ Pro' : `Free (${subscription.usage_today || 0}/3)`}
+                  {subscription.tier === 'pro' ? '✨ Pro' : `Free (${subscription.usage_today || 0}/3)`}
                 </span>
               )}
             </div>
