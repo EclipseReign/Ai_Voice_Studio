@@ -795,11 +795,23 @@ const HomePage = () => {
               <Card className="backdrop-blur-sm bg-white/80 border-slate-200 shadow-xl" data-testid="audio-player-card">
                 <CardHeader>
                   <CardTitle>Generated Audio</CardTitle>
-                  {audioDuration > 0 && (
-                    <p className="text-sm text-slate-600">
-                      Длительность: {Math.floor(audioDuration / 60)}:{String(Math.floor(audioDuration % 60)).padStart(2, '0')}
-                    </p>
-                  )}
+                  <div className="space-y-1 mt-2">
+                    {audioDuration > 0 && (
+                      <p className="text-sm text-slate-600">
+                        Длительность: {Math.floor(audioDuration / 60)}:{String(Math.floor(audioDuration % 60)).padStart(2, '0')}
+                      </p>
+                    )}
+                    {generationTime > 0 && (
+                      <div className="flex gap-4 text-xs text-slate-500">
+                        <span>⏱️ Время генерации: {generationTime.toFixed(1)}с</span>
+                        {audioSpeed > 0 && (
+                          <span className="text-green-600 font-semibold">
+                            ⚡ Скорость: {audioSpeed.toFixed(1)}x реального времени
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <audio controls className="w-full" data-testid="audio-player" key={audioUrl}>
