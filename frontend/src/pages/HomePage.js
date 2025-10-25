@@ -110,52 +110,72 @@ const HomePage = () => {
     setGeneratedText("");
     
     try {
-      // Use SSE endpoint for real-time progress
-      const eventSource = new EventSource(
+      // Use fetch with streaming for SSE (supports credentials)
+      const response = await fetch(
         `${API}/text/generate-with-progress?` + new URLSearchParams({
           prompt: prompt,
           duration_minutes: duration,
           language: language
-        })
-      );
-      
-      eventSource.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          
-          if (data.type === 'info') {
-            setTextProgressMessage(data.message);
-            if (data.progress !== undefined) {
-              setTextProgress(data.progress);
-            }
-          } else if (data.type === 'progress') {
-            setTextProgress(data.progress);
-            if (data.message) {
-              setTextProgressMessage(data.message);
-            }
-          } else if (data.type === 'complete') {
-            setTextProgress(100);
-            setTextProgressMessage("Готово!");
-            setGeneratedText(data.text);
-            toast.success(`Сгенерировано ${data.word_count} слов!`);
-            eventSource.close();
-            setIsGeneratingText(false);
-          } else if (data.type === 'error') {
-            toast.error(data.message || "Ошибка генерации текста");
-            eventSource.close();
-            setIsGeneratingText(false);
+        }),
+        {
+          credentials: 'include', // Send cookies
+          headers: {
+            'Accept': 'text/event-stream'
           }
-        } catch (error) {
-          console.error("Error parsing SSE data:", error);
         }
-      };
-      
-      eventSource.onerror = (error) => {
-        console.error("SSE error:", error);
-        toast.error("Ошибка соединения");
-        eventSource.close();
-        setIsGeneratingText(false);
-      };
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        
+        if (done) break;
+        
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || ''; // Keep incomplete line in buffer
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              
+              if (data.type === 'info') {
+                setTextProgressMessage(data.message);
+                if (data.progress !== undefined) {
+                  setTextProgress(data.progress);
+                }
+              } else if (data.type === 'progress') {
+                setTextProgress(data.progress);
+                if (data.message) {
+                  setTextProgressMessage(data.message);
+                }
+              } else if (data.type === 'complete') {
+                setTextProgress(100);
+                setTextProgressMessage("Готово!");
+                setGeneratedText(data.text);
+                toast.success(`Сгенерировано ${data.word_count} слов!`);
+                setIsGeneratingText(false);
+                // Refresh subscription to update usage count
+                await refreshSubscription();
+              } else if (data.type === 'error') {
+                toast.error(data.message || "Ошибка генерации текста");
+                setIsGeneratingText(false);
+                await refreshSubscription();
+              }
+            } catch (error) {
+              console.error("Error parsing SSE data:", error);
+            }
+          }
+        }
+      }
       
     } catch (error) {
       console.error("Error generating text:", error);
