@@ -206,53 +206,73 @@ const HomePage = () => {
       
       console.log("Synthesizing with voice:", selectedVoice, "rate:", rate);
       
-      // Use SSE endpoint for real-time progress
-      const eventSource = new EventSource(
+      // Use fetch with streaming for SSE (supports credentials)
+      const response = await fetch(
         `${API}/audio/synthesize-with-progress?${new URLSearchParams({
           text: text,
           voice: selectedVoice,
           rate: rate.toString(),
           language: language
-        })}`
-      );
-      
-      eventSource.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          
-          if (data.type === 'progress') {
-            setAudioProgress(data.progress);
-            setAudioProgressMessage(data.message);
-          } else if (data.type === 'info') {
-            setAudioProgressMessage(data.message);
-            if (data.progress !== undefined) {
-              setAudioProgress(data.progress);
-            }
-          } else if (data.type === 'complete') {
-            setAudioProgress(100);
-            setAudioProgressMessage("Готово!");
-            setAudioUrl(API + data.audio_url);
-            setAudioDuration(data.duration || 0);
-            toast.success("Аудио успешно сгенерировано!");
-            fetchHistory();
-            eventSource.close();
-            setIsSynthesizing(false);
-          } else if (data.type === 'error') {
-            toast.error("Ошибка генерации: " + data.message);
-            eventSource.close();
-            setIsSynthesizing(false);
+        })}`,
+        {
+          credentials: 'include', // Send cookies
+          headers: {
+            'Accept': 'text/event-stream'
           }
-        } catch (e) {
-          console.error("Error parsing SSE message:", e);
         }
-      };
-      
-      eventSource.onerror = (error) => {
-        console.error("SSE error:", error);
-        eventSource.close();
-        toast.error("Не удалось сгенерировать аудио");
-        setIsSynthesizing(false);
-      };
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        
+        if (done) break;
+        
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || ''; // Keep incomplete line in buffer
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              
+              if (data.type === 'progress') {
+                setAudioProgress(data.progress);
+                setAudioProgressMessage(data.message);
+              } else if (data.type === 'info') {
+                setAudioProgressMessage(data.message);
+                if (data.progress !== undefined) {
+                  setAudioProgress(data.progress);
+                }
+              } else if (data.type === 'complete') {
+                setAudioProgress(100);
+                setAudioProgressMessage("Готово!");
+                setAudioUrl(API + data.audio_url);
+                setAudioDuration(data.duration || 0);
+                toast.success("Аудио успешно сгенерировано!");
+                fetchHistory();
+                setIsSynthesizing(false);
+                // Refresh subscription to update usage count
+                await refreshSubscription();
+              } else if (data.type === 'error') {
+                toast.error("Ошибка генерации: " + data.message);
+                setIsSynthesizing(false);
+                await refreshSubscription();
+              }
+            } catch (e) {
+              console.error("Error parsing SSE message:", e);
+            }
+          }
+        }
+      }
       
     } catch (error) {
       console.error("Error synthesizing audio:", error);
