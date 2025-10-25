@@ -243,14 +243,51 @@ const HomePage = () => {
   };
   
   return (
-    <div className="min-h-screen p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      {/* Top Navigation Bar */}
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-4">
+              <h1 className="text-xl font-bold text-gray-900">🎙️ AI Voice Studio</h1>
+              {subscription && (
+                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                  subscription.plan === 'pro'
+                    ? 'bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border border-purple-200'
+                    : 'bg-gray-100 text-gray-700'
+                }`}>
+                  {subscription.plan === 'pro' ? '✨ Pro' : `Free (${subscription.usage_today || 0}/3)`}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <User className="w-4 h-4" />
+                <span>{user?.name?.split(' ')[0] || 'Profile'}</span>
+              </button>
+              {isAdmin && (
+                <button
+                  onClick={() => navigate('/admin')}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-semibold"
+                >
+                  ⚙️ Admin
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
-        <div className="text-center mb-12 pt-8">
-          <h1 className="text-5xl lg:text-6xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent" data-testid="main-heading">
-            AI Voice Studio
-          </h1>
-          <p className="text-lg text-slate-600">Generate text and create realistic voice narrations</p>
+        <div className="text-center mb-8 pt-4">
+          <h2 className="text-4xl lg:text-5xl font-bold mb-3 bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent" data-testid="main-heading">
+            Генерация и Озвучка
+          </h2>
+          <p className="text-lg text-slate-600">Создавайте тексты с помощью ИИ и озвучивайте их реалистичными голосами</p>
         </div>
         
         <div className="grid lg:grid-cols-3 gap-6">
