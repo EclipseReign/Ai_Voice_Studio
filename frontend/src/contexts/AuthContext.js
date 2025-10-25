@@ -49,31 +49,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const processSessionId = async (sessionId) => {
-    try {
-      const response = await axios.get(`${API}/auth/session-data`, {
-        headers: {
-          'X-Session-ID': sessionId
-        },
-        withCredentials: true
-      });
-      
-      setUser({
-        id: response.data.id,
-        email: response.data.email,
-        name: response.data.name,
-        picture: response.data.picture
-      });
-      
-      await fetchSubscription();
-      
-      return true;
-    } catch (error) {
-      console.error('Error processing session:', error);
-      return false;
-    }
-  };
-
   const logout = async () => {
     try {
       await axios.post(`${API}/auth/logout`, {}, {
@@ -94,7 +69,7 @@ export const AuthProvider = ({ children }) => {
     user,
     loading,
     subscription,
-    processSessionId,
+    checkExistingSession,
     logout,
     refreshSubscription,
     isAuthenticated: !!user,
