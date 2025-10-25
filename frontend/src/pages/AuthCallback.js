@@ -24,10 +24,15 @@ const AuthCallback = () => {
 
         // Send code to backend for processing
         const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
-        await axios.get(`${API}/auth/google/callback`, {
+        const response = await axios.get(`${API}/auth/google/callback`, {
           params: { code },
           withCredentials: true
         });
+        
+        console.log('Auth callback response:', response.data);
+        
+        // Wait a bit for cookie to be set
+        await new Promise(resolve => setTimeout(resolve, 500));
         
         // Check session after successful authentication
         await checkExistingSession();
@@ -37,7 +42,9 @@ const AuthCallback = () => {
         
       } catch (err) {
         console.error('Auth callback error:', err);
-        setError(err.response?.data?.detail || 'Ошибка аутентификации');
+        const errorDetail = err.response?.data?.detail || 'Ошибка аутентификации';
+        console.error('Error detail:', errorDetail);
+        setError(errorDetail);
         setLoading(false);
       }
     };
