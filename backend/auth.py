@@ -239,7 +239,13 @@ async def get_user_by_session_token(session_token: str) -> Optional[User]:
             return None
         
         # Check if session expired
-        if session["expires_at"] < datetime.now(timezone.utc):
+        # Ensure both datetimes are timezone-aware for comparison
+        expires_at = session["expires_at"]
+        if expires_at.tzinfo is None:
+            # If expires_at is naive, assume it's UTC
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        
+        if expires_at < datetime.now(timezone.utc):
             await db.user_sessions.delete_one({"session_token": session_token})
             return None
         
