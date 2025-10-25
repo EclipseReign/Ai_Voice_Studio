@@ -91,7 +91,6 @@ logger.info(f"Initialized ThreadPoolExecutor with {max_workers} workers")
 # ============================================================================
 import time
 from dataclasses import dataclass, field
-from typing import Dict, List
 from collections import defaultdict
 
 @dataclass
