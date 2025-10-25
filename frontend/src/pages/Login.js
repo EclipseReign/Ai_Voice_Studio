@@ -12,14 +12,19 @@ const Login = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  const handleEmergentLogin = () => {
-    const authUrl = process.env.REACT_APP_EMERGENT_AUTH_URL;
-    const clientId = process.env.REACT_APP_EMERGENT_CLIENT_ID;
-    const redirectUri = process.env.REACT_APP_REDIRECT_URI;
-    
-    const url = `${authUrl}?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=openid email profile`;
-    
-    window.location.href = url;
+  const handleGoogleLogin = async () => {
+    try {
+      const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+      const response = await fetch(`${API}/auth/google`);
+      const data = await response.json();
+      
+      if (data.auth_url) {
+        window.location.href = data.auth_url;
+      }
+    } catch (error) {
+      console.error('Error initiating Google login:', error);
+      alert('Ошибка при входе через Google. Попробуйте еще раз.');
+    }
   };
 
   return (
@@ -32,7 +37,7 @@ const Login = () => {
 
         <div className="space-y-4">
           <button
-            onClick={handleEmergentLogin}
+            onClick={handleGoogleLogin}
             className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 px-6 rounded-lg font-semibold text-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
           >
             🚀 Войти через Google
