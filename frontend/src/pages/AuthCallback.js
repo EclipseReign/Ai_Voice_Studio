@@ -1,45 +1,49 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import axios from 'axios';
 
 const AuthCallback = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { processSessionId } = useAuth();
+  const { checkExistingSession } = useAuth();
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // Get session_id from URL query params
-        const sessionId = searchParams.get('session_id');
+        // Get authorization code from URL query params
+        const code = searchParams.get('code');
         
-        if (!sessionId) {
-          setError('Не получен session_id от Emergent Auth');
+        if (!code) {
+          setError('Не получен код авторизации от Google');
           setLoading(false);
           return;
         }
 
-        // Process session with backend
-        const success = await processSessionId(sessionId);
+        // Send code to backend for processing
+        const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+        await axios.get(`${API}/auth/google/callback`, {
+          params: { code },
+          withCredentials: true
+        });
         
-        if (success) {
-          // Redirect to dashboard on success
-          navigate('/dashboard');
-        } else {
-          setError('Ошибка обработки сессии');
-          setLoading(false);
-        }
+        // Check session after successful authentication
+        await checkExistingSession();
+        
+        // Redirect to dashboard on success
+        navigate('/dashboard');
+        
       } catch (err) {
         console.error('Auth callback error:', err);
-        setError('Ошибка аутентификации');
+        setError(err.response?.data?.detail || 'Ошибка аутентификации');
         setLoading(false);
       }
     };
 
     handleCallback();
-  }, [searchParams, processSessionId, navigate]);
+  }, [searchParams, navigate, checkExistingSession]);
 
   if (loading) {
     return (
