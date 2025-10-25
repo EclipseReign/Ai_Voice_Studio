@@ -11,7 +11,7 @@ from pathlib import Path
 
 class ParallelAudioTester:
     def __init__(self):
-        self.base_url = "https://speechify-ai.preview.emergentagent.com/api"
+        self.base_url = "https://google-oauth-app.preview.emergentagent.com/api"
         self.results = []
         
     def test_api_connection(self):
