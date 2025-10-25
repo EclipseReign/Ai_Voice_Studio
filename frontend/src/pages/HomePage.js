@@ -656,12 +656,64 @@ const HomePage = () => {
                       </Button>
                       
                       {isSynthesizing && (
-                        <div className="space-y-2 mt-4">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">{audioProgressMessage}</span>
-                            <span className="font-medium">{audioProgress}%</span>
+                        <div className="space-y-3 mt-4">
+                          {/* Queue Status */}
+                          {queuePosition > 0 && (
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center">
+                              <p className="text-sm text-blue-700 font-medium">
+                                В очереди - позиция {queuePosition}
+                              </p>
+                            </div>
+                          )}
+                          
+                          {/* Progress Bar */}
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-sm items-center">
+                              <span className="text-muted-foreground font-medium">{audioProgressMessage}</span>
+                              <span className="font-bold text-primary">{audioProgress}%</span>
+                            </div>
+                            <Progress value={audioProgress} className="h-3" />
                           </div>
-                          <Progress value={audioProgress} className="h-2" />
+                          
+                          {/* Detailed Stats */}
+                          {audioStage === 'generating_segments' && totalSegments > 0 && (
+                            <div className="grid grid-cols-2 gap-3 text-sm">
+                              <div className="bg-gray-50 rounded-lg p-2">
+                                <p className="text-xs text-gray-500">Прогресс</p>
+                                <p className="font-semibold text-gray-900">
+                                  {completedSegments}/{totalSegments} сегментов
+                                </p>
+                              </div>
+                              {audioEta && (
+                                <div className="bg-blue-50 rounded-lg p-2">
+                                  <p className="text-xs text-blue-600">Осталось</p>
+                                  <p className="font-semibold text-blue-900">{audioEta}</p>
+                                </div>
+                              )}
+                              {audioSpeed > 0 && (
+                                <div className="bg-green-50 rounded-lg p-2">
+                                  <p className="text-xs text-green-600">Скорость</p>
+                                  <p className="font-semibold text-green-900">{audioSpeed.toFixed(1)}x</p>
+                                </div>
+                              )}
+                              {subscription?.tier === 'pro' && (
+                                <div className="bg-purple-50 rounded-lg p-2">
+                                  <p className="text-xs text-purple-600">Статус</p>
+                                  <p className="font-semibold text-purple-900">⚡ Pro Priority</p>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          
+                          {/* Stage Indicator */}
+                          {audioStage && (
+                            <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
+                              {audioStage === 'loading_model' && '📥 Загрузка модели'}
+                              {audioStage === 'generating_segments' && '🎙️ Генерация аудио'}
+                              {audioStage === 'combining' && '🔗 Объединение сегментов'}
+                              {audioStage === 'saving' && '💾 Сохранение файла'}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
