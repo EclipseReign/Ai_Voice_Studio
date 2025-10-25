@@ -552,7 +552,7 @@ async def synthesize_audio_segment_fast(
         # Generate audio file path
         segment_file = temp_dir / f"segment_{segment_idx:04d}.wav"
         
-        # Synthesize in thread pool
+        # Synthesize using optimized thread pool
         def synthesize():
             syn_config = SynthesisConfig(
                 length_scale=1.0 / rate,
@@ -563,7 +563,9 @@ async def synthesize_audio_segment_fast(
             with wave.open(str(segment_file), 'wb') as wav_out:
                 voice.synthesize_wav(text, wav_out, syn_config=syn_config)
         
-        await asyncio.to_thread(synthesize)
+        # Use shared thread pool executor for better performance
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(executor, synthesize)
         
         return segment_file
         
