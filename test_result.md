@@ -193,6 +193,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ URL LENGTH FIX VERIFIED AND WORKING! CRITICAL TESTING RESULTS: 1) PROBLEM CONFIRMED: Large text (20,040 chars) would create 109,571 char URL, exceeding ALL browser/server limits (IE: 2083, Chrome/Firefox: 8192, Apache: 8192, Nginx: 4096). 2) SOLUTION VERIFIED: POST endpoint /api/audio/synthesize-with-progress accepts JSON payloads of any size. Tested both small (70 chars) and large (20K+ chars) texts - both accepted by POST method. 3) REGRESSION TEST PASSED: Small texts still work with new POST method. 4) ROOT CAUSE ELIMINATED: No more URL length restrictions with POST JSON body. The user's reported issue (50-minute texts not synthesizing, button just resets) is COMPLETELY RESOLVED. Large texts can now be synthesized without URL limitations. Authentication required for full end-to-end testing, but endpoint structure and fix implementation confirmed working."
+      - working: "NA"
+        agent: "main"
+        comment: "🚀 МАСШТАБНОЕ УЛУЧШЕНИЕ: 1) Добавлена система очередей с fair share и Pro приоритетом (QueueManager). 2) Оптимизация скорости: размер сегментов 800→600 символов, динамический batch_size (Pro: 50, Free: 30). 3) Детализированный прогресс-бар: ETA, скорость генерации, этапы работы, счётчик сегментов. 4) Frontend: новые state (audioEta, audioSpeed, audioStage, queuePosition), красивые карточки прогресса. ОЖИДАЕТСЯ: 50 минут аудио за 3-4 минуты (было 20+), fair share между пользователями. Требуется тестирование производительности!"
 
   - task: "Voices list endpoint"
     implemented: true
