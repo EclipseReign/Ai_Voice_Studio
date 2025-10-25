@@ -17,4 +17,4 @@ COPY . .
 
 # Railway пробрасывает PORT, FastAPI/uvicorn должны слушать его
 ENV PYTHONUNBUFFERED=1
-CMD ["python","-m","uvicorn","server:app","--host","0.0.0.0","--port","${PORT}"]
+CMD ["sh", "-c", "python -m uvicorn server:app --host 0.0.0.0 --port ${PORT:-8000}"]
