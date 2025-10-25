@@ -111,6 +111,9 @@ async def get_google_oauth_url(state: str = None) -> str:
 async def exchange_code_for_tokens(code: str) -> Optional[dict]:
     """Exchange authorization code for access token"""
     try:
+        logger.info(f"Exchanging code for tokens. Code length: {len(code)}")
+        logger.info(f"Using redirect_uri: {GOOGLE_REDIRECT_URI}")
+        
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 GOOGLE_TOKEN_URL,
@@ -124,14 +127,19 @@ async def exchange_code_for_tokens(code: str) -> Optional[dict]:
                 timeout=10.0
             )
             
+            logger.info(f"Google token exchange response status: {response.status_code}")
+            
             if response.status_code == 200:
+                logger.info("Successfully exchanged code for tokens")
                 return response.json()
             else:
-                logger.error(f"Google token exchange returned {response.status_code}: {response.text}")
+                logger.error(f"Google token exchange failed with status {response.status_code}")
+                logger.error(f"Response body: {response.text}")
                 return None
                 
     except Exception as e:
-        logger.error(f"Error exchanging code for tokens: {str(e)}")
+        logger.error(f"Exception in exchange_code_for_tokens: {str(e)}")
+        logger.exception(e)
         return None
 
 async def get_google_user_info(access_token: str) -> Optional[dict]:
