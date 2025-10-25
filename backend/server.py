@@ -1060,10 +1060,10 @@ async def synthesize_audio_with_progress(
             audio_doc = {
                 "id": audio_id,
                 "user_id": current_user.id,
-                "text": text,
-                "voice": voice,
-                "rate": rate,
-                "language": language,
+                "text": request.text,
+                "voice": request.voice,
+                "rate": request.rate,
+                "language": request.language,
                 "audio_path": str(final_file),
                 "duration": audio_duration,
                 "created_at": datetime.now(timezone.utc).isoformat()
