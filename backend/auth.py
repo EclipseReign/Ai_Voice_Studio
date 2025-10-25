@@ -92,29 +92,69 @@ async def send_verification_email(email: str, name: str, verification_token: str
         logger.error(f"Error sending verification email: {str(e)}")
         return False
 
-async def get_session_from_emergent(session_id: str) -> Optional[dict]:
-    """Get session data from Emergent Auth"""
-    import httpx
+async def get_google_oauth_url(state: str = None) -> str:
+    """Generate Google OAuth authorization URL"""
+    params = {
+        "client_id": GOOGLE_CLIENT_ID,
+        "redirect_uri": GOOGLE_REDIRECT_URI,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "access_type": "offline",
+        "prompt": "consent"
+    }
     
+    if state:
+        params["state"] = state
+    
+    return f"{GOOGLE_AUTH_URL}?{urlencode(params)}"
+
+async def exchange_code_for_tokens(code: str) -> Optional[dict]:
+    """Exchange authorization code for access token"""
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.get(
-                EMERGENT_AUTH_SESSION_URL,
-                headers={"X-Session-ID": session_id},
+            response = await client.post(
+                GOOGLE_TOKEN_URL,
+                data={
+                    "client_id": GOOGLE_CLIENT_ID,
+                    "client_secret": GOOGLE_CLIENT_SECRET,
+                    "code": code,
+                    "grant_type": "authorization_code",
+                    "redirect_uri": GOOGLE_REDIRECT_URI
+                },
                 timeout=10.0
             )
             
             if response.status_code == 200:
                 return response.json()
             else:
-                logger.error(f"Emergent Auth returned {response.status_code}")
+                logger.error(f"Google token exchange returned {response.status_code}: {response.text}")
                 return None
                 
     except Exception as e:
-        logger.error(f"Error fetching session from Emergent Auth: {str(e)}")
+        logger.error(f"Error exchanging code for tokens: {str(e)}")
         return None
 
-async def create_or_update_user(session_data: dict) -> User:
+async def get_google_user_info(access_token: str) -> Optional[dict]:
+    """Get user information from Google"""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                GOOGLE_USERINFO_URL,
+                headers={"Authorization": f"Bearer {access_token}"},
+                timeout=10.0
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"Google userinfo returned {response.status_code}")
+                return None
+                
+    except Exception as e:
+        logger.error(f"Error fetching Google user info: {str(e)}")
+        return None
+
+async def create_or_update_user(user_info: dict) -> User:
     """Create new user or return existing user"""
     try:
         # Check if user exists
