@@ -309,6 +309,226 @@ def get_or_load_voice(voice_key: str, model_path: Path, config_path: Path) -> Pi
 async def root():
     return {"message": "Text-to-Speech API"}
 
+# ============================================================================
+# AUTHENTICATION ENDPOINTS
+# ============================================================================
+
+@api_router.get("/auth/session-data")
+async def get_session_data(request: Request, response: Response):
+    """Process session_id from Emergent Auth and create user session"""
+    try:
+        # Get session_id from header
+        session_id = request.headers.get("X-Session-ID")
+        
+        if not session_id:
+            raise HTTPException(status_code=400, detail="X-Session-ID header required")
+        
+        # Get session data from Emergent Auth
+        session_data = await get_session_from_emergent(session_id)
+        
+        if not session_data:
+            raise HTTPException(status_code=401, detail="Invalid session_id")
+        
+        # Create or get user
+        user = await create_or_update_user(session_data)
+        
+        # Create session in our database
+        session_token = session_data["session_token"]
+        await create_session(user.id, session_token)
+        
+        # Set httpOnly cookie
+        response.set_cookie(
+            key="session_token",
+            value=session_token,
+            httponly=True,
+            secure=True,
+            samesite="none",
+            max_age=7 * 24 * 60 * 60,  # 7 days
+            path="/"
+        )
+        
+        logger.info(f"User {user.email} authenticated successfully")
+        
+        return {
+            "id": user.id,
+            "email": user.email,
+            "name": user.name,
+            "picture": user.picture,
+            "session_token": session_token
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in session-data: {str(e)}")
+        raise HTTPException(status_code=500, detail="Authentication error")
+
+@api_router.get("/auth/me", response_model=UserResponse)
+async def get_me(current_user: User = Depends(get_current_user)):
+    """Get current authenticated user"""
+    return UserResponse(
+        id=current_user.id,
+        email=current_user.email,
+        name=current_user.name,
+        picture=current_user.picture,
+        is_admin=current_user.is_admin,
+        email_verified=current_user.email_verified
+    )
+
+@api_router.post("/auth/logout")
+async def logout(
+    response: Response,
+    current_user: User = Depends(get_current_user),
+    session_token: Optional[str] = None
+):
+    """Logout user"""
+    try:
+        # Delete session from database
+        if session_token:
+            await db.user_sessions.delete_one({"session_token": session_token})
+        
+        # Clear cookie
+        response.delete_cookie(key="session_token", path="/")
+        
+        return {"success": True, "message": "Logged out successfully"}
+        
+    except Exception as e:
+        logger.error(f"Error during logout: {str(e)}")
+        raise HTTPException(status_code=500, detail="Logout error")
+
+@api_router.get("/auth/verify-email")
+async def verify_email(token: str):
+    """Verify user email with token"""
+    try:
+        success = await verify_email_token(token)
+        
+        if not success:
+            raise HTTPException(status_code=400, detail="Invalid or expired verification token")
+        
+        return {"success": True, "message": "Email verified successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error verifying email: {str(e)}")
+        raise HTTPException(status_code=500, detail="Verification error")
+
+# ============================================================================
+# SUBSCRIPTION ENDPOINTS
+# ============================================================================
+
+@api_router.get("/subscription/status", response_model=SubscriptionResponse)
+async def get_subscription(current_user: User = Depends(get_current_user)):
+    """Get current user's subscription status"""
+    return await get_subscription_status(current_user.id)
+
+@api_router.post("/subscription/create")
+async def create_subscription(
+    request: PayPalSubscriptionRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """Create Pro subscription via PayPal"""
+    try:
+        result = await create_paypal_subscription(current_user.id, request.plan_id)
+        return result
+    except Exception as e:
+        logger.error(f"Error creating subscription: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error processing subscription")
+
+@api_router.post("/subscription/cancel")
+async def cancel_user_subscription(current_user: User = Depends(get_current_user)):
+    """Cancel Pro subscription"""
+    return await cancel_subscription(current_user.id)
+
+# ============================================================================
+# ADMIN ENDPOINTS
+# ============================================================================
+
+@api_router.get("/admin/users")
+async def get_all_users(
+    skip: int = 0,
+    limit: int = 50,
+    admin_user: User = Depends(require_admin)
+):
+    """Get all users (admin only)"""
+    try:
+        users_cursor = db.users.find().skip(skip).limit(limit).sort("created_at", -1)
+        users = []
+        
+        async for user_doc in users_cursor:
+            user_doc["id"] = str(user_doc["_id"])
+            
+            # Get subscription info
+            sub_doc = await db.subscriptions.find_one({"user_id": user_doc["id"]})
+            tier = sub_doc.get("tier", "free") if sub_doc else "free"
+            
+            users.append({
+                "id": user_doc["id"],
+                "email": user_doc["email"],
+                "name": user_doc["name"],
+                "tier": tier,
+                "email_verified": user_doc.get("email_verified", False),
+                "created_at": user_doc["created_at"].isoformat()
+            })
+        
+        return {"users": users, "total": await db.users.count_documents({})}
+        
+    except Exception as e:
+        logger.error(f"Error getting users: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error fetching users")
+
+@api_router.get("/admin/stats", response_model=AdminStatsResponse)
+async def get_admin_stats(admin_user: User = Depends(require_admin)):
+    """Get admin statistics"""
+    try:
+        # Count users
+        total_users = await db.users.count_documents({})
+        
+        # Count by subscription tier
+        pro_users = await db.subscriptions.count_documents({"tier": "pro", "status": "active"})
+        free_users = total_users - pro_users
+        
+        # Count generations
+        total_generations = await db.audio_generations.count_documents({})
+        
+        # Generations today
+        today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+        generations_today = await db.usage_logs.count_documents({
+            "created_at": {"$gte": today_start}
+        })
+        
+        return AdminStatsResponse(
+            total_users=total_users,
+            free_users=free_users,
+            pro_users=pro_users,
+            total_generations_today=generations_today,
+            total_generations_all_time=total_generations
+        )
+        
+    except Exception as e:
+        logger.error(f"Error getting stats: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error fetching statistics")
+
+@api_router.post("/admin/grant-pro")
+async def admin_grant_pro(
+    request: AdminGrantProRequest,
+    admin_user: User = Depends(require_admin)
+):
+    """Grant Pro subscription to user"""
+    return await grant_pro_subscription(request.user_email, request.duration_months)
+
+@api_router.post("/admin/revoke-pro")
+async def admin_revoke_pro(
+    user_email: str,
+    admin_user: User = Depends(require_admin)
+):
+    """Revoke Pro subscription from user"""
+    return await revoke_pro_subscription(user_email)
+
+# ============================================================================
+# TEXT & AUDIO GENERATION ENDPOINTS (Updated with auth)
+# ============================================================================
+
 @api_router.get("/voices", response_model=List[Voice])
 async def get_voices():
     """Get available voices from Piper"""
