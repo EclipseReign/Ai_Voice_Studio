@@ -2,6 +2,7 @@ import os
 import uuid
 import logging
 import aiosmtplib
+import httpx
 from fastapi import HTTPException, Request, Depends, Cookie
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional
@@ -12,6 +13,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from models import User, UserSession, UserResponse
 from dotenv import load_dotenv
 from pathlib import Path
+from urllib.parse import urlencode
 
 logger = logging.getLogger(__name__)
 
@@ -24,8 +26,13 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-# Emergent Auth endpoint
-EMERGENT_AUTH_SESSION_URL = "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data"
+# Google OAuth Configuration
+GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
+GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
+GOOGLE_REDIRECT_URI = os.environ.get('GOOGLE_REDIRECT_URI')
+GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
+GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
+GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo"
 
 # Security
 security = HTTPBearer(auto_error=False)
