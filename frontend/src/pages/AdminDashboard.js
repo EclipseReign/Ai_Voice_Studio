@@ -83,6 +83,10 @@ const AdminDashboard = () => {
       alert(`Pro подписка отозвана у ${revokeEmail}`);
       setRevokeEmail('');
       fetchData();
+      // Refresh subscription if admin revoked Pro from themselves
+      if (user?.email === revokeEmail) {
+        await refreshSubscription();
+      }
     } catch (error) {
       alert(error.response?.data?.detail || 'Ошибка отзыва Pro');
     }
