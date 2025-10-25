@@ -757,6 +757,7 @@ async def generate_text(request: TextGenerateRequest, current_user: User = Depen
         text_id = str(uuid.uuid4())
         generation_doc = {
             "id": text_id,
+            "user_id": current_user.id,
             "text": generated_text,
             "prompt": request.prompt,
             "language": request.language,
