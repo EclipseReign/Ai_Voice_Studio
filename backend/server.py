@@ -313,27 +313,37 @@ async def root():
 # AUTHENTICATION ENDPOINTS
 # ============================================================================
 
-@api_router.get("/auth/session-data")
-async def get_session_data(request: Request, response: Response):
-    """Process session_id from Emergent Auth and create user session"""
+@api_router.get("/auth/google")
+async def google_login():
+    """Initiate Google OAuth flow"""
     try:
-        # Get session_id from header
-        session_id = request.headers.get("X-Session-ID")
+        auth_url = await get_google_oauth_url()
+        return {"auth_url": auth_url}
+    except Exception as e:
+        logger.error(f"Error initiating Google OAuth: {str(e)}")
+        raise HTTPException(status_code=500, detail="OAuth initialization error")
+
+@api_router.get("/auth/google/callback")
+async def google_callback(code: str, response: Response):
+    """Handle Google OAuth callback"""
+    try:
+        # Exchange code for tokens
+        tokens = await exchange_code_for_tokens(code)
         
-        if not session_id:
-            raise HTTPException(status_code=400, detail="X-Session-ID header required")
+        if not tokens or "access_token" not in tokens:
+            raise HTTPException(status_code=401, detail="Failed to get access token")
         
-        # Get session data from Emergent Auth
-        session_data = await get_session_from_emergent(session_id)
+        # Get user info from Google
+        user_info = await get_google_user_info(tokens["access_token"])
         
-        if not session_data:
-            raise HTTPException(status_code=401, detail="Invalid session_id")
+        if not user_info or "email" not in user_info:
+            raise HTTPException(status_code=401, detail="Failed to get user info")
         
         # Create or get user
-        user = await create_or_update_user(session_data)
+        user = await create_or_update_user(user_info)
         
         # Create session in our database
-        session_token = session_data["session_token"]
+        session_token = str(uuid.uuid4())
         await create_session(user.id, session_token)
         
         # Set httpOnly cookie
@@ -347,7 +357,7 @@ async def get_session_data(request: Request, response: Response):
             path="/"
         )
         
-        logger.info(f"User {user.email} authenticated successfully")
+        logger.info(f"User {user.email} authenticated successfully via Google")
         
         return {
             "id": user.id,
@@ -360,7 +370,7 @@ async def get_session_data(request: Request, response: Response):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error in session-data: {str(e)}")
+        logger.error(f"Error in Google callback: {str(e)}")
         raise HTTPException(status_code=500, detail="Authentication error")
 
 @api_router.get("/auth/me", response_model=UserResponse)
