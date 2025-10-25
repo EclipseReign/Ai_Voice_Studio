@@ -1015,7 +1015,7 @@ async def synthesize_audio_with_progress(
                     task = synthesize_audio_segment_fast(
                         text=segment,
                         voice=voice_obj,
-                        rate=rate,
+                        rate=request.rate,
                         segment_idx=global_idx,
                         temp_dir=temp_dir
                     )
