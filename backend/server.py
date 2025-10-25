@@ -81,10 +81,116 @@ VOICES_CACHE_FILE = PIPER_MODELS_DIR / "voices_cache.json"
 # Cache for loaded Piper voices
 loaded_voices: Dict[str, PiperVoice] = {}
 
-# Thread pool executor for maximum parallelization
+# Thread pool executor for maximum parallelization (optimized for Railway 8 vCPU)
 max_workers = max(multiprocessing.cpu_count() * 2, 16)  # Use 2x CPU cores or minimum 16 threads
 executor = ThreadPoolExecutor(max_workers=max_workers)
 logger.info(f"Initialized ThreadPoolExecutor with {max_workers} workers")
+
+# ============================================================================
+# QUEUE MANAGEMENT SYSTEM (Fair Share with Pro Priority)
+# ============================================================================
+import time
+from dataclasses import dataclass, field
+from typing import Dict, List
+from collections import defaultdict
+
+@dataclass
+class QueueJob:
+    """Represents a job in the queue"""
+    job_id: str
+    user_id: str
+    is_pro: bool
+    segments_count: int
+    start_time: float = field(default_factory=time.time)
+    priority_score: float = 0.0
+    
+    def __post_init__(self):
+        # Pro users get 2x priority
+        base_priority = 2.0 if self.is_pro else 1.0
+        # FIFO: jobs that arrived earlier get slight priority boost
+        wait_time_bonus = (time.time() - self.start_time) * 0.01
+        self.priority_score = base_priority + wait_time_bonus
+
+class QueueManager:
+    """Manages audio generation queue with fair share and priority"""
+    def __init__(self, max_concurrent_jobs: int = 3):
+        self.max_concurrent_jobs = max_concurrent_jobs
+        self.active_jobs: Dict[str, QueueJob] = {}
+        self.queue: List[QueueJob] = []
+        self.lock = asyncio.Lock()
+        self.user_active_jobs: Dict[str, int] = defaultdict(int)
+        
+    async def add_job(self, job: QueueJob) -> int:
+        """Add job to queue and return position"""
+        async with self.lock:
+            self.queue.append(job)
+            # Sort by priority (higher priority first)
+            self.queue.sort(key=lambda j: j.priority_score, reverse=True)
+            return self.queue.index(job) + 1
+    
+    async def can_start_job(self, job: QueueJob) -> bool:
+        """Check if job can start based on fair share policy"""
+        async with self.lock:
+            # If under max concurrent limit, allow
+            if len(self.active_jobs) < self.max_concurrent_jobs:
+                return True
+            
+            # Fair share: check if this user has fewer active jobs than others
+            user_job_count = self.user_active_jobs[job.user_id]
+            avg_jobs_per_user = len(self.active_jobs) / max(len(self.user_active_jobs), 1)
+            
+            # Allow if user has fewer than average jobs
+            if user_job_count < avg_jobs_per_user:
+                return True
+            
+            # Pro users can bypass if they have priority
+            if job.is_pro and len(self.active_jobs) < self.max_concurrent_jobs * 1.5:
+                return True
+                
+            return False
+    
+    async def start_job(self, job: QueueJob):
+        """Mark job as started"""
+        async with self.lock:
+            if job in self.queue:
+                self.queue.remove(job)
+            self.active_jobs[job.job_id] = job
+            self.user_active_jobs[job.user_id] += 1
+    
+    async def finish_job(self, job_id: str):
+        """Mark job as finished"""
+        async with self.lock:
+            if job_id in self.active_jobs:
+                job = self.active_jobs.pop(job_id)
+                self.user_active_jobs[job.user_id] = max(0, self.user_active_jobs[job.user_id] - 1)
+                if self.user_active_jobs[job.user_id] == 0:
+                    del self.user_active_jobs[job.user_id]
+    
+    async def get_queue_position(self, job_id: str) -> Optional[int]:
+        """Get position in queue (None if active or not found)"""
+        async with self.lock:
+            if job_id in self.active_jobs:
+                return 0  # Active
+            for idx, job in enumerate(self.queue):
+                if job.job_id == job_id:
+                    return idx + 1
+            return None
+    
+    def get_batch_size_for_user(self, is_pro: bool) -> int:
+        """Calculate batch size based on user tier and current load"""
+        base_batch = 50 if is_pro else 30  # Pro gets larger batches
+        
+        # Reduce batch size if many concurrent jobs
+        active_count = len(self.active_jobs)
+        if active_count > 2:
+            base_batch = int(base_batch * 0.7)
+        if active_count > 4:
+            base_batch = int(base_batch * 0.5)
+            
+        return max(base_batch, 20)  # Minimum 20
+
+# Global queue manager
+queue_manager = QueueManager(max_concurrent_jobs=3)  # 3 concurrent generations for 8 vCPU
 
 # Models
 class Voice(BaseModel):
