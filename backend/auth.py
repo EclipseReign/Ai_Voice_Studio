@@ -158,7 +158,7 @@ async def create_or_update_user(user_info: dict) -> User:
     """Create new user or return existing user"""
     try:
         # Check if user exists
-        existing_user = await db.users.find_one({"email": session_data["email"]})
+        existing_user = await db.users.find_one({"email": user_info["email"]})
         
         if existing_user:
             # Return existing user (don't update data)
@@ -170,28 +170,29 @@ async def create_or_update_user(user_info: dict) -> User:
         verification_token = str(uuid.uuid4())
         
         # Check if user is admin
-        is_admin = (session_data["email"] == os.environ.get('ADMIN_EMAIL', ''))
+        is_admin = (user_info["email"] == os.environ.get('ADMIN_EMAIL', ''))
         
         user_doc = {
             "_id": user_id,
             "id": user_id,
-            "email": session_data["email"],
-            "name": session_data["name"],
-            "picture": session_data.get("picture"),
+            "email": user_info["email"],
+            "name": user_info.get("name", user_info["email"]),
+            "picture": user_info.get("picture"),
             "is_admin": is_admin,
-            "email_verified": False,
-            "verification_token": verification_token,
+            "email_verified": user_info.get("verified_email", False),
+            "verification_token": verification_token if not user_info.get("verified_email") else None,
             "created_at": datetime.now(timezone.utc)
         }
         
         await db.users.insert_one(user_doc)
         
-        # Send verification email
-        await send_verification_email(
-            session_data["email"],
-            session_data["name"],
-            verification_token
-        )
+        # Send verification email only if not verified by Google
+        if not user_info.get("verified_email", False):
+            await send_verification_email(
+                user_info["email"],
+                user_info.get("name", user_info["email"]),
+                verification_token
+            )
         
         user_doc["id"] = user_id
         return User(**user_doc)
