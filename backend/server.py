@@ -685,9 +685,21 @@ async def generate_text_with_progress(
     return StreamingResponse(generate_progress(), media_type="text/event-stream")
 
 @api_router.post("/text/generate", response_model=TextGenerateResponse)
-async def generate_text(request: TextGenerateRequest):
-    """Generate text based on prompt and duration using LLM"""
+async def generate_text(request: TextGenerateRequest, current_user: User = Depends(get_current_user)):
+    """Generate text based on prompt and duration using LLM (requires auth)"""
     try:
+        # Check if user can generate
+        can_generate_info = await check_can_generate(current_user.id)
+        
+        if not can_generate_info["can_generate"]:
+            raise HTTPException(
+                status_code=429, 
+                detail=f'Достигнут дневной лимит ({can_generate_info["limit"]} генераций). Обновитесь до Pro для безлимитного доступа.'
+            )
+        
+        # Log usage
+        await log_usage(current_user.id, "text_generation")
+        
         # Calculate target word count
         target_words = calculate_word_count(request.duration_minutes)
         
