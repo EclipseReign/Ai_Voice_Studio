@@ -1169,12 +1169,12 @@ async def download_audio(audio_id: str):
         raise HTTPException(status_code=500, detail=f"Error downloading audio: {str(e)}")
 
 @api_router.get("/history", response_model=List[GenerationHistory])
-async def get_history():
-    """Get generation history"""
+async def get_history(current_user: User = Depends(get_current_user)):
+    """Get generation history for current user"""
     try:
-        # Fetch audio generations with most recent first
+        # Fetch audio generations for current user only, most recent first
         audio_gens = await db.audio_generations.find(
-            {}, {"_id": 0}
+            {"user_id": current_user.id}, {"_id": 0}
         ).sort("created_at", -1).limit(50).to_list(50)
         
         history = []
