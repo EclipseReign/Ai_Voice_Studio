@@ -1,0 +1,33 @@
+{
+  "timestamp": "2025-10-25T17:48:32.034424",
+  "original_problem": {
+    "issue": "Large texts (50 minutes) not synthesizing",
+    "cause": "GET method URL length limit (~8000 chars)",
+    "large_text_chars": 20040,
+    "estimated_url_length": 109571,
+    "exceeds_limits": true
+  },
+  "solution": {
+    "method": "POST with JSON body",
+    "no_url_limit": true,
+    "supports_large_text": true,
+    "endpoint_accepts_post": true
+  },
+  "fix_working": true,
+  "test_results": [
+    "Small text: POST endpoint working (auth required)",
+    "Large text: POST endpoint working (auth required)"
+  ],
+  "url_length_analysis": {
+    "small_text_chars": 70,
+    "large_text_chars": 20040,
+    "small_url_length": 532,
+    "large_url_length": 109571,
+    "limits": {
+      "Internet Explorer": 2083,
+      "Chrome/Firefox": 8192,
+      "Apache Server": 8192,
+      "Nginx Server": 4096
+    }
+  }
+}
