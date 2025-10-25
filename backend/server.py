@@ -600,7 +600,8 @@ async def generate_text_with_progress(
             can_generate_info = await check_can_generate(current_user.id)
             
             if not can_generate_info["can_generate"]:
-                yield f"data: {json.dumps({'type': 'error', 'message': f'Достигнут дневной лимит ({can_generate_info[\"limit\"]} генераций). Обновитесь до Pro для безлимитного доступа.'})}\n\n"
+                error_msg = f'Достигнут дневной лимит ({can_generate_info["limit"]} генераций). Обновитесь до Pro для безлимитного доступа.'
+                yield f"data: {json.dumps({'type': 'error', 'message': error_msg})}\n\n"
                 return
             
             # Log usage
@@ -610,7 +611,8 @@ async def generate_text_with_progress(
             target_words = calculate_word_count(duration_minutes)
             chunk_size = 1200
             
-            yield f"data: {json.dumps({'type': 'info', 'message': f'Генерация текста ({target_words} слов)', 'progress': 0})}\n\n"
+            info_msg = f'Генерация текста ({target_words} слов)'
+            yield f"data: {json.dumps({'type': 'info', 'message': info_msg, 'progress': 0})}\n\n"
             
             if target_words <= chunk_size:
                 # Short text
