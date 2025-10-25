@@ -9,6 +9,7 @@ WORKDIR /app
 
 # Ускоряем установку зависимостей
 COPY requirements.txt .
+RUN pip install --no-cache-dir emergentintegrations --extra-index-url https://d33sy5i8bnduwe.cloudfront.net/simple/
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Копируем код
