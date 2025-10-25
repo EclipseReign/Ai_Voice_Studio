@@ -1,0 +1,18 @@
+{
+  "timestamp": "2025-10-25T17:46:19.398045",
+  "overall_success": false,
+  "test_results": [
+    {
+      "test_name": "Voices Available",
+      "success": true,
+      "details": "Found 80 total voices, 4 Russian, 37 English",
+      "timestamp": "2025-10-25T17:46:19.354104"
+    },
+    {
+      "test_name": "Generate 50-minute Text",
+      "success": false,
+      "details": "HTTP 401: {\"detail\":\"Invalid or expired session\"}",
+      "timestamp": "2025-10-25T17:46:19.397939"
+    }
+  ]
+}
