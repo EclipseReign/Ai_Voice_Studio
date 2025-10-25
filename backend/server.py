@@ -961,7 +961,8 @@ async def synthesize_audio_with_progress(
             can_generate_info = await check_can_generate(current_user.id)
             
             if not can_generate_info["can_generate"]:
-                yield f"data: {json.dumps({'type': 'error', 'message': f'Достигнут дневной лимит ({can_generate_info[\"limit\"]} генераций). Обновитесь до Pro для безлимитного доступа.'})}\n\n"
+                error_msg = f'Достигнут дневной лимит ({can_generate_info["limit"]} генераций). Обновитесь до Pro для безлимитного доступа.'
+                yield f"data: {json.dumps({'type': 'error', 'message': error_msg})}\n\n"
                 return
             
             # Log usage
