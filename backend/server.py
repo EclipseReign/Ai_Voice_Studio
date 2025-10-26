@@ -179,17 +179,26 @@ class QueueManager:
             return None
     
     def get_batch_size_for_user(self, is_pro: bool) -> int:
-        """Calculate batch size based on user tier and current load"""
-        base_batch = 50 if is_pro else 30  # Pro gets larger batches
-        
-        # Reduce batch size if many concurrent jobs
+        """Get batch size based on user tier and current system load
+        Optimized for 10+ concurrent users with memory constraints"""
         active_count = len(self.active_jobs)
-        if active_count > 2:
-            base_batch = int(base_batch * 0.7)
-        if active_count > 4:
-            base_batch = int(base_batch * 0.5)
+        
+        # Base batch size - smaller to fit 10+ concurrent users in 8GB RAM
+        if is_pro:
+            base_batch = 20  # Pro: faster but memory-conscious
+        else:
+            base_batch = 12  # Free: slower to prioritize Pro users
+        
+        # Dynamic reduction based on load
+        # At 10 concurrent: batch size reduces significantly to prevent OOM
+        if active_count >= 8:
+            base_batch = int(base_batch * 0.4)  # 60% reduction
+        elif active_count >= 6:
+            base_batch = int(base_batch * 0.6)  # 40% reduction  
+        elif active_count >= 4:
+            base_batch = int(base_batch * 0.8)  # 20% reduction
             
-        return max(base_batch, 20)  # Minimum 20
+        return max(base_batch, 8)  # Minimum 8 for efficiency
 
 # Global queue manager
 queue_manager = QueueManager(max_concurrent_jobs=3)  # 3 concurrent generations for 8 vCPU
