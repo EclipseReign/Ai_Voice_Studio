@@ -1443,7 +1443,9 @@ async def synthesize_audio_with_progress(
                     
                     # Calculate ETA and speed based on batch completion (more accurate)
                     elapsed = time.time() - segments_start_time
-                    if batches_completed > 0 and elapsed > 0:
+                    
+                    # ALWAYS send progress update, with or without ETA
+                    if batches_completed > 0 and elapsed > 0.1:  # Changed from > 0 to > 0.1 to avoid division issues
                         time_per_batch = elapsed / batches_completed
                         remaining_batches = total_batches - batches_completed
                         
@@ -1462,9 +1464,10 @@ async def synthesize_audio_with_progress(
                         else:
                             eta_formatted = f"{int(eta_seconds)}с"
                         
-                        yield f"data: {json.dumps({'type': 'progress', 'progress': progress, 'message': f'Сегмент {completed_segments}/{total_segments}', 'stage': 'generating_segments', 'completed_segments': completed_segments, 'total_segments': total_segments, 'eta': eta_formatted, 'speed': round(speed, 1), 'elapsed': round(elapsed, 1)})}\n\n"
+                        yield f"data: {json.dumps({'type': 'progress', 'progress': progress, 'message': f'Генерация {completed_segments}/{total_segments} сегментов', 'stage': 'generating_segments', 'completed_segments': completed_segments, 'total_segments': total_segments, 'eta': eta_formatted, 'speed': round(speed, 1), 'elapsed': round(elapsed, 1)})}\n\n"
                     else:
-                        yield f"data: {json.dumps({'type': 'progress', 'progress': progress, 'message': f'Сегмент {completed_segments}/{total_segments}', 'stage': 'generating_segments', 'completed_segments': completed_segments, 'total_segments': total_segments})}\n\n"
+                        # First batch or very fast - show basic progress
+                        yield f"data: {json.dumps({'type': 'progress', 'progress': progress, 'message': f'Генерация {completed_segments}/{total_segments} сегментов', 'stage': 'generating_segments', 'completed_segments': completed_segments, 'total_segments': total_segments})}\n\n"
                 
                 # Stage 3: Combine audio segments (85-98%) with streaming to save memory
                 yield f"data: {json.dumps({'type': 'stage', 'stage': 'combining', 'message': 'Объединение аудио...', 'progress': 85})}\n\n"
