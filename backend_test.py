@@ -1038,9 +1038,19 @@ class PiperTTSAPITester:
         print("   Focus: Memory + Dynamic Allocation + Recovery + New Endpoints")
         print("=" * 70)
         
-        # PRIORITY TEST 1: ✅ TEXT GENERATION (10 minutes)
-        print("\n1️⃣ PRIORITY TEST: Text Generation (10 minutes)")
-        print("   Testing: Speed, word count (~1500 words), database storage")
+        # CRITICAL TEST 1: ✅ NEW ENDPOINT - Text Download
+        print("\n1️⃣ CRITICAL TEST: NEW ENDPOINT - Text Download")
+        print("   Testing: GET /api/text/download/{audio_id}")
+        
+        # First, we need to generate some audio to get an audio_id
+        # Get voices first
+        voices_success = self.test_voices_endpoint()
+        if not voices_success:
+            print("❌ Cannot get voices - stopping tests")
+            return False
+        
+        # Generate a short text and audio for testing
+        print("   Step 1: Generate test audio for text download...")
         
         start_time = time.time()
         text_result = self.test_text_generation_short_russian()
@@ -1048,8 +1058,7 @@ class PiperTTSAPITester:
         
         if text_result:
             print(f"   ✅ Text generation completed in {text_time:.1f} seconds")
-            print(f"   ✅ Generated {text_result['word_count']} words (target: ~1500)")
-            print(f"   ✅ Estimated duration: {text_result['estimated_duration']:.0f}s ({text_result['estimated_duration']/60:.1f} min)")
+            print(f"   ✅ Generated {text_result['word_count']} words")
             generated_text = text_result['text']
         else:
             print(f"   ❌ Text generation failed after {text_time:.1f} seconds")
