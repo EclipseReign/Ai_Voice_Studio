@@ -49,14 +49,14 @@ class OOMFixTester:
     def capture_backend_logs(self):
         """Capture backend logs to verify LRU cache behavior"""
         try:
-            # Get recent backend logs
+            # Get recent backend logs from error log (where our logging goes)
             result = subprocess.run([
-                "tail", "-n", "50", "/var/log/supervisor/backend.out.log"
+                "tail", "-n", "100", "/var/log/supervisor/backend.err.log"
             ], capture_output=True, text=True, timeout=10)
             
             if result.returncode == 0:
                 self.backend_logs = result.stdout.split('\n')
-                print(f"📋 Captured {len(self.backend_logs)} log lines")
+                print(f"📋 Captured {len(self.backend_logs)} log lines from backend.err.log")
             else:
                 print(f"⚠️  Could not capture backend logs: {result.stderr}")
         except Exception as e:
