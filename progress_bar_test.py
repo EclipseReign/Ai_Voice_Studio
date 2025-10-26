@@ -34,23 +34,28 @@ class ProgressBarTester:
         """Authenticate with the API to get session token"""
         print("🔐 Authenticating with API...")
         
-        # For testing, we'll use a test user or skip auth if not required
-        # The endpoints might require authentication based on the backend code
+        # Try to load test session token
         try:
-            # Try to access a protected endpoint to see if auth is required
-            response = requests.get(f"{self.base_url}/auth/me", timeout=10)
-            if response.status_code == 401:
-                print("   ⚠️  Authentication required but not implemented in test")
-                print("   ⚠️  Some tests may fail due to missing auth")
-                return False
-            elif response.status_code == 200:
-                print("   ✅ Already authenticated or auth not required")
+            with open('/app/test_session.txt', 'r') as f:
+                self.session_token = f.read().strip()
+            
+            # Test the session token
+            cookies = {'session_token': self.session_token}
+            response = requests.get(f"{self.base_url}/auth/me", cookies=cookies, timeout=10)
+            
+            if response.status_code == 200:
+                user_data = response.json()
+                print(f"   ✅ Authenticated as: {user_data.get('email', 'Unknown')}")
                 return True
             else:
-                print(f"   ⚠️  Unexpected auth response: {response.status_code}")
+                print(f"   ❌ Session token invalid: {response.status_code}")
                 return False
+                
+        except FileNotFoundError:
+            print("   ❌ No test session file found. Run create_test_user.py first")
+            return False
         except Exception as e:
-            print(f"   ⚠️  Auth check failed: {str(e)}")
+            print(f"   ❌ Auth failed: {str(e)}")
             return False
     
     def test_text_generation_short_progress(self):
