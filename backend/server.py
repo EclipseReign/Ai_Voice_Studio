@@ -1098,7 +1098,7 @@ async def synthesize_audio_parallel(request: AudioSynthesizeRequest):
         # Load voice once (optimization)
         voices_data = await fetch_available_voices()
         model_path, config_path = await download_voice_model(request.voice, voices_data)
-        voice = get_or_load_voice(request.voice, model_path, config_path)
+        voice = await get_or_load_voice(request.voice, model_path, config_path)
         
         # Split text into segments (using larger segments for better performance)
         segments = split_text_into_segments(request.text)
@@ -1119,6 +1119,7 @@ async def synthesize_audio_parallel(request: AudioSynthesizeRequest):
                 task = synthesize_audio_segment_fast(
                     text=segment,
                     voice=voice,
+                    voice_key=request.voice,  # NEW: for per-voice locking
                     rate=request.rate,
                     segment_idx=global_idx,
                     temp_dir=temp_dir
