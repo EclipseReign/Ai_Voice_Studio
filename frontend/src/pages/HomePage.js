@@ -57,6 +57,7 @@ const HomePage = () => {
   useEffect(() => {
     fetchVoices();
     fetchHistory();
+    checkPendingJobs(); // NEW: Check for pending jobs on mount (recovery)
   }, []);
   
   // Update selected voice when language changes
