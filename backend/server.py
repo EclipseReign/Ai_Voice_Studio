@@ -88,6 +88,7 @@ logger.info(f"Initialized ThreadPoolExecutor with {max_workers} workers")
 
 # ============================================================================
 # QUEUE MANAGEMENT SYSTEM (Fair Share with Pro Priority)
+# Optimized for 10+ concurrent users on 8GB RAM / 8 vCPU
 # ============================================================================
 import time
 from dataclasses import dataclass, field
@@ -111,13 +112,15 @@ class QueueJob:
         self.priority_score = base_priority + wait_time_bonus
 
 class QueueManager:
-    """Manages audio generation queue with fair share and priority"""
-    def __init__(self, max_concurrent_jobs: int = 3):
+    """Manages audio generation queue with fair share and priority
+    Optimized for 10+ concurrent users with memory and CPU constraints"""
+    def __init__(self, max_concurrent_jobs: int = 10):
         self.max_concurrent_jobs = max_concurrent_jobs
         self.active_jobs: Dict[str, QueueJob] = {}
         self.queue: List[QueueJob] = []
         self.lock = asyncio.Lock()
         self.user_active_jobs: Dict[str, int] = defaultdict(int)
+        self.job_timeout_seconds: int = 900  # 15 minutes max per job
         
     async def add_job(self, job: QueueJob) -> int:
         """Add job to queue and return position"""
