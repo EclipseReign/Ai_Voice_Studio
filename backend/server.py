@@ -200,8 +200,8 @@ class QueueManager:
             
         return max(base_batch, 8)  # Minimum 8 for efficiency
 
-# Global queue manager
-queue_manager = QueueManager(max_concurrent_jobs=3)  # 3 concurrent generations for 8 vCPU
+# Global queue manager - optimized for 10+ concurrent users
+queue_manager = QueueManager(max_concurrent_jobs=10)  # 10 concurrent for 8 vCPU with optimized memory
 
 # Models
 class Voice(BaseModel):
