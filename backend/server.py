@@ -977,7 +977,8 @@ async def generate_text_with_progress(
                 num_chunks = (target_words + chunk_size - 1) // chunk_size
                 chunks = []
                 
-                yield f"data: {json.dumps({'type': 'info', 'message': f'Генерация {num_chunks} частей', 'progress': 0})}\n\n"
+                yield f"data: {json.dumps({'type': 'info', 'message': f'Генерация {num_chunks} частей по ~{chunk_size} слов', 'progress': 5})}\n\n"
+                await asyncio.sleep(0.2)
                 
                 for i in range(num_chunks):
                     remaining_words = target_words - sum(len(chunk.split()) for chunk in chunks)
@@ -988,6 +989,10 @@ async def generate_text_with_progress(
                     
                     is_first = (i == 0)
                     is_last = (i == num_chunks - 1)
+                    
+                    # Progress update before generating chunk
+                    progress_before = int(5 + (i / num_chunks) * 85)  # 5-90% for generation
+                    yield f"data: {json.dumps({'type': 'progress', 'progress': progress_before, 'message': f'Генерация части {i+1}/{num_chunks}...'})}\n\n"
                     
                     chunk_text = await generate_text_chunk(
                         prompt,
@@ -1000,11 +1005,18 @@ async def generate_text_with_progress(
                     )
                     
                     chunks.append(chunk_text)
-                    progress = int(((i + 1) / num_chunks) * 100)
                     
-                    yield f"data: {json.dumps({'type': 'progress', 'progress': progress, 'message': f'Часть {i+1}/{num_chunks}'})}\n\n"
+                    # Progress update after chunk is generated
+                    progress_after = int(5 + ((i + 1) / num_chunks) * 85)
+                    current_word_count = sum(len(chunk.split()) for chunk in chunks)
+                    yield f"data: {json.dumps({'type': 'progress', 'progress': progress_after, 'message': f'Готово {i+1}/{num_chunks} частей ({current_word_count} слов)'})}\n\n"
                 
+                yield f"data: {json.dumps({'type': 'progress', 'progress': 92, 'message': 'Объединение частей...'})}\n\n"
                 generated_text = " ".join(chunks)
+                await asyncio.sleep(0.2)
+                
+                yield f"data: {json.dumps({'type': 'progress', 'progress': 97, 'message': 'Сохранение результата...'})}\n\n"
+                await asyncio.sleep(0.1)
             
             word_count = len(generated_text.split())
             estimated_duration = estimate_duration(generated_text)
