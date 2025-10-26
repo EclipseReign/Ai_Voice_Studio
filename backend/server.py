@@ -464,11 +464,13 @@ async def download_voice_model(voice_key: str, voices_data: Dict) -> tuple[Path,
         raise
 
 def get_or_load_voice(voice_key: str, model_path: Path, config_path: Path) -> PiperVoice:
-    """Get a cached voice or load it"""
-    if voice_key not in loaded_voices:
-        logger.info(f"Loading voice: {voice_key}")
-        loaded_voices[voice_key] = PiperVoice.load(str(model_path), str(config_path))
-    return loaded_voices[voice_key]
+    """Get a cached voice or load it with LRU eviction"""
+    voice = loaded_voices.get(voice_key)
+    if voice is None:
+        logger.info(f"Loading voice from disk: {voice_key}")
+        voice = PiperVoice.load(str(model_path), str(config_path))
+        loaded_voices.put(voice_key, voice)
+    return voice
 
 @api_router.get("/")
 async def root():
