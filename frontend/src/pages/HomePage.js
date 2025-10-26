@@ -698,7 +698,7 @@ const HomePage = () => {
                       </div>
                       
                       <Button 
-                        onClick={() => handleSynthesize(manualText)}
+                        onClick={() => handleSynthesize()}
                         disabled={isSynthesizing}
                         className="w-full"
                         size="lg"
