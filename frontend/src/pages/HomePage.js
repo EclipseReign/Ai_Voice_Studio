@@ -1031,7 +1031,17 @@ const HomePage = () => {
             {history.length > 0 && (
               <Card className="backdrop-blur-sm bg-white/80 border-slate-200 shadow-xl" data-testid="history-card">
                 <CardHeader>
-                  <CardTitle>Recent Generations</CardTitle>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>Recent Generations</span>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={cleanupOldFiles}
+                      className="text-xs"
+                    >
+                      🧹 Очистить старые
+                    </Button>
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -1040,11 +1050,21 @@ const HomePage = () => {
                         <p className="text-sm text-slate-700 mb-2">{item.text}</p>
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-slate-500">{new Date(item.created_at).toLocaleString()}</span>
-                          <a href={API + item.audio_url} download>
-                            <Button size="sm" variant="ghost" data-testid={'history-download-' + item.id}>
-                              <Download className="w-3 h-3" />
+                          <div className="flex gap-2">
+                            <Button 
+                              size="sm" 
+                              variant="ghost"
+                              onClick={() => downloadText(item.id)}
+                              title="Скачать текст"
+                            >
+                              📄
                             </Button>
-                          </a>
+                            <a href={API + item.audio_url} download>
+                              <Button size="sm" variant="ghost" data-testid={'history-download-' + item.id} title="Скачать аудио">
+                                <Download className="w-3 h-3" />
+                              </Button>
+                            </a>
+                          </div>
                         </div>
                       </div>
                     ))}
