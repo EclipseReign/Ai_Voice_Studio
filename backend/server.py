@@ -78,8 +78,53 @@ PIPER_MODELS_DIR = ROOT_DIR / "piper_models"
 PIPER_MODELS_DIR.mkdir(exist_ok=True)
 VOICES_CACHE_FILE = PIPER_MODELS_DIR / "voices_cache.json"
 
-# Cache for loaded Piper voices
-loaded_voices: Dict[str, PiperVoice] = {}
+# Cache for loaded Piper voices with LRU eviction (max 2 models ~200MB to prevent OOM)
+from collections import OrderedDict
+
+class VoiceCache:
+    """LRU cache for Piper voice models to prevent OOM when multiple users use different voices"""
+    def __init__(self, max_size: int = 2):
+        self.cache: OrderedDict[str, PiperVoice] = OrderedDict()
+        self.max_size = max_size
+        logger.info(f"Initialized VoiceCache with max_size={max_size} models")
+    
+    def get(self, key: str) -> Optional[PiperVoice]:
+        """Get voice from cache, moving it to end (most recently used)"""
+        if key in self.cache:
+            # Move to end (mark as recently used)
+            self.cache.move_to_end(key)
+            logger.info(f"Voice cache HIT: {key} (cache size: {len(self.cache)})")
+            return self.cache[key]
+        logger.info(f"Voice cache MISS: {key}")
+        return None
+    
+    def put(self, key: str, value: PiperVoice):
+        """Add voice to cache, evicting least recently used if cache is full"""
+        if key in self.cache:
+            # Already exists, just move to end
+            self.cache.move_to_end(key)
+            logger.info(f"Voice updated in cache: {key}")
+        else:
+            # Check if we need to evict
+            if len(self.cache) >= self.max_size:
+                # Evict least recently used (first item)
+                evicted_key, evicted_voice = self.cache.popitem(last=False)
+                # Explicitly delete the model to free memory
+                del evicted_voice
+                logger.warning(f"Voice EVICTED from cache (LRU): {evicted_key} - freed memory")
+            
+            self.cache[key] = value
+            logger.info(f"Voice LOADED into cache: {key} (cache size: {len(self.cache)}/{self.max_size})")
+    
+    def __contains__(self, key: str) -> bool:
+        return key in self.cache
+    
+    def clear(self):
+        """Clear all voices from cache"""
+        self.cache.clear()
+        logger.info("Voice cache cleared")
+
+loaded_voices = VoiceCache(max_size=2)  # Max 2 models in memory (~200MB)
 
 # Thread pool executor for parallel audio synthesis (optimized for 10+ concurrent users)
 # Each user needs a few threads for their batch, so we need more total workers
