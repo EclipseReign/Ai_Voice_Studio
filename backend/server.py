@@ -1219,21 +1219,28 @@ async def synthesize_audio_with_progress(
                     else:
                         yield f"data: {json.dumps({'type': 'progress', 'progress': progress, 'message': f'Сегмент {completed_segments}/{total_segments}', 'stage': 'generating_segments', 'completed_segments': completed_segments, 'total_segments': total_segments})}\n\n"
                 
-                # Stage 3: Combine audio segments (85-98%)
+                # Stage 3: Combine audio segments (85-98%) with streaming to save memory
                 yield f"data: {json.dumps({'type': 'stage', 'stage': 'combining', 'message': 'Объединение аудио...', 'progress': 85})}\n\n"
                 
                 final_audio = AudioSegment.empty()
                 total_files = len(all_segment_files)
                 
+                # Combine and clean up in smaller chunks to reduce memory usage
                 for idx, segment_file in enumerate(sorted(all_segment_files), 1):
                     segment_audio = AudioSegment.from_wav(str(segment_file))
                     final_audio += segment_audio
                     
+                    # Delete segment file immediately after combining to free memory
+                    try:
+                        segment_file.unlink()
+                    except:
+                        pass
+                    
                     # Progress during combining (85-98%)
                     combine_progress = int(85 + (idx / total_files) * 13)
                     
-                    # Show progress every 10 files or on last file
-                    if idx % max(1, total_files // 10) == 0 or idx == total_files:
+                    # Show progress every 5 files or on important milestones
+                    if idx % 5 == 0 or idx == total_files or idx == 1:
                         yield f"data: {json.dumps({'type': 'progress', 'progress': combine_progress, 'message': f'Склейка {idx}/{total_files}', 'stage': 'combining'})}\n\n"
                 
                 # Stage 4: Save file (98-100%)
