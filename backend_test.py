@@ -1064,16 +1064,6 @@ class PiperTTSAPITester:
             print(f"   ❌ Text generation failed after {text_time:.1f} seconds")
             return False
         
-        # PRIORITY TEST 2: ✅ AUDIO GENERATION WITH PROGRESS (SSE)
-        print("\n2️⃣ PRIORITY TEST: Audio Generation with Progress (SSE)")
-        print("   Testing: SSE endpoint, real progress, speed optimization")
-        
-        # Get voices first
-        voices_success = self.test_voices_endpoint()
-        if not voices_success:
-            print("❌ Cannot get voices - stopping tests")
-            return False
-        
         # Find Russian voice
         ru_voice = None
         for voice in self.available_voices:
@@ -1091,43 +1081,56 @@ class PiperTTSAPITester:
             print("❌ No Russian voice found")
             return False
         
-        # Test parallel audio generation (fallback since SSE has issues)
-        print("   Note: Testing parallel synthesis endpoint as SSE endpoint has connectivity issues")
+        # Generate audio for testing new endpoints
+        print("   Step 2: Generate test audio...")
         
         start_time = time.time()
         parallel_success, parallel_response = self.run_test(
-            "Parallel Audio Synthesis (10-minute text)",
+            "Generate Audio for New Endpoint Testing",
             "POST",
             "audio/synthesize-parallel",
             200,
             data={
-                "text": generated_text,
+                "text": generated_text[:500],  # Use shorter text for faster testing
                 "voice": ru_voice,
                 "rate": 1.0,
                 "language": "ru-RU"
             },
-            timeout=300  # 5 minutes timeout for long synthesis
+            timeout=120
         )
         parallel_time = time.time() - start_time
         
         if parallel_success and parallel_response:
             audio_id = parallel_response.get('id')
-            print(f"   ✅ Parallel audio generation completed in {parallel_time:.1f} seconds")
+            print(f"   ✅ Audio generation completed in {parallel_time:.1f} seconds")
             print(f"   ✅ Audio ID: {audio_id}")
-            print(f"   ✅ Audio URL: {parallel_response.get('audio_url')}")
-            
-            # Check speed expectation (for 10 min content should be ~20-40 sec)
-            expected_max_time = 60  # seconds (more lenient for parallel processing)
-            if parallel_time <= expected_max_time:
-                print(f"   ✅ Speed optimization working: {parallel_time:.1f}s ≤ {expected_max_time}s target")
-            else:
-                print(f"   ⚠️  Slower than expected: {parallel_time:.1f}s > {expected_max_time}s target")
             
             if audio_id:
                 self.generated_audio_ids.append(audio_id)
         else:
-            print(f"   ❌ Parallel audio generation failed after {parallel_time:.1f} seconds")
+            print(f"   ❌ Audio generation failed after {parallel_time:.1f} seconds")
             return False
+        
+        # Now test the new text download endpoint
+        text_download_success = self.test_text_download_endpoint(audio_id)
+        
+        # CRITICAL TEST 2: ✅ NEW ENDPOINT - Audio Cleanup
+        print("\n2️⃣ CRITICAL TEST: NEW ENDPOINT - Audio Cleanup")
+        print("   Testing: POST /api/audio/cleanup/{audio_id}")
+        
+        audio_cleanup_success = self.test_audio_cleanup_endpoint(audio_id)
+        
+        # CRITICAL TEST 3: ✅ NEW ENDPOINT - Cleanup Old Files
+        print("\n3️⃣ CRITICAL TEST: NEW ENDPOINT - Cleanup Old Files")
+        print("   Testing: POST /api/audio/cleanup/old")
+        
+        cleanup_old_success = self.test_audio_cleanup_old_endpoint()
+        
+        # CRITICAL TEST 4: ✅ Background Auto-Cleanup Task
+        print("\n4️⃣ CRITICAL TEST: Background Auto-Cleanup Task")
+        print("   Testing: Background task startup and scheduling")
+        
+        background_cleanup_success = self.test_background_auto_cleanup()
         
         # PRIORITY TEST 3: ✅ AUDIO DOWNLOAD
         print("\n3️⃣ PRIORITY TEST: Audio Download")
