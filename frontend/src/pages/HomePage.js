@@ -1017,12 +1017,22 @@ const HomePage = () => {
                     <source src={audioUrl} type="audio/mpeg" />
                     Your browser does not support the audio element.
                   </audio>
-                  <a href={audioUrl} download>
-                    <Button className="w-full" variant="outline" data-testid="download-button">
-                      <Download className="w-4 h-4 mr-2" />
-                      Download Audio
+                  <div className="grid grid-cols-2 gap-2">
+                    <a href={audioUrl} download className="w-full">
+                      <Button className="w-full" variant="outline" data-testid="download-button">
+                        <Download className="w-4 h-4 mr-2" />
+                        Скачать аудио
+                      </Button>
+                    </a>
+                    <Button 
+                      className="w-full" 
+                      variant="outline"
+                      onClick={() => currentAudioId && downloadText(currentAudioId)}
+                      disabled={!currentAudioId}
+                    >
+                      📄 Скачать текст
                     </Button>
-                  </a>
+                  </div>
                 </CardContent>
               </Card>
             )}
