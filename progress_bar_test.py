@@ -81,7 +81,8 @@ class ProgressBarTester:
         try:
             print(f"   📡 Connecting to SSE endpoint: {url}")
             
-            with httpx.stream("GET", url, params=params, timeout=120) as response:
+            cookies = {'session_token': self.session_token} if self.session_token else {}
+            with httpx.stream("GET", url, params=params, cookies=cookies, timeout=120) as response:
                 if response.status_code != 200:
                     print(f"   ❌ SSE request failed with status {response.status_code}")
                     if response.status_code == 401:
