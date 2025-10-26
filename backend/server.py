@@ -81,8 +81,9 @@ VOICES_CACHE_FILE = PIPER_MODELS_DIR / "voices_cache.json"
 # Cache for loaded Piper voices
 loaded_voices: Dict[str, PiperVoice] = {}
 
-# Thread pool executor for maximum parallelization (optimized for Railway 8 vCPU)
-max_workers = max(multiprocessing.cpu_count() * 2, 16)  # Use 2x CPU cores or minimum 16 threads
+# Thread pool executor for parallel audio synthesis (optimized for 10+ concurrent users)
+# Each user needs a few threads for their batch, so we need more total workers
+max_workers = max(multiprocessing.cpu_count() * 6, 48)  # Use 6x CPU cores or minimum 48 threads
 executor = ThreadPoolExecutor(max_workers=max_workers)
 logger.info(f"Initialized ThreadPoolExecutor with {max_workers} workers")
 
