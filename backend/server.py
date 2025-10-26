@@ -317,6 +317,34 @@ class GenerationHistory(BaseModel):
     language: str
     created_at: str
 
+# NEW: Model for generation job state (for recovery after crashes)
+class GenerationJob(BaseModel):
+    """Tracks audio generation progress for crash recovery"""
+    model_config = ConfigDict(extra="ignore")
+    job_id: str
+    user_id: str
+    text: str
+    voice: str
+    rate: float
+    language: str
+    status: Literal["pending", "processing", "completed", "failed"]
+    total_segments: int
+    completed_segments: int
+    segment_files: List[str] = Field(default_factory=list)  # Paths to generated segments
+    temp_dir: str  # Path to temp directory
+    created_at: str
+    updated_at: str
+    error_message: Optional[str] = None
+
+class GenerationJobResponse(BaseModel):
+    """Response for generation job queries"""
+    job_id: str
+    status: str
+    completed_segments: int
+    total_segments: int
+    progress_percent: int
+    text_preview: str  # First 100 chars
+
 # Helper function to estimate speaking duration
 def estimate_duration(text: str, rate: float = 1.0) -> float:
     """Estimate audio duration in seconds. Average: 150 words per minute"""
