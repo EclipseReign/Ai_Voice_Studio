@@ -250,7 +250,10 @@ const HomePage = () => {
     }
   };
   
-  const handleSynthesize = async (text) => {
+  const handleSynthesize = async (textOverride = null, jobId = null) => {
+    // Use provided text or fall back to current text based on active tab
+    const text = textOverride || (activeTab === "ai-generate" ? generatedText : manualText);
+    
     if (!text.trim()) {
       toast.error("Пожалуйста, введите текст для озвучки");
       return;
@@ -263,7 +266,7 @@ const HomePage = () => {
     
     setIsSynthesizing(true);
     setAudioProgress(0);
-    setAudioProgressMessage("Подготовка...");
+    setAudioProgressMessage(jobId ? "Продолжение генерации..." : "Подготовка...");
     setAudioUrl(null);
     setAudioEta("");
     setAudioSpeed(0);
