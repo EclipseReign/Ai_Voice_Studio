@@ -911,11 +911,11 @@ async def generate_text(request: TextGenerateRequest, current_user: User = Depen
         raise HTTPException(status_code=500, detail=f"Error generating text: {str(e)}")
 
 # Helper function to split text into segments
-def split_text_into_segments(text: str, max_segment_length: int = 600) -> list:
+def split_text_into_segments(text: str, max_segment_length: int = 1000) -> list:
     """
     Split text into segments by sentences while trying to keep segment lengths reasonable
-    Optimized at 600 chars for maximum parallelization on 8 vCPU
-    Smaller segments = more parallel tasks = faster generation
+    Optimized at 1000 chars (up from 600) for better memory efficiency with 10+ concurrent users
+    Larger segments = fewer total segments = less memory overhead during concatenation
     Also adds pauses at punctuation marks for more natural speech
     """
     # Add pauses at punctuation for natural speech rhythm
