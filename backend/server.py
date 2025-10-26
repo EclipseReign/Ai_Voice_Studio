@@ -1751,6 +1751,129 @@ async def download_audio(audio_id: str):
         logger.error(f"Error downloading audio: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error downloading audio: {str(e)}")
 
+@api_router.get("/text/download/{audio_id}")
+async def download_text(audio_id: str, current_user: User = Depends(get_current_user)):
+    """Download generated text as .txt file"""
+    try:
+        # Fetch from database - verify user owns this generation
+        audio_doc = await db.audio_generations.find_one({
+            "id": audio_id,
+            "user_id": current_user.id
+        }, {"_id": 0})
+        
+        if not audio_doc:
+            raise HTTPException(status_code=404, detail="Text not found or access denied")
+        
+        text_content = audio_doc.get("text", "")
+        
+        if not text_content:
+            raise HTTPException(status_code=404, detail="Text content not available")
+        
+        # Return as downloadable .txt file
+        return Response(
+            content=text_content,
+            media_type="text/plain; charset=utf-8",
+            headers={
+                "Content-Disposition": f'attachment; filename="text_{audio_id}.txt"',
+                "Content-Type": "text/plain; charset=utf-8"
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error downloading text: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error downloading text: {str(e)}")
+
+@api_router.post("/audio/cleanup/{audio_id}")
+async def cleanup_audio_file(audio_id: str, current_user: User = Depends(get_current_user)):
+    """Delete audio file from disk (keeps database record)
+    Use after successful download to free up memory"""
+    try:
+        # Verify user owns this audio
+        audio_doc = await db.audio_generations.find_one({
+            "id": audio_id,
+            "user_id": current_user.id
+        }, {"_id": 0})
+        
+        if not audio_doc:
+            raise HTTPException(status_code=404, detail="Audio not found or access denied")
+        
+        audio_path = Path(audio_doc["audio_path"])
+        
+        # Delete file if it exists
+        deleted = False
+        if audio_path.exists():
+            try:
+                audio_path.unlink()
+                deleted = True
+                logger.info(f"Deleted audio file: {audio_id} ({audio_path.name})")
+            except Exception as e:
+                logger.warning(f"Could not delete audio file {audio_id}: {str(e)}")
+        
+        # Mark as cleaned in database
+        await db.audio_generations.update_one(
+            {"id": audio_id},
+            {"$set": {"file_deleted": True, "deleted_at": datetime.now(timezone.utc).isoformat()}}
+        )
+        
+        return {"success": True, "deleted": deleted, "message": "Audio file cleaned up"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error cleaning up audio: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error cleaning up audio: {str(e)}")
+
+@api_router.post("/audio/cleanup/old")
+async def cleanup_old_audio_files(current_user: User = Depends(get_current_user)):
+    """Delete old audio files to free memory
+    Keeps last 5 generations, deletes older ones"""
+    try:
+        # Get all user's audio generations, sorted by created_at (newest first)
+        audio_gens = await db.audio_generations.find(
+            {"user_id": current_user.id, "file_deleted": {"$ne": True}},
+            {"_id": 0, "id": 1, "audio_path": 1, "created_at": 1}
+        ).sort("created_at", -1).to_list(100)
+        
+        # Keep last 5, delete rest
+        keep_count = 5
+        to_delete = audio_gens[keep_count:]
+        
+        deleted_count = 0
+        freed_bytes = 0
+        
+        for gen in to_delete:
+            audio_path = Path(gen["audio_path"])
+            if audio_path.exists():
+                try:
+                    file_size = audio_path.stat().st_size
+                    audio_path.unlink()
+                    deleted_count += 1
+                    freed_bytes += file_size
+                    logger.info(f"Deleted old audio: {gen['id']}")
+                except Exception as e:
+                    logger.warning(f"Could not delete {gen['id']}: {str(e)}")
+            
+            # Mark as deleted in DB
+            await db.audio_generations.update_one(
+                {"id": gen["id"]},
+                {"$set": {"file_deleted": True, "deleted_at": datetime.now(timezone.utc).isoformat()}}
+            )
+        
+        freed_mb = freed_bytes / (1024 * 1024)
+        
+        return {
+            "success": True,
+            "deleted_count": deleted_count,
+            "freed_mb": round(freed_mb, 2),
+            "message": f"Deleted {deleted_count} old files, freed {freed_mb:.2f} MB"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error cleaning up old files: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error cleaning up old files: {str(e)}")
+
 @api_router.get("/history", response_model=List[GenerationHistory])
 async def get_history(current_user: User = Depends(get_current_user)):
     """Get generation history for current user"""
