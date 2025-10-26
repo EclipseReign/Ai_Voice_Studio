@@ -745,8 +745,11 @@ async def generate_text_with_progress(
             yield f"data: {json.dumps({'type': 'info', 'message': info_msg, 'progress': 0})}\n\n"
             
             if target_words <= chunk_size:
-                # Short text
-                yield f"data: {json.dumps({'type': 'progress', 'progress': 50, 'message': 'Генерация текста...'})}\n\n"
+                # Short text - add intermediate progress updates
+                yield f"data: {json.dumps({'type': 'progress', 'progress': 10, 'message': 'Подготовка запроса...'})}\n\n"
+                await asyncio.sleep(0.5)  # Small delay for UI update
+                
+                yield f"data: {json.dumps({'type': 'progress', 'progress': 30, 'message': 'Генерация текста...'})}\n\n"
                 
                 generated_text = await generate_text_chunk(
                     prompt, 
@@ -755,6 +758,8 @@ async def generate_text_with_progress(
                     is_complete=True
                 )
                 
+                yield f"data: {json.dumps({'type': 'progress', 'progress': 90, 'message': 'Финализация...'})}\n\n"
+                await asyncio.sleep(0.3)
                 yield f"data: {json.dumps({'type': 'progress', 'progress': 100, 'message': 'Текст готов'})}\n\n"
             else:
                 # Long text with chunks
