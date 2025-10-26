@@ -1431,8 +1431,15 @@ async def synthesize_audio_with_progress(
             # Add to queue
             queue_position = await queue_manager.add_job(queue_job)
             
+            # Check for high load and notify user
+            is_high_load = queue_manager.is_high_load()
+            active_user_count = queue_manager.get_active_user_count()
+            
+            if is_high_load:
+                yield f"data: {json.dumps({{'type': 'high_load', 'message': f'⚠️ Высокая нагрузка ({active_user_count}+ пользователей). Генерация может занять больше времени.', 'active_users': active_user_count})}\n\n"
+            
             if queue_position > 1:
-                yield f"data: {json.dumps({'type': 'queue', 'message': f'В очереди (позиция {queue_position})', 'progress': 0, 'queue_position': queue_position})}\n\n"
+                yield f"data: {json.dumps({{'type': 'queue', 'message': f'В очереди (позиция {queue_position})', 'progress': 0, 'queue_position': queue_position}})}\n\n"
             
             # Wait for our turn
             while not await queue_manager.can_start_job(queue_job):
