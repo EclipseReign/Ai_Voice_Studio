@@ -332,7 +332,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Audio synthesis with Piper TTS - OOM fix for multiple users"
+    - "Audio synthesis with Piper TTS - Race condition fix + Crash recovery"
   stuck_tasks: []
   test_all: false
   test_priority: "critical"
