@@ -1257,10 +1257,18 @@ async def synthesize_audio_with_progress(
                 # Get real audio duration
                 audio_duration = get_audio_duration(final_file)
                 
-                # Clean up temp files
-                for file in temp_dir.glob("*.wav"):
-                    file.unlink()
-                temp_dir.rmdir()
+                # Clean up temp directory (files already deleted inline during combining)
+                try:
+                    if temp_dir.exists():
+                        # Delete any remaining files
+                        for file in temp_dir.glob("*.wav"):
+                            try:
+                                file.unlink()
+                            except:
+                                pass
+                        temp_dir.rmdir()
+                except Exception as cleanup_error:
+                    logger.warning(f"Temp cleanup warning: {cleanup_error}")
                 
                 # Calculate total generation time and final speed
                 total_generation_time = time.time() - generation_start_time
