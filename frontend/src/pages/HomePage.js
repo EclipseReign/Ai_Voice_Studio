@@ -227,65 +227,6 @@ const HomePage = () => {
     }
   };
   
-  // NEW: Check for pending jobs on mount (auto-resume after crash)
-  useEffect(() => {
-    checkPendingJobs();
-  }, []);
-  
-  const checkPendingJobs = async () => {
-    try {
-      const response = await axios.get(API + '/jobs/pending', {
-        withCredentials: true
-      });
-      
-      const pendingJobs = response.data;
-      
-      if (pendingJobs && pendingJobs.length > 0) {
-        // Auto-resume the most recent pending job
-        const mostRecentJob = pendingJobs[0];
-        
-        toast.info(
-          `Обнаружена незавершенная генерация (${mostRecentJob.progress_percent}%). Автоматическое продолжение...`,
-          { duration: 5000 }
-        );
-        
-        // Fetch full job details and resume
-        resumePendingJob(mostRecentJob.job_id);
-      }
-    } catch (error) {
-      console.error("Error checking pending jobs:", error);
-    }
-  };
-  
-  const resumePendingJob = async (jobId) => {
-    try {
-      // Get full job details
-      const response = await axios.post(API + `/jobs/${jobId}/resume`, {}, {
-        withCredentials: true
-      });
-      
-      const jobDetails = response.data;
-      
-      // Set the text and voice from the job
-      if (activeTab === "ai-generate") {
-        setGeneratedText(jobDetails.text);
-      } else {
-        setManualText(jobDetails.text);
-      }
-      
-      // Set voice and language
-      setSelectedVoice(jobDetails.voice);
-      setLanguage(jobDetails.language);
-      
-      // Start synthesis with existing job
-      handleSynthesize(jobDetails.text, jobId);
-      
-    } catch (error) {
-      console.error("Error resuming job:", error);
-      toast.error("Не удалось продолжить генерацию");
-    }
-  };
-  
   const handleGenerateText = async () => {
     if (!prompt.trim()) {
       toast.error("Пожалуйста, введите промпт");
