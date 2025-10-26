@@ -1253,7 +1253,7 @@ async def synthesize_audio_with_progress(
                 
                 voices_data = await fetch_available_voices()
                 model_path, config_path = await download_voice_model(request.voice, voices_data)
-                voice_obj = get_or_load_voice(request.voice, model_path, config_path)
+                voice_obj = await get_or_load_voice(request.voice, model_path, config_path)
                 
                 yield f"data: {json.dumps({'type': 'progress', 'progress': 5, 'message': 'Модель загружена', 'stage': 'loading_model'})}\n\n"
                 
@@ -1281,6 +1281,7 @@ async def synthesize_audio_with_progress(
                         task = synthesize_audio_segment_fast(
                             text=segment,
                             voice=voice_obj,
+                            voice_key=request.voice,  # NEW: for per-voice locking
                             rate=request.rate,
                             segment_idx=global_idx,
                             temp_dir=temp_dir
