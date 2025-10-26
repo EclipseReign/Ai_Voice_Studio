@@ -252,26 +252,69 @@ class QueueManager:
             return None
     
     def get_batch_size_for_user(self, is_pro: bool) -> int:
-        """Get batch size based on user tier and current system load
-        Optimized for 10+ concurrent users with memory constraints"""
-        active_count = len(self.active_jobs)
+        """Dynamic resource allocation with Pro/Free ratio (70/30)
         
-        # Base batch size - smaller to fit 10+ concurrent users in 8GB RAM
+        When 1 user alone: uses ~80% of resources (leave 20% for stability)
+        When 1 Pro + 1 Free: Pro gets 70%, Free gets 30% (2.33x speed difference)
+        When multiple users: resources distributed according to Pro:Free = 70:30 ratio
+        
+        Optimized for 20+ concurrent users on 8GB RAM / 8 vCPU
+        """
+        active_jobs = list(self.active_jobs.values())
+        total_active = len(active_jobs)
+        
+        # Single user: give them most resources (leave 20% for server stability)
+        if total_active == 0:
+            return 38 if is_pro else 38  # ~80% of 48 threads
+        
+        if total_active == 1:
+            # First user gets generous allocation
+            return 38 if is_pro else 38
+        
+        # Multiple users: dynamic allocation with Pro/Free ratio
+        pro_count = sum(1 for job in active_jobs if job.is_pro)
+        free_count = total_active - pro_count
+        
+        # Weight system: Pro = 70 points, Free = 30 points
+        PRO_WEIGHT = 70
+        FREE_WEIGHT = 30
+        
+        # Calculate total weighted points in system
+        total_points = (pro_count * PRO_WEIGHT) + (free_count * FREE_WEIGHT)
+        
+        # Available resources (48 threads total, use 80% to keep 20% for stability)
+        MAX_THREADS = 48
+        usable_threads = int(MAX_THREADS * 0.8)  # 38 threads for audio generation
+        
+        if total_points == 0:
+            # Fallback: equal distribution
+            return max(6, usable_threads // total_active)
+        
+        # Calculate this user's share based on their weight
         if is_pro:
-            base_batch = 20  # Pro: faster but memory-conscious
+            # Pro user gets their weighted share
+            user_threads = int((PRO_WEIGHT / total_points) * usable_threads)
         else:
-            base_batch = 12  # Free: slower to prioritize Pro users
+            # Free user gets their weighted share
+            user_threads = int((FREE_WEIGHT / total_points) * usable_threads)
         
-        # Dynamic reduction based on load
-        # At 10 concurrent: batch size reduces significantly to prevent OOM
-        if active_count >= 8:
-            base_batch = int(base_batch * 0.4)  # 60% reduction
-        elif active_count >= 6:
-            base_batch = int(base_batch * 0.6)  # 40% reduction  
-        elif active_count >= 4:
-            base_batch = int(base_batch * 0.8)  # 20% reduction
-            
-        return max(base_batch, 8)  # Minimum 8 for efficiency
+        # Ensure reasonable bounds: min 6 (efficiency), max 40 (safety)
+        final_threads = max(6, min(user_threads, 40))
+        
+        # Log allocation for monitoring
+        logger.info(f"Resource allocation: {'Pro' if is_pro else 'Free'} user | "
+                   f"Active: {total_active} ({pro_count} Pro, {free_count} Free) | "
+                   f"Allocated threads: {final_threads}")
+        
+        return final_threads
+    
+    def is_high_load(self) -> bool:
+        """Check if system is under high load (10+ active users)"""
+        return len(self.active_jobs) >= 10
+    
+    def get_active_user_count(self) -> int:
+        """Get count of active users"""
+        return len(set(job.user_id for job in self.active_jobs.values()))
 
 # Global queue manager - optimized for 10+ concurrent users
 queue_manager = QueueManager(max_concurrent_jobs=10)  # 10 concurrent for 8 vCPU with optimized memory
