@@ -1295,13 +1295,42 @@ async def synthesize_audio_with_progress(
                 yield f"data: {json.dumps({'type': 'complete', 'progress': 100, 'audio_id': audio_id, 'audio_url': f'/audio/download/{audio_id}', 'duration': audio_duration, 'generation_time': round(total_generation_time, 1), 'speed': round(final_speed, 2), 'message': f'Готово! ({round(audio_duration/60, 1)} мин за {round(total_generation_time, 1)}с, скорость {round(final_speed, 1)}x)'})}\n\n"
                 
             finally:
-                # Always finish job in queue
+                # Always finish job in queue and cleanup temp files
                 await queue_manager.finish_job(job_id)
+                
+                # Cleanup temp directory if it still exists (in case of error)
+                try:
+                    if temp_dir.exists():
+                        for file in temp_dir.glob("*.wav"):
+                            try:
+                                file.unlink()
+                            except:
+                                pass
+                        temp_dir.rmdir()
+                except Exception as cleanup_error:
+                    logger.warning(f"Final cleanup warning: {cleanup_error}")
             
         except Exception as e:
             logger.error(f"Error in SSE audio synthesis: {str(e)}", exc_info=True)
-            if generation_start_time:
+            
+            # Cleanup on error
+            try:
+                if 'temp_dir' in locals() and temp_dir.exists():
+                    for file in temp_dir.glob("*.wav"):
+                        try:
+                            file.unlink()
+                        except:
+                            pass
+                    try:
+                        temp_dir.rmdir()
+                    except:
+                        pass
+            except:
+                pass
+            
+            if 'generation_start_time' in locals() and generation_start_time:
                 await queue_manager.finish_job(job_id)
+            
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
     
     return StreamingResponse(generate_progress(), media_type="text/event-stream")
