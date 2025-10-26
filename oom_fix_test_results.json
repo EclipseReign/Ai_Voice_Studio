@@ -1,0 +1,11 @@
+{
+  "timestamp": "2025-10-26T11:53:33.509918",
+  "overall_success": false,
+  "test_voices": [
+    "en_US-hfc_male-medium",
+    "en_US-libritts_r-medium",
+    "ru_RU-irina-medium"
+  ],
+  "backend_logs_captured": 8,
+  "test_results": []
+}
