@@ -323,10 +323,10 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Audio synthesis with Piper TTS"
+    - "Audio synthesis with Piper TTS - OOM fix for multiple users"
   stuck_tasks: []
   test_all: false
-  test_priority: "high_first"
+  test_priority: "critical"
 
 agent_communication:
   - agent: "main"
