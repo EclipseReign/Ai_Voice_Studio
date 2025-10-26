@@ -154,11 +154,11 @@ backend:
 
   - task: "Audio synthesis with Piper TTS"
     implemented: true
-    working: true
+    working: "NA"
     file: "/app/backend/server.py"
-    stuck_count: 1
+    stuck_count: 2
     priority: "critical"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
