@@ -950,10 +950,13 @@ async def generate_text_with_progress(
             
             if target_words <= chunk_size:
                 # Short text - add intermediate progress updates
-                yield f"data: {json.dumps({'type': 'progress', 'progress': 10, 'message': 'Подготовка запроса...'})}\n\n"
-                await asyncio.sleep(0.5)  # Small delay for UI update
+                yield f"data: {json.dumps({'type': 'progress', 'progress': 10, 'message': f'Подготовка запроса ({target_words} слов)...'})}\n\n"
+                await asyncio.sleep(0.3)  # Small delay for UI update
                 
-                yield f"data: {json.dumps({'type': 'progress', 'progress': 30, 'message': 'Генерация текста...'})}\n\n"
+                yield f"data: {json.dumps({'type': 'progress', 'progress': 20, 'message': 'Генерация началась...'})}\n\n"
+                await asyncio.sleep(0.2)
+                
+                yield f"data: {json.dumps({'type': 'progress', 'progress': 40, 'message': 'LLM обрабатывает запрос...'})}\n\n"
                 
                 generated_text = await generate_text_chunk(
                     prompt, 
@@ -962,9 +965,13 @@ async def generate_text_with_progress(
                     is_complete=True
                 )
                 
-                yield f"data: {json.dumps({'type': 'progress', 'progress': 90, 'message': 'Финализация...'})}\n\n"
-                await asyncio.sleep(0.3)
-                yield f"data: {json.dumps({'type': 'progress', 'progress': 100, 'message': 'Текст готов'})}\n\n"
+                yield f"data: {json.dumps({'type': 'progress', 'progress': 85, 'message': 'Текст получен, финализация...'})}\n\n"
+                await asyncio.sleep(0.2)
+                
+                yield f"data: {json.dumps({'type': 'progress', 'progress': 95, 'message': 'Сохранение результата...'})}\n\n"
+                await asyncio.sleep(0.1)
+                
+                yield f"data: {json.dumps({'type': 'progress', 'progress': 100, 'message': 'Текст готов!'})}\n\n"
             else:
                 # Long text with chunks
                 num_chunks = (target_words + chunk_size - 1) // chunk_size
