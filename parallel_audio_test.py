@@ -11,7 +11,7 @@ from pathlib import Path
 
 class ParallelAudioTester:
     def __init__(self):
-        self.base_url = "https://voice-flow-system.preview.emergentagent.com/api"
+        self.base_url = "https://codedoctor-6.preview.emergentagent.com/api"
         self.results = []
         
     def test_api_connection(self):
