@@ -184,7 +184,8 @@ class ProgressBarTester:
         
         # First get available voices
         try:
-            voices_response = requests.get(f"{self.base_url}/voices", timeout=30)
+            cookies = {'session_token': self.session_token} if self.session_token else {}
+            voices_response = requests.get(f"{self.base_url}/voices", cookies=cookies, timeout=30)
             if voices_response.status_code != 200:
                 print(f"   ❌ Failed to get voices: {voices_response.status_code}")
                 return None
