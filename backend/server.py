@@ -1432,6 +1432,15 @@ async def synthesize_audio_with_progress(
                     batches_completed += 1
                     progress = int(5 + (completed_segments / total_segments) * 80)  # 5-85% for generation
                     
+                    # NEW: Update generation job progress after each batch (for crash recovery)
+                    segment_file_paths = [str(f) for f in all_segment_files]
+                    await update_generation_job_progress(
+                        job_id=generation_job_id,
+                        completed_segments=completed_segments,
+                        segment_files=segment_file_paths,
+                        status="processing"
+                    )
+                    
                     # Calculate ETA and speed based on batch completion (more accurate)
                     elapsed = time.time() - segments_start_time
                     if batches_completed > 0 and elapsed > 0:
