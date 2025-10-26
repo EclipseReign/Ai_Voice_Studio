@@ -452,6 +452,9 @@ const HomePage = () => {
                 setAudioProgress(0);
                 setAudioProgressMessage(data.message);
                 setQueuePosition(data.queue_position || 0);
+              } else if (data.type === 'high_load') {
+                // NEW: High load notification
+                toast.warning(data.message, { duration: 5000 });
               } else if (data.type === 'stage') {
                 // New stage started
                 setAudioStage(data.stage);
