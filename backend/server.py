@@ -374,6 +374,101 @@ def get_audio_duration(wav_path: Path) -> float:
         logger.error(f"Error getting audio duration: {str(e)}")
         return 0.0
 
+# ============================================================================
+# GENERATION JOB MANAGEMENT (For crash recovery and resume functionality)
+# ============================================================================
+
+async def create_generation_job(
+    user_id: str,
+    text: str,
+    voice: str,
+    rate: float,
+    language: str,
+    total_segments: int,
+    temp_dir: str
+) -> str:
+    """Create a new generation job in database for crash recovery"""
+    job_id = str(uuid.uuid4())
+    job_doc = {
+        "job_id": job_id,
+        "user_id": user_id,
+        "text": text,
+        "voice": voice,
+        "rate": rate,
+        "language": language,
+        "status": "pending",
+        "total_segments": total_segments,
+        "completed_segments": 0,
+        "segment_files": [],
+        "temp_dir": temp_dir,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "error_message": None
+    }
+    await db.generation_jobs.insert_one(job_doc)
+    logger.info(f"Created generation job {job_id} with {total_segments} segments")
+    return job_id
+
+async def update_generation_job_progress(
+    job_id: str,
+    completed_segments: int,
+    segment_files: List[str],
+    status: str = "processing"
+):
+    """Update generation job progress after each batch"""
+    await db.generation_jobs.update_one(
+        {"job_id": job_id},
+        {
+            "$set": {
+                "completed_segments": completed_segments,
+                "segment_files": segment_files,
+                "status": status,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    logger.info(f"Updated job {job_id}: {completed_segments} segments completed")
+
+async def complete_generation_job(job_id: str, audio_id: str):
+    """Mark generation job as completed"""
+    await db.generation_jobs.update_one(
+        {"job_id": job_id},
+        {
+            "$set": {
+                "status": "completed",
+                "audio_id": audio_id,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    logger.info(f"Completed generation job {job_id}")
+
+async def fail_generation_job(job_id: str, error_message: str):
+    """Mark generation job as failed"""
+    await db.generation_jobs.update_one(
+        {"job_id": job_id},
+        {
+            "$set": {
+                "status": "failed",
+                "error_message": error_message,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    logger.error(f"Failed generation job {job_id}: {error_message}")
+
+async def get_pending_jobs(user_id: str) -> List[dict]:
+    """Get all pending/processing jobs for a user"""
+    cursor = db.generation_jobs.find({
+        "user_id": user_id,
+        "status": {"$in": ["pending", "processing"]}
+    }).sort("created_at", -1)
+    return await cursor.to_list(length=10)
+
+async def get_generation_job(job_id: str) -> Optional[dict]:
+    """Get specific generation job by ID"""
+    return await db.generation_jobs.find_one({"job_id": job_id})
+
 # Helper function to generate text chunks
 async def generate_text_chunk(
     prompt: str, 
