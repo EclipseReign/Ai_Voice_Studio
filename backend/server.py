@@ -1682,6 +1682,88 @@ async def get_history(current_user: User = Depends(get_current_user)):
         logger.error(f"Error fetching history: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error fetching history: {str(e)}")
 
+# ============================================================================
+# GENERATION JOB ENDPOINTS (For crash recovery)
+# ============================================================================
+
+@api_router.get("/jobs/pending", response_model=List[GenerationJobResponse])
+async def get_pending_generation_jobs(current_user: User = Depends(get_current_user)):
+    """Get pending/processing generation jobs for current user (for auto-resume after crash)"""
+    try:
+        jobs = await get_pending_jobs(current_user.id)
+        
+        response = []
+        for job in jobs:
+            progress_percent = int((job["completed_segments"] / job["total_segments"]) * 100) if job["total_segments"] > 0 else 0
+            response.append(GenerationJobResponse(
+                job_id=job["job_id"],
+                status=job["status"],
+                completed_segments=job["completed_segments"],
+                total_segments=job["total_segments"],
+                progress_percent=progress_percent,
+                text_preview=job["text"][:100] + "..." if len(job["text"]) > 100 else job["text"]
+            ))
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error fetching pending jobs: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fetching pending jobs: {str(e)}")
+
+@api_router.get("/jobs/{job_id}", response_model=GenerationJob)
+async def get_job_details(job_id: str, current_user: User = Depends(get_current_user)):
+    """Get details of a specific generation job"""
+    try:
+        job = await get_generation_job(job_id)
+        if not job:
+            raise HTTPException(status_code=404, detail="Job not found")
+        
+        # Verify ownership
+        if job["user_id"] != current_user.id:
+            raise HTTPException(status_code=403, detail="Not authorized to access this job")
+        
+        return GenerationJob(**job)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching job details: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fetching job details: {str(e)}")
+
+@api_router.post("/jobs/{job_id}/resume")
+async def resume_generation_job(job_id: str, current_user: User = Depends(get_current_user)):
+    """Resume a pending/failed generation job (triggers SSE audio generation)"""
+    try:
+        job = await get_generation_job(job_id)
+        if not job:
+            raise HTTPException(status_code=404, detail="Job not found")
+        
+        # Verify ownership
+        if job["user_id"] != current_user.id:
+            raise HTTPException(status_code=403, detail="Not authorized to access this job")
+        
+        # Only resume if pending or failed
+        if job["status"] not in ["pending", "failed", "processing"]:
+            raise HTTPException(status_code=400, detail=f"Cannot resume job with status: {job['status']}")
+        
+        # Return job details - frontend will use these to call SSE endpoint
+        return {
+            "job_id": job_id,
+            "message": "Job ready to resume",
+            "text": job["text"],
+            "voice": job["voice"],
+            "rate": job["rate"],
+            "language": job["language"],
+            "completed_segments": job["completed_segments"],
+            "total_segments": job["total_segments"]
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error resuming job: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error resuming job: {str(e)}")
+
 # Include router
 app.include_router(api_router)
 
