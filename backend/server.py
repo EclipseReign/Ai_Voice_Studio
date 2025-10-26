@@ -1311,6 +1311,7 @@ async def synthesize_audio_with_progress(
     
     async def generate_progress():
         job_id = str(uuid.uuid4())
+        generation_job_id = None  # NEW: Track generation job for recovery
         generation_start_time = None
         
         try:
@@ -1340,6 +1341,18 @@ async def synthesize_audio_with_progress(
             # Split text early to get segment count for queue
             segments = split_text_into_segments(request.text)
             total_segments = len(segments)
+            
+            # NEW: Create generation job for crash recovery
+            generation_job_id = await create_generation_job(
+                user_id=current_user.id,
+                text=request.text,
+                voice=request.voice,
+                rate=request.rate,
+                language=request.language,
+                total_segments=total_segments,
+                temp_dir=str(temp_dir)
+            )
+            logger.info(f"Created generation job {generation_job_id} for audio {audio_id}")
             
             # Estimate audio duration for ETA calculation
             estimated_audio_duration = estimate_duration(request.text, request.rate)
