@@ -62,61 +62,19 @@ class FinalOOMTest:
             )
             
             if response.status_code == 200:
-                # Process SSE stream
-                audio_id = None
-                progress_updates = 0
-                
-                for line in response.iter_lines():
-                    if line:
-                        line_str = line.decode('utf-8')
-                        if line_str.startswith('data: '):
-                            try:
-                                data = json.loads(line_str[6:])
-                                event_type = data.get('type')
-                                progress = data.get('progress', 0)
-                                
-                                if event_type == 'progress':
-                                    progress_updates += 1
-                                    if progress_updates % 5 == 0:  # Show every 5th update
-                                        print(f"   USER {user_id}: {progress}% - {data.get('message', '')}")
-                                
-                                elif event_type == 'complete':
-                                    audio_id = data.get('audio_id')
-                                    elapsed = time.time() - start_time
-                                    print(f"   ✅ USER {user_id}: COMPLETED in {elapsed:.2f}s")
-                                    print(f"   Audio ID: {audio_id}")
-                                    return {
-                                        'success': True,
-                                        'user_id': user_id,
-                                        'voice': voice,
-                                        'audio_id': audio_id,
-                                        'time': elapsed,
-                                        'progress_updates': progress_updates
-                                    }
-                                
-                                elif event_type == 'error':
-                                    elapsed = time.time() - start_time
-                                    print(f"   ❌ USER {user_id}: ERROR after {elapsed:.2f}s")
-                                    print(f"   Error: {data.get('message', 'Unknown error')}")
-                                    return {
-                                        'success': False,
-                                        'user_id': user_id,
-                                        'voice': voice,
-                                        'error': data.get('message', 'Unknown error'),
-                                        'time': elapsed
-                                    }
-                                    
-                            except json.JSONDecodeError:
-                                continue
-                
-                # If we get here, stream ended without completion
+                # Process regular JSON response
                 elapsed = time.time() - start_time
-                print(f"   ❌ USER {user_id}: INCOMPLETE after {elapsed:.2f}s")
+                result = response.json()
+                audio_id = result.get('id')
+                
+                print(f"   ✅ USER {user_id}: COMPLETED in {elapsed:.2f}s")
+                print(f"   Audio ID: {audio_id}")
+                
                 return {
-                    'success': False,
+                    'success': True,
                     'user_id': user_id,
                     'voice': voice,
-                    'error': 'Stream ended without completion',
+                    'audio_id': audio_id,
                     'time': elapsed
                 }
                 
