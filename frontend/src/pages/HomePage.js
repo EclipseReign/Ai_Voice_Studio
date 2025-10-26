@@ -50,6 +50,7 @@ const HomePage = () => {
   const [isSynthesizing, setIsSynthesizing] = useState(false);
   const [audioUrl, setAudioUrl] = useState(null);
   const [audioDuration, setAudioDuration] = useState(0);
+  const [currentAudioId, setCurrentAudioId] = useState(null); // Track current audio ID for cleanup
   const [history, setHistory] = useState([]);
   
   // Fetch voices on mount
