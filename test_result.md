@@ -1341,4 +1341,224 @@ agent_communication:
       ПОЛНОСТЬЮ РЕШЕНА. Система теперь поддерживает 10+ одновременных пользователей без падений сервера.
       
       СТАТУС: Audio synthesis with Piper TTS - ✅ WORKING
+
+  - agent: "main"
+    message: |
+      🔧 ДВОЙНОЕ КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: RACE CONDITION + CRASH RECOVERY
+      
+      ПРОБЛЕМА ПОЛЬЗОВАТЕЛЯ #1:
+      ❌ Сайт падает когда несколько клиентов одновременно используют ОДНУ И ТУ ЖЕ модель озвучки
+      ❌ Проблема отличается от предыдущего OOM бага (тот был для РАЗНЫХ моделей)
+      ❌ Падение происходит при запуске генерации вторым пользователем с той же моделью
+      
+      ПРОБЛЕМА ПОЛЬЗОВАТЕЛЯ #2:
+      ❌ Нужна функция восстановления после падения сайта
+      ❌ Автоматически продолжать генерацию с места где остановилось
+      ❌ Сохранять текст + частично сгенерированное аудио (сегменты)
+      
+      ═══════════════════════════════════════════════════════════════════════
+      ИСПРАВЛЕНИЕ #1: THREAD-SAFETY ДЛЯ ОДНОЙ МОДЕЛИ (RACE CONDITION FIX)
+      ═══════════════════════════════════════════════════════════════════════
+      
+      ROOT CAUSE ANALYSIS:
+      1. ❌ VoiceCache не имел механизмов thread-safety
+      2. ❌ Несколько потоков могли одновременно обращаться к одному voice объекту
+      3. ❌ PiperVoice.synthesize_wav() вызывался одновременно из разных потоков
+      4. ❌ Race condition при concurrent synthesis на одной модели → crash
+      
+      TECHNICAL SOLUTION:
+      
+      1. ✅ ОБНОВЛЕН VoiceCache С THREAD-SAFETY (server.py строки 84-148):
+         - Добавлен asyncio.Lock (self.cache_lock) для операций с кэшем
+         - Добавлен Dict[str, asyncio.Lock] (self.voice_locks) для per-voice locking
+         - Все методы (get, put, contains, clear) теперь async и используют cache_lock
+         - Новый метод get_voice_lock() возвращает lock для конкретного голоса
+         - При eviction удаляется и соответствующий lock
+      
+      2. ✅ ОБНОВЛЕНА get_or_load_voice() (server.py строки 482-491):
+         - Теперь async функция
+         - Использует await loaded_voices.get() и await loaded_voices.put()
+         - Загрузка модели через loop.run_in_executor для non-blocking
+         - Полностью thread-safe
+      
+      3. ✅ ОБНОВЛЕНА synthesize_audio_segment_fast() (server.py строки 1050-1082):
+         - Добавлен параметр voice_key для per-voice locking
+         - Получает voice_lock через await loaded_voices.get_voice_lock(voice_key)
+         - Synthesis обернут в 'async with voice_lock:' блок
+         - КРИТИЧНО: Только один поток может синтезировать на одной модели одновременно
+         - Добавлена проверка существования файла (для resume functionality)
+      
+      4. ✅ ОБНОВЛЕНЫ ВСЕ ВЫЗОВЫ synthesize_audio_segment_fast():
+         - POST /api/audio/synthesize-parallel: передается voice_key=request.voice
+         - POST /api/audio/synthesize-with-progress (SSE): передается voice_key=request.voice
+         - Оба endpoint используют await get_or_load_voice() вместо sync версии
+      
+      КАК РАБОТАЕТ PER-VOICE LOCKING:
+      - User 1 генерирует с voice A → получает lock A → synthesize
+      - User 2 генерирует с voice A → ждет lock A освободится → synthesize
+      - User 3 генерирует с voice B → получает lock B → synthesize параллельно
+      - Разные голоса работают параллельно, одинаковые - последовательно
+      
+      ═══════════════════════════════════════════════════════════════════════
+      ИСПРАВЛЕНИЕ #2: CRASH RECOVERY SYSTEM (АВТОВОССТАНОВЛЕНИЕ)
+      ═══════════════════════════════════════════════════════════════════════
+      
+      ТРЕБОВАНИЯ:
+      1. ✅ Автоматическое продолжение генерации после падения
+      2. ✅ Сохранение текста + частично сгенерированных аудио сегментов
+      3. ✅ Проверка при загрузке страницы
+      
+      DATABASE SCHEMA:
+      
+      Новая коллекция: generation_jobs
+      ```
+      {
+        "job_id": "uuid",
+        "user_id": "user_uuid",
+        "text": "full text to synthesize",
+        "voice": "en_US-hfc_male-medium",
+        "rate": 1.0,
+        "language": "en-US",
+        "status": "pending|processing|completed|failed",
+        "total_segments": 100,
+        "completed_segments": 45,
+        "segment_files": ["/path/to/segment_0000.wav", ...],
+        "temp_dir": "/path/to/temp_audio_id",
+        "created_at": "ISO timestamp",
+        "updated_at": "ISO timestamp",
+        "error_message": "optional error"
+      }
+      ```
+      
+      BACKEND ИЗМЕНЕНИЯ:
+      
+      1. ✅ НОВЫЕ PYDANTIC МОДЕЛИ (server.py строки 320-346):
+         - GenerationJob: полная схема для БД
+         - GenerationJobResponse: для API responses
+      
+      2. ✅ HELPER ФУНКЦИИ (server.py строки 377-469):
+         - create_generation_job(): создать job в БД
+         - update_generation_job_progress(): обновить после батча
+         - complete_generation_job(): пометить как completed
+         - fail_generation_job(): пометить как failed
+         - get_pending_jobs(): получить незавершенные задачи пользователя
+         - get_generation_job(): получить конкретную задачу
+      
+      3. ✅ ИНТЕГРАЦИЯ В SSE ENDPOINT (server.py):
+         a) В начале generate_progress():
+            - Создается generation_job_id через create_generation_job()
+            - Сохраняется: text, voice, rate, language, total_segments, temp_dir
+         
+         b) После каждого батча:
+            - Вызывается update_generation_job_progress()
+            - Сохраняются: completed_segments, segment_files (массив путей)
+            - Статус: "processing"
+         
+         c) При успешном завершении:
+            - Вызывается complete_generation_job(job_id, audio_id)
+            - Статус: "completed"
+         
+         d) При ошибке:
+            - Вызывается fail_generation_job(job_id, error_message)
+            - Статус: "failed"
+      
+      4. ✅ НОВЫЕ API ENDPOINTS (server.py строки 1697-1776):
+         - GET /api/jobs/pending: получить pending/processing jobs
+         - GET /api/jobs/{job_id}: детали конкретной задачи
+         - POST /api/jobs/{job_id}/resume: подготовка к продолжению
+      
+      5. ✅ SKIP GENERATED SEGMENTS (server.py synthesize_audio_segment_fast):
+         - Проверка: if segment_file.exists(): return segment_file
+         - Пропускает уже сгенерированные сегменты при resume
+      
+      FRONTEND ИЗМЕНЕНИЯ (HomePage.js):
+      
+      1. ✅ НОВЫЙ useEffect ДЛЯ AUTO-CHECK (строки 109-158):
+         - Вызывает checkPendingJobs() при загрузке компонента
+         - Проверяет GET /api/jobs/pending
+         - Если есть pending jobs → автоматически показывает toast
+         - Вызывает resumePendingJob() для самого свежего
+      
+      2. ✅ ФУНКЦИЯ checkPendingJobs():
+         - Получает список pending/processing jobs
+         - Показывает toast с прогрессом
+         - Автоматически запускает resume
+      
+      3. ✅ ФУНКЦИЯ resumePendingJob(jobId):
+         - Вызывает POST /api/jobs/{jobId}/resume
+         - Получает детали: text, voice, rate, language
+         - Устанавливает состояние: generatedText/manualText, selectedVoice, language
+         - Вызывает handleSynthesize(text, jobId)
+      
+      4. ✅ ОБНОВЛЕНА handleSynthesize(textOverride, jobId):
+         - Теперь принимает опциональные параметры
+         - textOverride: для resume (иначе использует текущий текст)
+         - jobId: для отслеживания (пока не используется в SSE, но готов)
+         - Показывает "Продолжение генерации..." при resume
+      
+      ═══════════════════════════════════════════════════════════════════════
+      ТЕХНИЧЕСКИЕ ДЕТАЛИ
+      ═══════════════════════════════════════════════════════════════════════
+      
+      Изменённые файлы:
+      1. /app/backend/server.py:
+         - VoiceCache: добавлены asyncio locks (cache_lock, voice_locks)
+         - get_or_load_voice: переделана в async
+         - synthesize_audio_segment_fast: добавлен voice_key, per-voice lock, skip check
+         - Все вызовы synthesize_audio_segment_fast: обновлены с voice_key
+         - GenerationJob models: добавлены
+         - Generation job helper functions: добавлены (7 функций)
+         - SSE endpoint: интегрирована job tracking логика
+         - Новые API endpoints: /api/jobs/pending, /api/jobs/{id}, /api/jobs/{id}/resume
+      
+      2. /app/frontend/src/pages/HomePage.js:
+         - useEffect: добавлена проверка pending jobs
+         - checkPendingJobs(): новая функция
+         - resumePendingJob(): новая функция
+         - handleSynthesize(): обновлена сигнатура (textOverride, jobId)
+         - Button onClick: обновлены для новой сигнатуры
+      
+      ═══════════════════════════════════════════════════════════════════════
+      ОЖИДАЕМЫЕ РЕЗУЛЬТАТЫ
+      ═══════════════════════════════════════════════════════════════════════
+      
+      ИСПРАВЛЕНИЕ #1 (Race Condition):
+      ✅ Множественные пользователи могут безопасно использовать одну модель
+      ✅ Per-voice locks предотвращают concurrent synthesis на одной модели
+      ✅ Разные модели продолжают работать параллельно
+      ✅ Сервер не падает при одновременном использовании одного голоса
+      
+      ИСПРАВЛЕНИЕ #2 (Crash Recovery):
+      ✅ При падении сервера прогресс сохраняется в БД
+      ✅ При перезагрузке страницы автоматически показывается toast
+      ✅ Генерация автоматически продолжается с сохраненного прогресса
+      ✅ Уже сгенерированные сегменты не генерируются повторно
+      ✅ Пользователь видит "Продолжение генерации..." вместо начала с нуля
+      
+      ═══════════════════════════════════════════════════════════════════════
+      ТЕСТИРОВАНИЕ ПРИОРИТЕТОВ
+      ═══════════════════════════════════════════════════════════════════════
+      
+      КРИТИЧНО #1: Race Condition Fix
+      1. Запустить 2 пользователей одновременно с ОДНОЙ И ТОЙ ЖЕ моделью
+      2. Оба должны успешно генерировать без падений
+      3. Проверить логи: должны быть сообщения о voice lock waiting/acquired
+      4. Сервер должен оставаться стабильным
+      
+      КРИТИЧНО #2: Crash Recovery
+      1. Начать генерацию длинного аудио (10+ минут)
+      2. Остановить backend в середине (sudo supervisorctl stop backend)
+      3. Перезапустить backend (sudo supervisorctl start backend)
+      4. Перезагрузить страницу в браузере
+      5. Должен появиться toast о незавершенной генерации
+      6. Генерация должна автоматически продолжиться с сохраненного прогресса
+      7. Проверить в MongoDB: generation_jobs должен содержать запись
+      
+      ВЫСОКИЙ: Регрессия
+      1. Убедиться что одиночный пользователь работает как раньше
+      2. Убедиться что разные голоса работают параллельно
+      3. Проверить что не сломался функционал history/download
+      
+      Сервисы перезапущены. Готово к тестированию обоих исправлений!
+
       РЕКОМЕНДАЦИЯ: Главный агент может завершить задачу и подвести итоги успешного исправления.
