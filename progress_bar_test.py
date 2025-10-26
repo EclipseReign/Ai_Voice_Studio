@@ -227,7 +227,8 @@ class ProgressBarTester:
             
             headers = {'Content-Type': 'application/json'}
             
-            with httpx.stream("POST", url, json=data, headers=headers, timeout=300) as response:
+            cookies = {'session_token': self.session_token} if self.session_token else {}
+            with httpx.stream("POST", url, json=data, headers=headers, cookies=cookies, timeout=300) as response:
                 if response.status_code != 200:
                     print(f"   ❌ SSE request failed with status {response.status_code}")
                     if response.status_code == 401:
