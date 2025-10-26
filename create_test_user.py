@@ -35,7 +35,7 @@ async def create_test_user():
         
         if existing_user:
             print(f"Test user already exists: {test_email}")
-            user_id = str(existing_user["_id"])
+            user_id = existing_user["_id"]  # Don't convert to string here
         else:
             # Create test user
             user_doc = {
