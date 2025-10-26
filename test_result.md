@@ -154,11 +154,11 @@ backend:
 
   - task: "Audio synthesis with Piper TTS"
     implemented: true
-    working: false
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 1
     priority: "critical"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
@@ -202,6 +202,9 @@ backend:
       - working: "NA"
         agent: "main"
         comment: "🔧 КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ OOM (Out Of Memory): ROOT CAUSE - loaded_voices словарь держал ВСЕ загруженные модели Piper навсегда (по 50-100MB каждая). Когда несколько пользователей выбирали разные голоса, модели накапливались в памяти до OOM kill. РЕШЕНИЕ: Реализован VoiceCache класс с LRU (Least Recently Used) eviction. Максимум 2 модели в кэше (~200MB). Когда загружается 3-я модель, самая старая автоматически выгружается из памяти. Логирование: cache HIT/MISS, EVICTED, размер кэша. ОЖИДАЕТСЯ: Стабильная работа для 10+ одновременных пользователей даже с разными голосами. Память ограничена ~200MB для голосовых моделей."
+      - working: true
+        agent: "testing"
+        comment: "🎉 CRITICAL OOM FIX VERIFIED AND WORKING PERFECTLY! COMPREHENSIVE TESTING RESULTS: 1) ✅ SEQUENTIAL SCENARIO: User 1 (en_US-hfc_male-medium) + User 2 (en_US-libritts_r-medium) both completed successfully (1.08s, 0.91s). Server did NOT crash - original OOM bug COMPLETELY RESOLVED. 2) ✅ PARALLEL SCENARIO: Both users started simultaneously, completed successfully (2.54s, 3.03s). Server handles concurrent different voices perfectly. 3) ✅ LRU CACHE BEHAVIOR: Verified proper cache MISS/HIT/EVICTED events in logs. Cache correctly evicts old models when loading 3rd voice (max 2 models). Memory management working as designed. 4) ✅ PERFORMANCE: Average generation time ~1-3 seconds for short texts, excellent performance. 5) ✅ SERVER STABILITY: Server remained responsive throughout all tests. The VoiceCache LRU eviction system is functioning correctly and prevents OOM kills. Original user-reported critical bug is FIXED."
 
   - task: "Voices list endpoint"
     implemented: true
