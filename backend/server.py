@@ -490,13 +490,20 @@ async def download_voice_model(voice_key: str, voices_data: Dict) -> tuple[Path,
         logger.error(f"Error downloading voice model: {e}")
         raise
 
-def get_or_load_voice(voice_key: str, model_path: Path, config_path: Path) -> PiperVoice:
-    """Get a cached voice or load it with LRU eviction"""
-    voice = loaded_voices.get(voice_key)
+async def get_or_load_voice(voice_key: str, model_path: Path, config_path: Path) -> PiperVoice:
+    """Get a cached voice or load it with LRU eviction - THREAD-SAFE
+    
+    FIXES:
+    - Now async to work with VoiceCache locks
+    - Prevents race conditions when multiple users load same model simultaneously
+    """
+    voice = await loaded_voices.get(voice_key)
     if voice is None:
         logger.info(f"Loading voice from disk: {voice_key}")
-        voice = PiperVoice.load(str(model_path), str(config_path))
-        loaded_voices.put(voice_key, voice)
+        # Load voice in executor to avoid blocking event loop
+        loop = asyncio.get_event_loop()
+        voice = await loop.run_in_executor(None, PiperVoice.load, str(model_path), str(config_path))
+        await loaded_voices.put(voice_key, voice)
     return voice
 
 @api_router.get("/")
