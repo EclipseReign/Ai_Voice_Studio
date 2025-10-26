@@ -66,10 +66,15 @@ async def create_test_user():
         await db.user_sessions.delete_many({"user_id": user_id})
         
         # Insert new session
-        await db.user_sessions.insert_one(session_doc)
+        result = await db.user_sessions.insert_one(session_doc)
         
         print(f"Created session token: {session_token}")
         print(f"User ID: {user_id}")
+        print(f"Session insert result: {result.inserted_id}")
+        
+        # Verify session was created
+        created_session = await db.user_sessions.find_one({"session_token": session_token})
+        print(f"Session verification: {created_session is not None}")
         
         # Create subscription record (free tier)
         subscription_doc = {
