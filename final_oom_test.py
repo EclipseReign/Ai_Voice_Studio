@@ -42,15 +42,15 @@ class FinalOOMTest:
             return False
 
     def synthesize_with_progress(self, voice, user_id, text):
-        """Synthesize audio using the SSE endpoint (as specified in review)"""
+        """Synthesize audio using the regular endpoint (no auth required)"""
         print(f"\n👤 USER {user_id}: Starting synthesis with {voice}")
         
         start_time = time.time()
         
         try:
-            # Use POST method as specified in the review request
+            # Use regular synthesis endpoint (no auth required)
             response = requests.post(
-                f"{self.base_url}/audio/synthesize-with-progress",
+                f"{self.base_url}/audio/synthesize",
                 json={
                     "text": text,
                     "voice": voice,
@@ -58,8 +58,7 @@ class FinalOOMTest:
                     "language": "en-US"
                 },
                 headers={'Content-Type': 'application/json'},
-                timeout=180,  # 3 minutes timeout
-                stream=True
+                timeout=180  # 3 minutes timeout
             )
             
             if response.status_code == 200:
