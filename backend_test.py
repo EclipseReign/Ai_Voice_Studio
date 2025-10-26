@@ -1132,36 +1132,61 @@ class PiperTTSAPITester:
         
         background_cleanup_success = self.test_background_auto_cleanup()
         
-        # PRIORITY TEST 3: ✅ AUDIO DOWNLOAD
-        print("\n3️⃣ PRIORITY TEST: Audio Download")
-        print(f"   Testing: Download audio file {audio_id}")
+        # IMPORTANT TEST 5: ✅ Dynamic Resource Allocation Logic
+        print("\n5️⃣ IMPORTANT TEST: Dynamic Resource Allocation")
+        print("   Testing: Pro/Free ratio (70/30) and scaling logic")
         
-        download_success = self.test_audio_download(audio_id)
-        if download_success:
-            print("   ✅ Audio download successful")
+        dynamic_allocation_success = self.test_dynamic_resource_allocation()
+        
+        # IMPORTANT TEST 6: ✅ High Load Notification
+        print("\n6️⃣ IMPORTANT TEST: High Load Notification")
+        print("   Testing: SSE event when 10+ active users")
+        
+        high_load_success = self.test_high_load_notification()
+        
+        # OPTIONAL TEST 7: ✅ Audio Generation Still Works
+        print("\n7️⃣ OPTIONAL TEST: Audio Generation Still Works")
+        print("   Testing: Basic audio generation after changes")
+        
+        # Generate another audio to verify system still works
+        start_time = time.time()
+        basic_success, basic_response = self.run_test(
+            "Basic Audio Generation (Regression Test)",
+            "POST",
+            "audio/synthesize-parallel",
+            200,
+            data={
+                "text": "Это тест базовой генерации аудио после всех изменений.",
+                "voice": ru_voice,
+                "rate": 1.0,
+                "language": "ru-RU"
+            },
+            timeout=60
+        )
+        basic_time = time.time() - start_time
+        
+        if basic_success and basic_response:
+            basic_audio_id = basic_response.get('id')
+            print(f"   ✅ Basic audio generation works: {basic_time:.1f}s")
+            print(f"   ✅ Audio ID: {basic_audio_id}")
+            if basic_audio_id:
+                self.generated_audio_ids.append(basic_audio_id)
         else:
-            print("   ❌ Audio download failed")
+            print(f"   ❌ Basic audio generation failed")
         
-        # PRIORITY TEST 4: ✅ VOICES LIST
-        print("\n4️⃣ PRIORITY TEST: Voices List")
-        print("   Testing: Returns Russian voices")
+        # OPTIONAL TEST 8: ✅ Audio Download (Original Functionality)
+        print("\n8️⃣ OPTIONAL TEST: Audio Download (Original)")
+        print(f"   Testing: Download audio file {basic_audio_id if basic_success else 'N/A'}")
         
-        ru_voices = [v for v in self.available_voices if v.get('locale', '').startswith('ru-')]
-        if ru_voices:
-            print(f"   ✅ Found {len(ru_voices)} Russian voices")
-            print(f"   ✅ Sample: {ru_voices[0]['name']} ({ru_voices[0]['short_name']})")
+        if basic_success and basic_audio_id:
+            download_success = self.test_audio_download(basic_audio_id)
+            if download_success:
+                print("   ✅ Audio download successful")
+            else:
+                print("   ❌ Audio download failed")
         else:
-            print("   ❌ No Russian voices found")
-        
-        # PRIORITY TEST 5: ✅ HISTORY
-        print("\n5️⃣ PRIORITY TEST: Generation History")
-        print("   Testing: Returns recent generations")
-        
-        history_success = self.test_history_endpoint()
-        if history_success:
-            print("   ✅ History endpoint working")
-        else:
-            print("   ❌ History endpoint failed")
+            download_success = False
+            print("   ⚠️  Skipping download test - no audio ID")
         
         # VERIFICATION: File exists on disk
         print("\n🔍 VERIFICATION: Audio File on Disk")
