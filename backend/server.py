@@ -1165,10 +1165,13 @@ async def synthesize_audio_with_progress(
                 all_segment_files = []
                 
                 segments_start_time = time.time()
+                batches_completed = 0
+                total_batches = (total_segments + batch_size - 1) // batch_size
                 
                 for batch_start in range(0, total_segments, batch_size):
                     batch_end = min(batch_start + batch_size, total_segments)
                     batch_segments = segments[batch_start:batch_end]
+                    batch_segment_count = len(batch_segments)
                     
                     # Generate batch in parallel
                     tasks = []
@@ -1187,23 +1190,32 @@ async def synthesize_audio_with_progress(
                     batch_files = await asyncio.gather(*tasks)
                     all_segment_files.extend(batch_files)
                     
-                    completed_segments += len(batch_segments)
+                    completed_segments += batch_segment_count
+                    batches_completed += 1
                     progress = int(5 + (completed_segments / total_segments) * 80)  # 5-85% for generation
                     
-                    # Calculate ETA and speed
+                    # Calculate ETA and speed based on batch completion (more accurate)
                     elapsed = time.time() - segments_start_time
-                    if completed_segments > 0:
-                        time_per_segment = elapsed / completed_segments
-                        remaining_segments = total_segments - completed_segments
-                        eta_seconds = time_per_segment * remaining_segments
+                    if batches_completed > 0 and elapsed > 0:
+                        time_per_batch = elapsed / batches_completed
+                        remaining_batches = total_batches - batches_completed
                         
-                        # Calculate generation speed (audio_minutes per second)
+                        # ETA for remaining batches + estimated combine time (5% of total)
+                        batches_eta = time_per_batch * remaining_batches
+                        combine_eta = elapsed * 0.05  # Combine typically takes ~5% of generation time
+                        eta_seconds = batches_eta + combine_eta
+                        
+                        # Calculate generation speed (audio_minutes per second of real time)
                         audio_generated_minutes = (completed_segments / total_segments) * estimated_audio_minutes
                         speed = audio_generated_minutes / elapsed if elapsed > 0 else 0
                         
-                        eta_formatted = f"{int(eta_seconds // 60)}м {int(eta_seconds % 60)}с" if eta_seconds >= 60 else f"{int(eta_seconds)}с"
+                        # Format ETA nicely
+                        if eta_seconds >= 60:
+                            eta_formatted = f"{int(eta_seconds // 60)}м {int(eta_seconds % 60)}с"
+                        else:
+                            eta_formatted = f"{int(eta_seconds)}с"
                         
-                        yield f"data: {json.dumps({'type': 'progress', 'progress': progress, 'message': f'Сегмент {completed_segments}/{total_segments}', 'stage': 'generating_segments', 'completed_segments': completed_segments, 'total_segments': total_segments, 'eta': eta_formatted, 'speed': round(speed, 2), 'elapsed': round(elapsed, 1)})}\n\n"
+                        yield f"data: {json.dumps({'type': 'progress', 'progress': progress, 'message': f'Сегмент {completed_segments}/{total_segments}', 'stage': 'generating_segments', 'completed_segments': completed_segments, 'total_segments': total_segments, 'eta': eta_formatted, 'speed': round(speed, 1), 'elapsed': round(elapsed, 1)})}\n\n"
                     else:
                         yield f"data: {json.dumps({'type': 'progress', 'progress': progress, 'message': f'Сегмент {completed_segments}/{total_segments}', 'stage': 'generating_segments', 'completed_segments': completed_segments, 'total_segments': total_segments})}\n\n"
                 
