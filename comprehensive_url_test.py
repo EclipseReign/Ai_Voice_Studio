@@ -18,7 +18,7 @@ def main():
     print("🚀 COMPREHENSIVE URL LENGTH FIX VERIFICATION")
     print("=" * 60)
     
-    base_url = "https://speedytts.preview.emergentagent.com/api"
+    base_url = "https://audioflow-59.preview.emergentagent.com/api"
     
     # Test data
     small_text = "Это короткий тест синтеза речи для проверки работоспособности системы."
