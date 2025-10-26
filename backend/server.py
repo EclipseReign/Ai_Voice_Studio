@@ -1533,6 +1533,10 @@ async def synthesize_audio_with_progress(
                 
                 await db.audio_generations.insert_one(audio_doc)
                 
+                # NEW: Mark generation job as completed
+                if generation_job_id:
+                    await complete_generation_job(generation_job_id, audio_id)
+                
                 # Send completion with stats
                 yield f"data: {json.dumps({'type': 'complete', 'progress': 100, 'audio_id': audio_id, 'audio_url': f'/audio/download/{audio_id}', 'duration': audio_duration, 'generation_time': round(total_generation_time, 1), 'speed': round(final_speed, 2), 'message': f'Готово! ({round(audio_duration/60, 1)} мин за {round(total_generation_time, 1)}с, скорость {round(final_speed, 1)}x)'})}\n\n"
                 
@@ -1554,6 +1558,10 @@ async def synthesize_audio_with_progress(
             
         except Exception as e:
             logger.error(f"Error in SSE audio synthesis: {str(e)}", exc_info=True)
+            
+            # NEW: Mark generation job as failed
+            if generation_job_id:
+                await fail_generation_job(generation_job_id, str(e))
             
             # Cleanup on error
             try:
