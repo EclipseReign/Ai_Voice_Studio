@@ -107,6 +107,126 @@ const HomePage = () => {
     }
   };
   
+  // NEW: Reset generation state after completion (to free memory)
+  const resetGenerationState = () => {
+    setAudioProgress(0);
+    setAudioProgressMessage("");
+    setTextProgress(0);
+    setTextProgressMessage("");
+    setAudioEta("");
+    setAudioSpeed(0);
+    setAudioStage("");
+    setCompletedSegments(0);
+    setTotalSegments(0);
+    setQueuePosition(0);
+    setGenerationTime(0);
+  };
+  
+  // NEW: Check for pending jobs on mount (recovery after page refresh/crash)
+  const checkPendingJobs = async () => {
+    try {
+      const response = await axios.get(API + '/jobs/pending', {
+        withCredentials: true
+      });
+      
+      if (response.data && response.data.length > 0) {
+        const pendingJob = response.data[0]; // Get most recent pending job
+        
+        // Show toast notification about recovery option
+        toast.info(
+          `Найдена незавершенная генерация (${pendingJob.progress_percent}%). Продолжить?`,
+          {
+            duration: 10000,
+            action: {
+              label: 'Продолжить',
+              onClick: () => resumeJob(pendingJob.job_id)
+            }
+          }
+        );
+      }
+    } catch (error) {
+      console.error("Error checking pending jobs:", error);
+    }
+  };
+  
+  // NEW: Resume a pending job
+  const resumeJob = async (jobId) => {
+    try {
+      // Call backend to resume job
+      const response = await axios.post(
+        API + `/jobs/resume/${jobId}`,
+        {},
+        { withCredentials: true }
+      );
+      
+      toast.success("Продолжаем генерацию...");
+      // The backend will continue generating and send SSE updates
+    } catch (error) {
+      console.error("Error resuming job:", error);
+      toast.error("Не удалось продолжить генерацию");
+    }
+  };
+  
+  // NEW: Cleanup audio file from server (free memory)
+  const cleanupAudioFile = async (audioId) => {
+    try {
+      await axios.post(
+        API + `/audio/cleanup/${audioId}`,
+        {},
+        { withCredentials: true }
+      );
+      console.log(`Cleaned up audio file: ${audioId}`);
+    } catch (error) {
+      console.error("Error cleaning up audio:", error);
+    }
+  };
+  
+  // NEW: Cleanup old files
+  const cleanupOldFiles = async () => {
+    try {
+      const response = await axios.post(
+        API + '/audio/cleanup/old',
+        {},
+        { withCredentials: true }
+      );
+      
+      toast.success(`Очищено ${response.data.deleted_count} файлов, освобождено ${response.data.freed_mb} MB`);
+      fetchHistory(); // Refresh history
+    } catch (error) {
+      console.error("Error cleaning up old files:", error);
+      toast.error("Не удалось очистить старые файлы");
+    }
+  };
+  
+  // NEW: Download text as .txt file
+  const downloadText = async (audioId) => {
+    try {
+      const response = await fetch(API + `/text/download/${audioId}`, {
+        method: 'GET',
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Download failed');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `text_${audioId}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast.success("Текст скачан!");
+    } catch (error) {
+      console.error("Error downloading text:", error);
+      toast.error("Не удалось скачать текст");
+    }
+  };
+  
   // NEW: Check for pending jobs on mount (auto-resume after crash)
   useEffect(() => {
     checkPendingJobs();
