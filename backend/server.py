@@ -1747,47 +1747,85 @@ async def synthesize_audio_with_progress(
                             all_segment_files.extend(batch_files)
                         else:
                             batch_files = []
-                    
-                    completed_segments += batch_segment_count
-                    batches_completed += 1
-                    progress = int(5 + (completed_segments / total_segments) * 80)  # 5-85% for generation
-                    
-                    # NEW: Update generation job progress after each batch (for crash recovery)
-                    segment_file_paths = [str(f) for f in all_segment_files]
-                    await update_generation_job_progress(
-                        job_id=generation_job_id,
-                        completed_segments=completed_segments,
-                        segment_files=segment_file_paths,
-                        status="processing"
-                    )
-                    
-                    # Calculate ETA and speed based on batch completion (more accurate)
-                    elapsed = time.time() - segments_start_time
-                    
-                    # ALWAYS send progress update, with or without ETA
-                    if batches_completed > 0 and elapsed > 0.1:  # Changed from > 0 to > 0.1 to avoid division issues
-                        time_per_batch = elapsed / batches_completed
-                        remaining_batches = total_batches - batches_completed
                         
-                        # ETA for remaining batches + estimated combine time (5% of total)
-                        batches_eta = time_per_batch * remaining_batches
-                        combine_eta = elapsed * 0.05  # Combine typically takes ~5% of generation time
-                        eta_seconds = batches_eta + combine_eta
+                        completed_segments += batch_segment_count
+                        batches_completed += 1
+                        progress = int(5 + (completed_segments / total_segments) * 80)  # 5-85% for generation
                         
-                        # Calculate generation speed (audio_minutes per second of real time)
-                        audio_generated_minutes = (completed_segments / total_segments) * estimated_audio_minutes
-                        speed = audio_generated_minutes / elapsed if elapsed > 0 else 0
+                        # NEW: Update generation job progress after each batch (for crash recovery)
+                        segment_file_paths = [str(f) for f in all_segment_files]
+                        await update_generation_job_progress(
+                            job_id=generation_job_id,
+                            completed_segments=completed_segments,
+                            segment_files=segment_file_paths,
+                            status="processing"
+                        )
                         
-                        # Format ETA nicely
-                        if eta_seconds >= 60:
-                            eta_formatted = f"{int(eta_seconds // 60)}м {int(eta_seconds % 60)}с"
+                        # Calculate ETA and speed based on batch completion (more accurate)
+                        elapsed = time.time() - segments_start_time
+                        
+                        # ALWAYS send progress update, with or without ETA
+                        if batches_completed > 0 and elapsed > 0.1:  # Changed from > 0 to > 0.1 to avoid division issues
+                            time_per_batch = elapsed / batches_completed
+                            remaining_batches = total_batches - batches_completed
+                            
+                            # ETA for remaining batches + estimated combine time (5% of total)
+                            batches_eta = time_per_batch * remaining_batches
+                            combine_eta = elapsed * 0.05  # Combine typically takes ~5% of generation time
+                            eta_seconds = batches_eta + combine_eta
+                            
+                            # Calculate generation speed (audio_minutes per second of real time)
+                            audio_generated_minutes = (completed_segments / total_segments) * estimated_audio_minutes
+                            speed = audio_generated_minutes / elapsed if elapsed > 0 else 0
+                            
+                            # Format ETA nicely
+                            if eta_seconds >= 60:
+                                eta_formatted = f"{int(eta_seconds // 60)}м {int(eta_seconds % 60)}с"
+                            else:
+                                eta_formatted = f"{int(eta_seconds)}с"
+                            
+                            yield f"data: {json.dumps({'type': 'progress', 'progress': progress, 'message': f'Генерация {completed_segments}/{total_segments} сегментов', 'stage': 'generating_segments', 'completed_segments': completed_segments, 'total_segments': total_segments, 'eta': eta_formatted, 'speed': round(speed, 1), 'elapsed': round(elapsed, 1)})}\n\n"
                         else:
-                            eta_formatted = f"{int(eta_seconds)}с"
-                        
-                        yield f"data: {json.dumps({'type': 'progress', 'progress': progress, 'message': f'Генерация {completed_segments}/{total_segments} сегментов', 'stage': 'generating_segments', 'completed_segments': completed_segments, 'total_segments': total_segments, 'eta': eta_formatted, 'speed': round(speed, 1), 'elapsed': round(elapsed, 1)})}\n\n"
-                    else:
-                        # First batch or very fast - show basic progress
-                        yield f"data: {json.dumps({'type': 'progress', 'progress': progress, 'message': f'Генерация {completed_segments}/{total_segments} сегментов', 'stage': 'generating_segments', 'completed_segments': completed_segments, 'total_segments': total_segments})}\n\n"
+                            # First batch or very fast - show basic progress
+                            yield f"data: {json.dumps({'type': 'progress', 'progress': progress, 'message': f'Генерация {completed_segments}/{total_segments} сегментов', 'stage': 'generating_segments', 'completed_segments': completed_segments, 'total_segments': total_segments})}\n\n"
+                
+                except (asyncio.CancelledError, GeneratorExit) as e:
+                    # Client disconnected or generation cancelled
+                    logger.warning(f"Generation cancelled for job {generation_job_id}: {type(e).__name__}")
+                    
+                    # Cancel all active tasks
+                    for task in all_active_tasks:
+                        if not task.done():
+                            task.cancel()
+                    
+                    # Wait for all tasks to finish cancelling (with timeout)
+                    if all_active_tasks:
+                        try:
+                            await asyncio.wait_for(
+                                asyncio.gather(*all_active_tasks, return_exceptions=True),
+                                timeout=10
+                            )
+                        except asyncio.TimeoutError:
+                            logger.error(f"Timeout waiting for tasks to cancel for job {generation_job_id}")
+                    
+                    # Mark job as failed
+                    if generation_job_id:
+                        await fail_generation_job(generation_job_id, "Client disconnected")
+                    
+                    # Cleanup temp files
+                    if temp_dir.exists():
+                        try:
+                            for file in temp_dir.glob("*.wav"):
+                                try:
+                                    file.unlink()
+                                except Exception:
+                                    pass
+                            temp_dir.rmdir()
+                        except Exception as cleanup_error:
+                            logger.warning(f"Cleanup after cancellation error: {cleanup_error}")
+                    
+                    # Re-raise to stop generator
+                    raise
                 
                 # Stage 3: Combine audio segments (85-98%) with streaming to save memory
                 yield f"data: {json.dumps({'type': 'stage', 'stage': 'combining', 'message': 'Объединение аудио...', 'progress': 85})}\n\n"
