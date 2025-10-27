@@ -302,7 +302,6 @@ logger.info(f"✅ Initialized ThreadPoolExecutor with {max_workers} workers (CPU
 # QUEUE MANAGEMENT SYSTEM (Fair Share with Pro Priority)
 # Optimized for 10+ concurrent users on 8GB RAM / 8 vCPU
 # ============================================================================
-import time
 from dataclasses import dataclass, field
 from collections import defaultdict
 
