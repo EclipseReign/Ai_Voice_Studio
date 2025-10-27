@@ -1604,7 +1604,7 @@ async def synthesize_audio_with_progress(
                     # Delete segment file immediately after combining to free memory
                     try:
                         segment_file.unlink()
-                    except:
+                    except Exception:
                         pass
                     
                     # Progress during combining (85-98%)
