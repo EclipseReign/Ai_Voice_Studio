@@ -153,9 +153,10 @@ class VoiceCache:
 
 loaded_voices = VoiceCache(max_size=2)  # Max 2 models in memory (~200MB)
 
-# Thread pool executor for parallel audio synthesis (optimized for 10+ concurrent users)
-# Each user needs a few threads for their batch, so we need more total workers
-max_workers = max(multiprocessing.cpu_count() * 6, 48)  # Use 6x CPU cores or minimum 48 threads
+# Thread pool executor for parallel audio synthesis (optimized for memory efficiency)
+# CRITICAL: Limit workers to prevent OOM crashes on Railway (8GB RAM)
+# Each worker consumes ~10-20MB overhead, so we cap at 24 to stay within memory limits
+max_workers = min(24, max(multiprocessing.cpu_count() * 2, 8))  # Use 2x CPU cores, max 24
 executor = ThreadPoolExecutor(max_workers=max_workers)
 logger.info(f"Initialized ThreadPoolExecutor with {max_workers} workers")
 
