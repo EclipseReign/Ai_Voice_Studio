@@ -83,7 +83,10 @@ VOICES_CACHE_FILE = PIPER_MODELS_DIR / "voices_cache.json"
 # Cache for loaded Piper voices with LRU eviction (max 2 models ~200MB to prevent OOM)
 from collections import OrderedDict
 
-VOICE_MAX_CONCURRENCY = int(os.getenv("VOICE_MAX_CONCURRENCY", "4"))
+# CRITICAL FIX: Increased from 4 to 32 to prevent task starvation
+# When batch_size=24 and 2 users generate simultaneously, we need at least 48 semaphores
+# Setting to 32 provides good balance between concurrency and memory safety
+VOICE_MAX_CONCURRENCY = int(os.getenv("VOICE_MAX_CONCURRENCY", "32"))
 
 class VoiceCache:
     """Thread-safe LRU cache for Piper voice models to prevent OOM and race conditions
