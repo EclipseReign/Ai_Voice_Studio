@@ -1198,6 +1198,10 @@ def split_text_into_segments(text: str, max_segment_length: int = 1000) -> list:
     # Add remaining segment
     if current_segment:
         segments.append(current_segment.strip())
+    
+    return segments
+
+
 # Streaming-safe concatenation to avoid loading all segments in memory
 # Writes directly to output WAV by appending frames with consistent params
 # Falls back to pydub if parameters mismatch
