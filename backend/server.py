@@ -3,6 +3,8 @@ from fastapi.responses import FileResponse, StreamingResponse, JSONResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
+import gridfs
+from gridfs.errors import NoFile
 import os
 import logging
 from pathlib import Path
