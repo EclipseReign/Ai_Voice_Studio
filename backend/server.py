@@ -1248,10 +1248,7 @@ async def synthesize_audio_segment_fast(
             logger.info(f"Segment {segment_idx} already exists, skipping")
             return segment_file
         
-        # Get lock for this specific voice to prevent concurrent synthesis
-        voice_lock = await loaded_voices.get_voice_lock(voice_key)
-        
-        # Synthesize using optimized thread pool with per-voice lock
+        # Synthesize using optimized thread pool (ThreadPoolExecutor handles parallelism)
         def synthesize():
             syn_config = SynthesisConfig(
                 length_scale=1.0 / rate,
@@ -1262,10 +1259,9 @@ async def synthesize_audio_segment_fast(
             with wave.open(str(segment_file), 'wb') as wav_out:
                 voice.synthesize_wav(text, wav_out, syn_config=syn_config)
         
-        # CRITICAL: Use per-voice lock to prevent concurrent access to same model
-        async with voice_lock:
-            loop = asyncio.get_event_loop()
-            await loop.run_in_executor(executor, synthesize)
+        # Run in thread pool - executor manages parallelism, Piper is thread-safe for inference
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(executor, synthesize)
         
         return segment_file
         
