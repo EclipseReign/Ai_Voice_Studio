@@ -258,18 +258,24 @@ class QueueManager:
         When 1 Pro + 1 Free: Pro gets 70%, Free gets 30% (2.33x speed difference)
         When multiple users: resources distributed according to Pro:Free = 70:30 ratio
         
-        Optimized for 20+ concurrent users on 8GB RAM / 8 vCPU
+        Optimized for 20+ concurrent users on available CPU cores
         """
         active_jobs = list(self.active_jobs.values())
         total_active = len(active_jobs)
         
+        # Use actual ThreadPoolExecutor max_workers (auto-detected based on CPU)
+        global executor
+        MAX_THREADS = executor._max_workers  # Access actual thread pool size
+        
         # Single user: give them most resources (leave 20% for server stability)
         if total_active == 0:
-            return 38 if is_pro else 38  # ~80% of 48 threads
+            single_user_threads = int(MAX_THREADS * 0.8)  # 80% of available threads
+            return single_user_threads if is_pro else single_user_threads
         
         if total_active == 1:
             # First user gets generous allocation
-            return 38 if is_pro else 38
+            single_user_threads = int(MAX_THREADS * 0.8)
+            return single_user_threads if is_pro else single_user_threads
         
         # Multiple users: dynamic allocation with Pro/Free ratio
         pro_count = sum(1 for job in active_jobs if job.is_pro)
@@ -282,13 +288,12 @@ class QueueManager:
         # Calculate total weighted points in system
         total_points = (pro_count * PRO_WEIGHT) + (free_count * FREE_WEIGHT)
         
-        # Available resources (48 threads total, use 80% to keep 20% for stability)
-        MAX_THREADS = 48
-        usable_threads = int(MAX_THREADS * 0.8)  # 38 threads for audio generation
+        # Available resources (use 80% to keep 20% for stability)
+        usable_threads = int(MAX_THREADS * 0.8)
         
         if total_points == 0:
             # Fallback: equal distribution
-            return max(6, usable_threads // total_active)
+            return max(10, usable_threads // total_active)
         
         # Calculate this user's share based on their weight
         if is_pro:
@@ -298,8 +303,10 @@ class QueueManager:
             # Free user gets their weighted share
             user_threads = int((FREE_WEIGHT / total_points) * usable_threads)
         
-        # Ensure reasonable bounds: min 6 (efficiency), max 40 (safety)
-        final_threads = max(6, min(user_threads, 40))
+        # Ensure reasonable bounds: min 10 threads for efficiency, max 80% of pool for safety
+        min_threads = 10
+        max_threads = int(MAX_THREADS * 0.8)
+        final_threads = max(min_threads, min(user_threads, max_threads))
         
         # Log allocation for monitoring
         logger.info(f"Resource allocation: {'Pro' if is_pro else 'Free'} user | "
