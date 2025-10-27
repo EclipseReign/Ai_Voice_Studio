@@ -210,7 +210,7 @@ def calculate_optimal_parameters(resources: dict):
         }
     """
     available_ram = resources['available_ram_gb']
-    cpu_count = resources['cpu_count']
+    # cpu_count = resources['cpu_count']  # Not used in fixed config
     
     # CRITICAL: Assume max 5GB usable in container (Railway 8GB limit - OS overhead)
     # Even if system reports 300GB, container is limited
