@@ -1284,8 +1284,11 @@ async def synthesize_audio_segment_fast(
                 voice.synthesize_wav(text, wav_out, syn_config=syn_config)
         
         # Run in thread pool - executor manages parallelism, Piper is thread-safe for inference
-        loop = asyncio.get_event_loop()
-        await loop.run_in_executor(executor, synthesize)
+        # Additionally, cap concurrency per-voice to VOICE_MAX_CONCURRENCY using semaphore
+        semaphore = await loaded_voices.get_voice_semaphore(voice_key)
+        async with semaphore:
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(executor, synthesize)
         
         return segment_file
         
