@@ -193,7 +193,7 @@ class QueueManager:
         self.queue: List[QueueJob] = []
         self.lock = asyncio.Lock()
         self.user_active_jobs: Dict[str, int] = defaultdict(int)
-        self.job_timeout_seconds: int = 900  # 15 minutes max per job
+        self.job_timeout_seconds: int = 3600  # 60 minutes max per job (increased from 15 min)
         
     async def add_job(self, job: QueueJob) -> int:
         """Add job to queue and return position"""
