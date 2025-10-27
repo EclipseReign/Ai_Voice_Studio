@@ -167,34 +167,20 @@ const HomePage = () => {
     }
   };
   
-  // NEW: Cleanup audio file from server (free memory)
-  const cleanupAudioFile = async (audioId) => {
+  // Delete audio file (user-initiated only)
+  const deleteAudioFile = async (audioId) => {
     try {
-      await axios.post(
+      const response = await axios.post(
         API + `/audio/cleanup/${audioId}`,
         {},
         { withCredentials: true }
       );
-      console.log(`Cleaned up audio file: ${audioId}`);
-    } catch (error) {
-      console.error("Error cleaning up audio:", error);
-    }
-  };
-  
-  // NEW: Cleanup old files
-  const cleanupOldFiles = async () => {
-    try {
-      const response = await axios.post(
-        API + '/audio/cleanup/old',
-        {},
-        { withCredentials: true }
-      );
       
-      toast.success(`Очищено ${response.data.deleted_count} файлов, освобождено ${response.data.freed_mb} MB`);
+      toast.success(`Файл удален (${response.data.freed_mb} MB освобождено)`);
       fetchHistory(); // Refresh history
     } catch (error) {
-      console.error("Error cleaning up old files:", error);
-      toast.error("Не удалось очистить старые файлы");
+      console.error("Error deleting audio:", error);
+      toast.error("Не удалось удалить файл");
     }
   };
   
