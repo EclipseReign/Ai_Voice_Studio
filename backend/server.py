@@ -621,7 +621,7 @@ async def get_generation_job(job_id: str) -> Optional[dict]:
     return await db.generation_jobs.find_one({"job_id": job_id})
 
 # Helper function to generate text chunks
-async def generate_text_chunk(
+def _generate_text_chunk_sync(
     prompt: str, 
     target_words: int, 
     language: str,
@@ -630,7 +630,7 @@ async def generate_text_chunk(
     is_last: bool = False,
     previous_content: Optional[str] = None
 ) -> str:
-    """Generate a chunk of text using LLM"""
+    """Synchronous text generation to be run in executor (prevents event loop blocking)"""
     
     # For short texts (≤5 minutes = ≤750 words): use EXACT target, no compensation
     # For long texts (>5 minutes): slight compensation (1.1x) because LLM tends to underproduce
@@ -694,11 +694,52 @@ Maintain the same tone and style.
 End at a natural pause point, but don't conclude - there's more to come.
 Be precise - exactly {adjusted_words} words."""
     
-    # Generate text
+    # Generate text synchronously (will be run in executor)
     user_message = UserMessage(text=user_prompt)
-    response = await chat.send_message(user_message)
     
-    return response.strip()
+    # IMPORTANT: Use sync method - this runs in thread pool, not in async event loop
+    import nest_asyncio
+    nest_asyncio.apply()
+    
+    # Run the async send_message in a new event loop in this thread
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    try:
+        response = loop.run_until_complete(chat.send_message(user_message))
+        return response.strip()
+    finally:
+        loop.close()
+
+async def generate_text_chunk(
+    prompt: str, 
+    target_words: int, 
+    language: str,
+    is_complete: bool = True,
+    is_first: bool = True,
+    is_last: bool = False,
+    previous_content: Optional[str] = None
+) -> str:
+    """Generate a chunk of text using LLM (async wrapper that runs in executor)
+    
+    CRITICAL FIX: Runs LLM call in executor to prevent blocking the main event loop.
+    Without this, when one user generates text, the entire server becomes unresponsive
+    and other users cannot even load the website.
+    """
+    
+    loop = asyncio.get_event_loop()
+    result = await loop.run_in_executor(
+        executor,
+        _generate_text_chunk_sync,
+        prompt,
+        target_words,
+        language,
+        is_complete,
+        is_first,
+        is_last,
+        previous_content
+    )
+    
+    return result
 
 # Piper helper functions
 async def fetch_available_voices() -> Dict:
