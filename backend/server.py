@@ -254,9 +254,9 @@ class QueueManager:
     def get_batch_size_for_user(self, is_pro: bool) -> int:
         """Dynamic resource allocation with Pro/Free ratio (70/30)
         
-        When 1 user alone: uses ~80% of resources (leave 20% for stability)
+        When 1 user alone: uses ~90% of resources (leave 10% for stability)
+        When multiple users: ALL threads distributed (no reserve needed - async handles it)
         When 1 Pro + 1 Free: Pro gets 70%, Free gets 30% (2.33x speed difference)
-        When multiple users: resources distributed according to Pro:Free = 70:30 ratio
         
         Optimized for 20+ concurrent users on available CPU cores
         """
@@ -267,14 +267,14 @@ class QueueManager:
         global executor
         MAX_THREADS = executor._max_workers  # Access actual thread pool size
         
-        # Single user: give them most resources (leave 20% for server stability)
+        # Single user: give them ALMOST all resources (leave 10% for stability)
         if total_active == 0:
-            single_user_threads = int(MAX_THREADS * 0.8)  # 80% of available threads
+            single_user_threads = int(MAX_THREADS * 0.9)  # 90% of available threads
             return single_user_threads if is_pro else single_user_threads
         
         if total_active == 1:
             # First user gets generous allocation
-            single_user_threads = int(MAX_THREADS * 0.8)
+            single_user_threads = int(MAX_THREADS * 0.9)
             return single_user_threads if is_pro else single_user_threads
         
         # Multiple users: dynamic allocation with Pro/Free ratio
@@ -288,8 +288,8 @@ class QueueManager:
         # Calculate total weighted points in system
         total_points = (pro_count * PRO_WEIGHT) + (free_count * FREE_WEIGHT)
         
-        # Available resources (use 80% to keep 20% for stability)
-        usable_threads = int(MAX_THREADS * 0.8)
+        # Available resources - use ALL threads when multiple users (async handles conflicts)
+        usable_threads = MAX_THREADS  # Use 100% of threads (no reserve for multiple users)
         
         if total_points == 0:
             # Fallback: equal distribution
@@ -303,9 +303,11 @@ class QueueManager:
             # Free user gets their weighted share
             user_threads = int((FREE_WEIGHT / total_points) * usable_threads)
         
-        # Ensure reasonable bounds: min 10 threads for efficiency, max 80% of pool for safety
+        # Ensure reasonable bounds
+        # Min: 10 threads for efficiency
+        # Max: 90% of pool for single user safety, 100% distributable among multiple users
         min_threads = 10
-        max_threads = int(MAX_THREADS * 0.8)
+        max_threads = MAX_THREADS  # No artificial cap for multiple users
         final_threads = max(min_threads, min(user_threads, max_threads))
         
         # Log allocation for monitoring
