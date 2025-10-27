@@ -1447,7 +1447,8 @@ async def synthesize_audio_segment_fast(
                 voice.synthesize_wav(text, wav_out, syn_config=syn_config)
         
         # Run in thread pool - executor manages parallelism, Piper is thread-safe for inference
-        # Additionally, cap concurrency per-voice to VOICE_MAX_CONCURRENCY using semaphore
+        # Per-voice semaphore limits concurrent synthesis to prevent memory spikes
+        # VOICE_MAX_CONCURRENCY=32 allows batch_size=24 with multiple users
         semaphore = await loaded_voices.get_voice_semaphore(voice_key)
         async with semaphore:
             loop = asyncio.get_event_loop()
