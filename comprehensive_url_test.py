@@ -18,7 +18,7 @@ def main():
     print("🚀 COMPREHENSIVE URL LENGTH FIX VERIFICATION")
     print("=" * 60)
     
-    base_url = "https://voice-scaling.preview.emergentagent.com/api"
+    base_url = "https://api-server-2.preview.emergentagent.com/api"
     
     # Test data
     small_text = "Это короткий тест синтеза речи для проверки работоспособности системы."
