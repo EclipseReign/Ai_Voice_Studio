@@ -237,10 +237,10 @@ def calculate_optimal_parameters(resources: dict):
     # Voice cache: Keep 2 models only
     voice_cache_size = 2  # ~100-200MB total
     
-    logger.info(f"⚙️ OPTIMIZED FOR CONCURRENT USERS:")
+    logger.info("⚙️ OPTIMIZED FOR CONCURRENT USERS:")
     logger.info(f"  - Max batch Pro: {batch_size_pro} (2 users = {batch_size_pro*2} tasks)")
     logger.info(f"  - Max batch Free: {batch_size_free}")
-    logger.info(f"  - Memory footprint per user: ~300-400MB")
+    logger.info("  - Memory footprint per user: ~300-400MB")
     logger.info(f"  - Safe for {max_concurrent_jobs} concurrent users")
     
     return {
