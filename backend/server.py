@@ -285,6 +285,10 @@ logger.info(f"  - Batch Size (Pro): {optimal_params['batch_size_pro']}")
 logger.info(f"  - Batch Size (Free): {optimal_params['batch_size_free']}")
 logger.info(f"  - Voice Cache Size: {optimal_params['voice_cache_size']} models")
 
+# Initialize VoiceCache with optimal size
+loaded_voices = VoiceCache(max_size=optimal_params['voice_cache_size'])
+logger.info(f"✅ Initialized VoiceCache with size={optimal_params['voice_cache_size']} models")
+
 # Thread pool executor for parallel audio synthesis (optimized for high concurrency)
 # Piper TTS is I/O bound, benefits from high worker count (8x CPU cores)
 # Each worker consumes ~10-20MB overhead
