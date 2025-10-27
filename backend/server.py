@@ -1593,33 +1593,48 @@ async def synthesize_audio_with_progress(
                 # Stage 3: Combine audio segments (85-98%) with streaming to save memory
                 yield f"data: {json.dumps({'type': 'stage', 'stage': 'combining', 'message': 'Объединение аудио...', 'progress': 85})}\n\n"
                 
-                final_audio = AudioSegment.empty()
+                # Stream concatenate directly to output WAV to avoid high RAM usage
                 total_files = len(all_segment_files)
-                
-                # Combine and clean up in smaller chunks to reduce memory usage
-                for idx, segment_file in enumerate(sorted(all_segment_files), 1):
-                    segment_audio = AudioSegment.from_wav(str(segment_file))
-                    final_audio += segment_audio
-                    
-                    # Delete segment file immediately after combining to free memory
-                    try:
-                        segment_file.unlink()
-                    except Exception:
-                        pass
-                    
-                    # Progress during combining (85-98%)
-                    combine_progress = int(85 + (idx / total_files) * 13)
-                    
-                    # Show progress every 5 files or on important milestones
-                    if idx % 5 == 0 or idx == total_files or idx == 1:
-                        yield f"data: {json.dumps({'type': 'progress', 'progress': combine_progress, 'message': f'Склейка {idx}/{total_files}', 'stage': 'combining'})}\n\n"
+                final_file = audio_dir / f"{audio_id}.wav"
+                try:
+                    import contextlib
+                    with contextlib.ExitStack() as stack:
+                        files_sorted = sorted(all_segment_files)
+                        first = stack.enter_context(wave.open(str(files_sorted[0]), 'rb'))
+                        params = first.getparams()
+                        with wave.open(str(final_file), 'wb') as out_wav:
+                            out_wav.setparams(params)
+                            out_wav.writeframes(first.readframes(first.getnframes()))
+                            for idx, seg in enumerate(files_sorted[1:], 2):
+                                wf = stack.enter_context(wave.open(str(seg), 'rb'))
+                                if wf.getparams() != params:
+                                    # fallback to pydub if params differ
+                                    temp_audio = AudioSegment.from_wav(str(files_sorted[0]))
+                                    for rest in files_sorted[1:]:
+                                        temp_audio += AudioSegment.from_wav(str(rest))
+                                    temp_audio.export(str(final_file), format="wav")
+                                    break
+                                out_wav.writeframes(wf.readframes(wf.getnframes()))
+                                # Progress during combining (85-98%)
+                                combine_progress = int(85 + (idx / total_files) * 13)
+                                if idx % 5 == 0 or idx == total_files or idx == 1:
+                                    yield f"data: {json.dumps({'type': 'progress', 'progress': combine_progress, 'message': f'Склейка {idx}/{total_files}', 'stage': 'combining'})}\n\n"
+                except Exception:
+                    # Fallback: pydub concat
+                    temp_audio = AudioSegment.empty()
+                    for seg in sorted(all_segment_files):
+                        temp_audio += AudioSegment.from_wav(str(seg))
+                    temp_audio.export(str(final_file), format="wav")
                 
                 # Stage 4: Save file (98-100%)
                 yield f"data: {json.dumps({'type': 'stage', 'stage': 'saving', 'message': 'Сохранение файла...', 'progress': 98})}\n\n"
                 
-                final_file = audio_dir / f"{audio_id}.wav"
-                # Use streaming-safe concatenation to reduce RAM usage dramatically
-                await concat_wav_files_streaming(sorted(all_segment_files), final_file)
+                # After saving, delete segment files to free disk
+                for file in all_segment_files:
+                    try:
+                        Path(file).unlink()
+                    except Exception:
+                        pass
                 
                 # Get real audio duration
                 audio_duration = get_audio_duration(final_file)
