@@ -1547,6 +1547,11 @@ async def synthesize_audio_with_progress(
                     tasks = []
                     for idx, segment in enumerate(batch_segments):
                         global_idx = batch_start + idx
+                        # Skip work if file for this segment already exists (resume)
+                        seg_path = temp_dir / f"segment_{global_idx:04d}.wav"
+                        if seg_path.exists():
+                            all_segment_files.append(seg_path)
+                            continue
                         task = synthesize_audio_segment_fast(
                             text=segment,
                             voice=voice_obj,
@@ -1558,7 +1563,7 @@ async def synthesize_audio_with_progress(
                         tasks.append(task)
                     
                     # Wait for batch to complete
-                    batch_files = await asyncio.gather(*tasks)
+                    batch_files = await asyncio.gather(*tasks) if tasks else []
                     all_segment_files.extend(batch_files)
                     
                     completed_segments += batch_segment_count
