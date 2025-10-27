@@ -1517,6 +1517,13 @@ async def synthesize_audio_with_progress(
             
             # Start job
             await queue_manager.start_job(queue_job)
+                        # If resuming, use updated generation_job document for segment_files
+                        try:
+                            if resume_from_job:
+                                resume_from_job = await get_generation_job(generation_job_id)
+                        except Exception:
+                            pass
+
             generation_start_time = time.time()
             
             try:
