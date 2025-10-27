@@ -10,7 +10,7 @@ import urllib.parse
 
 def test_text_generation_sse(duration_minutes, prompt="История космоса"):
     """Test text generation via SSE and return word count analysis"""
-    base_url = "https://api-server-2.preview.emergentagent.com/api"
+    base_url = "https://voice-session-repair.preview.emergentagent.com/api"
     url = f"{base_url}/text/generate-with-progress"
     
     params = {
