@@ -963,20 +963,13 @@ const HomePage = () => {
               <Card className="backdrop-blur-sm bg-white/80 border-slate-200 shadow-xl" data-testid="history-card">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
-                    <span>Recent Generations</span>
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={cleanupOldFiles}
-                      className="text-xs"
-                    >
-                      🧹 Очистить старые
-                    </Button>
+                    <span>История генераций</span>
+                    <span className="text-xs text-slate-500">Файлы хранятся постоянно</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {history.slice(0, 5).map((item) => (
+                    {history.slice(0, 10).map((item) => (
                       <div key={item.id} className="p-3 bg-slate-50 rounded-lg border border-slate-200" data-testid={'history-item-' + item.id}>
                         <p className="text-sm text-slate-700 mb-2">{item.text}</p>
                         <div className="flex items-center justify-between">
@@ -995,6 +988,15 @@ const HomePage = () => {
                                 <Download className="w-3 h-3" />
                               </Button>
                             </a>
+                            <Button 
+                              size="sm" 
+                              variant="ghost"
+                              onClick={() => deleteAudioFile(item.id)}
+                              title="Удалить файл"
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              🗑️
+                            </Button>
                           </div>
                         </div>
                       </div>
