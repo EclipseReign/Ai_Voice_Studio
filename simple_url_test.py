@@ -15,7 +15,7 @@ from datetime import datetime
 def test_url_length_limits():
     """Test URL length limits and POST method fix"""
     
-    base_url = "https://audio-synth-debug.preview.emergentagent.com/api"
+    base_url = "https://voicesync-fix.preview.emergentagent.com/api"
     
     print("🚀 URL LENGTH LIMIT TESTING")
     print("=" * 50)
