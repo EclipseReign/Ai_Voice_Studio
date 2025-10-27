@@ -1212,6 +1212,40 @@ def split_text_into_segments(text: str, max_segment_length: int = 1000) -> list:
     # Add remaining segment
     if current_segment:
         segments.append(current_segment.strip())
+# Streaming-safe concatenation to avoid loading all segments in memory
+# Writes directly to output WAV by appending frames with consistent params
+# Falls back to pydub if parameters mismatch
+async def concat_wav_files_streaming(segment_files: List[Path], out_path: Path) -> None:
+    if not segment_files:
+        raise ValueError("No segment files to concatenate")
+    try:
+        import contextlib
+        with contextlib.ExitStack() as stack:
+            first = stack.enter_context(wave.open(str(segment_files[0]), 'rb'))
+            params = first.getparams()
+            with wave.open(str(out_path), 'wb') as out_wav:
+                out_wav.setparams(params)
+                # write first
+                out_wav.writeframes(first.readframes(first.getnframes()))
+                # append others
+                for seg in segment_files[1:]:
+                    wf = stack.enter_context(wave.open(str(seg), 'rb'))
+                    if wf.getparams() != params:
+                        # Fallback to pydub if params mismatch
+                        from pydub import AudioSegment
+                        audio = AudioSegment.from_wav(str(segment_files[0]))
+                        for rest in segment_files[1:]:
+                            audio += AudioSegment.from_wav(str(rest))
+                        audio.export(str(out_path), format="wav")
+                        return
+                    out_wav.writeframes(wf.readframes(wf.getnframes()))
+    except Exception as e:
+        # Fallback on any error
+        final_audio = AudioSegment.empty()
+        for seg in segment_files:
+            final_audio += AudioSegment.from_wav(str(seg))
+        final_audio.export(str(out_path), format="wav")
+
     
     return segments
 
