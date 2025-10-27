@@ -1402,6 +1402,14 @@ async def synthesize_audio_with_progress(
     """Synthesize audio with real-time progress updates via SSE (requires auth)
     Features: Queue management, ETA, speed tracking, fair share, Pro priority
     Uses POST method to support large texts (up to 1 hour audio) that exceed URL length limits"""
+            # If request carries a job_id to resume, attempt to load and continue
+            resume_from_job = None
+            if request.job_id:
+                try:
+                    resume_from_job = await get_generation_job(request.job_id)
+                except Exception:
+                    resume_from_job = None
+
     
     async def generate_progress():
         job_id = str(uuid.uuid4())
