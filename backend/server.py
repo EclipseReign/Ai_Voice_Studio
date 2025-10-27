@@ -1602,7 +1602,8 @@ async def synthesize_audio_with_progress(
                 yield f"data: {json.dumps({'type': 'stage', 'stage': 'saving', 'message': 'Сохранение файла...', 'progress': 98})}\n\n"
                 
                 final_file = audio_dir / f"{audio_id}.wav"
-                final_audio.export(str(final_file), format="wav")
+                # Use streaming-safe concatenation to reduce RAM usage dramatically
+                await concat_wav_files_streaming(sorted(all_segment_files), final_file)
                 
                 # Get real audio duration
                 audio_duration = get_audio_duration(final_file)
