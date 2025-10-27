@@ -393,32 +393,32 @@ class QueueManager:
     def get_batch_size_for_user(self, is_pro: bool) -> int:
         """Dynamic resource allocation with memory-aware batch sizing
         
-        Strategy: Adjust batch_size based on concurrent load to prevent OOM
-        - 1 user: batch=24 (fast, uses more memory)
-        - 2-3 users: batch=12 (balanced)
-        - 4-6 users: batch=8 (conservative)
-        - 7+ users: batch=6 (safe, prevents OOM)
+        АВТОМАТИЧЕСКИ адаптируется под доступные ресурсы сервера
+        Использует предварительно рассчитанные optimal_params
         
-        Pro users get slightly larger batches for faster generation
+        Strategy: Adjust batch_size based on concurrent load to prevent OOM
+        Pro users get 1.5x boost for faster generation
         """
         active_jobs = list(self.active_jobs.values())
         total_active = len(active_jobs)
         
-        # Base batch sizes by load level (memory-safe)
-        if total_active <= 1:
-            base_batch = 24  # Single user: fast generation
-        elif total_active <= 3:
-            base_batch = 12  # 2-3 users: balanced
-        elif total_active <= 6:
-            base_batch = 8   # 4-6 users: conservative
-        else:
-            base_batch = 6   # 7+ users: maximum safety
-        
-        # Pro users get 1.5x boost (but capped)
+        # Base batch sizes from automatic resource detection
         if is_pro:
-            batch_size = min(32, int(base_batch * 1.5))
+            base_batch = optimal_params['batch_size_pro']
         else:
-            batch_size = base_batch
+            base_batch = optimal_params['batch_size_free']
+        
+        # Снижаем batch при высокой нагрузке для предотвращения OOM
+        if total_active <= 1:
+            multiplier = 1.0  # Single user: full batch
+        elif total_active <= 3:
+            multiplier = 0.85  # 2-3 users: 85%
+        elif total_active <= 6:
+            multiplier = 0.7   # 4-6 users: 70%
+        else:
+            multiplier = 0.5   # 7+ users: 50% для максимальной безопасности
+        
+        batch_size = max(6, int(base_batch * multiplier))  # Минимум 6
         
         return batch_size
     
