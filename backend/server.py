@@ -290,20 +290,6 @@ class QueueManager:
             batch_size = base_batch
         
         return batch_size
-        
-        # Ensure reasonable bounds
-        # Min: 10 threads for efficiency
-        # Max: 80 threads (safety cap to prevent OOM, even if pool is larger)
-        min_threads = 10
-        max_threads = min(80, MAX_THREADS)  # Cap at 80 threads max for memory safety
-        final_threads = max(min_threads, min(user_threads, max_threads))
-        
-        # Log allocation for monitoring
-        logger.info(f"Resource allocation: {'Pro' if is_pro else 'Free'} user | "
-                   f"Active: {total_active} ({pro_count} Pro, {free_count} Free) | "
-                   f"Allocated threads: {final_threads} (pool size: {MAX_THREADS})")
-        
-        return final_threads
     
     def is_high_load(self) -> bool:
         """Check if system is under high load (10+ active users)"""
