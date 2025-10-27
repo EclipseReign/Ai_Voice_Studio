@@ -2062,8 +2062,27 @@ async def auto_cleanup_old_files():
 
 @app.on_event("startup")
 async def startup_cleanup_task():
-    """Start background cleanup task on app startup"""
+    """Start background cleanup task and reset stuck jobs on app startup"""
     global cleanup_task
+    
+    # Reset stuck generation jobs (from previous crash/restart)
+    try:
+        result = await db.generation_jobs.update_many(
+            {"status": {"$in": ["pending", "processing"]}},
+            {
+                "$set": {
+                    "status": "failed",
+                    "error_message": "Server restarted - job was interrupted",
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }
+            }
+        )
+        if result.modified_count > 0:
+            logger.warning(f"Reset {result.modified_count} stuck generation jobs from previous session")
+    except Exception as e:
+        logger.error(f"Error resetting stuck jobs: {str(e)}")
+    
+    # Start background cleanup task
     cleanup_task = asyncio.create_task(auto_cleanup_old_files())
     logger.info("Started background auto-cleanup task (runs every 6 hours)")
 
