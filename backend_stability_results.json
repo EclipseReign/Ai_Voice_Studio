@@ -1,0 +1,54 @@
+{
+  "timestamp": "2025-10-27 13:18:17",
+  "total_tests": 9,
+  "passed_tests": 9,
+  "success_rate": "100.0%",
+  "overall_success": true,
+  "test_results": [
+    {
+      "name": "Backend startup complete",
+      "success": true,
+      "details": "ThreadPoolExecutor: 32 workers, VoiceCache: max_size=2"
+    },
+    {
+      "name": "GET /api/voices (public)",
+      "success": true,
+      "details": "Status: 200, Voices: 80, Structure: ✓"
+    },
+    {
+      "name": "POST /api/audio/synthesize-with-progress (no auth)",
+      "success": true,
+      "details": "Status: 401 (expected unauthorized)"
+    },
+    {
+      "name": "GET /api/jobs/pending (no auth)",
+      "success": true,
+      "details": "Status: 401 (expected unauthorized)"
+    },
+    {
+      "name": "GET /api/ (root)",
+      "success": true,
+      "details": "Status: 200"
+    },
+    {
+      "name": "GET /api/nonexistent (404 test)",
+      "success": true,
+      "details": "Status: 404 (expected)"
+    },
+    {
+      "name": "Logs syntax check",
+      "success": true,
+      "details": "No critical syntax/import errors found"
+    },
+    {
+      "name": "Code changes verification",
+      "success": true,
+      "details": "Found 5/5: VOICE_MAX_CONCURRENCY, concat_wav_files_streaming, job_id support, VoiceCache, Semaphore"
+    },
+    {
+      "name": "SSE simulation test",
+      "success": true,
+      "details": "Status: 401 (expected - no auth provided)"
+    }
+  ]
+}
