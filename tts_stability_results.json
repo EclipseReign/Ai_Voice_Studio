@@ -1,0 +1,83 @@
+{
+  "timestamp": "2025-10-27T12:10:59.200559",
+  "summary": {
+    "critical_passed": 0,
+    "critical_total": 5,
+    "optional_passed": 0,
+    "optional_total": 1,
+    "overall_passed": 0,
+    "overall_total": 6,
+    "all_critical_passed": false
+  },
+  "memory_usage": {
+    "initial": {
+      "total_mb": 15975,
+      "used_mb": 9571,
+      "usage_percent": 59.91236306729264
+    },
+    "final": {
+      "total_mb": 15975,
+      "used_mb": 9601,
+      "usage_percent": 60.10015649452269
+    }
+  },
+  "generated_audio_ids": [],
+  "detailed_results": [
+    {
+      "test": "1.1 Server Response",
+      "success": true,
+      "timestamp": "2025-10-27T12:10:58.787342",
+      "details": "Server responds, 80 voices available",
+      "error": ""
+    },
+    {
+      "test": "1.2 Worker Configuration",
+      "success": false,
+      "timestamp": "2025-10-27T12:10:58.791796",
+      "details": "Found worker config in logs: False",
+      "error": ""
+    },
+    {
+      "test": "1.3 Permanent Storage",
+      "success": false,
+      "timestamp": "2025-10-27T12:10:58.791814",
+      "details": "Found storage config in logs: False",
+      "error": ""
+    },
+    {
+      "test": "2.1 Concurrent Generation",
+      "success": false,
+      "timestamp": "2025-10-27T12:10:58.890806",
+      "details": "Successful: 0/2 clients, Failures: ['Unknown error', 'Unknown error']",
+      "error": ""
+    },
+    {
+      "test": "3.1 Audio Generation",
+      "success": false,
+      "timestamp": "2025-10-27T12:10:58.932567",
+      "details": "",
+      "error": "Failed to generate audio: {'detail': 'Not authenticated'}"
+    },
+    {
+      "test": "4.1 History Endpoint",
+      "success": false,
+      "timestamp": "2025-10-27T12:10:58.970739",
+      "details": "",
+      "error": "Status 401, expected 200"
+    },
+    {
+      "test": "5.0 Audio ID Available",
+      "success": false,
+      "timestamp": "2025-10-27T12:10:58.970785",
+      "details": "",
+      "error": "No audio IDs available for deletion test"
+    },
+    {
+      "test": "6.1 Stress Test (3 Clients)",
+      "success": false,
+      "timestamp": "2025-10-27T12:10:59.194402",
+      "details": "Successful: 0/3 clients in 0.2s, Failures: ['Client 1: None', 'Client 2: None', 'Client 3: None']",
+      "error": ""
+    }
+  ]
+}
