@@ -2293,6 +2293,28 @@ async def startup_job_recovery():
     except Exception as e:
         logger.error(f"Error marking interrupted jobs as resumable: {str(e)}")
     
+    # Cleanup orphaned temp directories (from crashed/cancelled jobs)
+    try:
+        BASE_DIR = Path(__file__).resolve().parent
+        audio_dir = Path(os.getenv("AUDIO_OUTPUT_DIR", BASE_DIR / "audio_files"))
+        if audio_dir.exists():
+            for temp_dir in audio_dir.glob("temp_*"):
+                if temp_dir.is_dir():
+                    try:
+                        # Remove all files in temp directory
+                        for file in temp_dir.glob("*.wav"):
+                            try:
+                                file.unlink()
+                            except Exception:
+                                pass
+                        # Remove directory
+                        temp_dir.rmdir()
+                        logger.info(f"Cleaned up orphaned temp directory: {temp_dir.name}")
+                    except Exception as e:
+                        logger.warning(f"Error cleaning temp directory {temp_dir.name}: {e}")
+    except Exception as e:
+        logger.error(f"Error during temp directory cleanup: {str(e)}")
+    
     logger.info("Job recovery complete. Permanent file storage enabled (no auto-cleanup)")
 
 @app.on_event("shutdown")
