@@ -81,19 +81,24 @@ VOICES_CACHE_FILE = PIPER_MODELS_DIR / "voices_cache.json"
 # Cache for loaded Piper voices with LRU eviction (max 2 models ~200MB to prevent OOM)
 from collections import OrderedDict
 
+VOICE_MAX_CONCURRENCY = int(os.getenv("VOICE_MAX_CONCURRENCY", "4"))
+
 class VoiceCache:
     """Thread-safe LRU cache for Piper voice models to prevent OOM and race conditions
     
     FIXES:
-    1. Added asyncio.Lock for thread-safety when multiple users access same model
-    2. Added per-voice locks to prevent concurrent synthesis on same model
+    1. Added asyncio.Lock for thread-safety when multiple users access same model (cache ops)
+    2. Added per-voice SEMAPHORE to limit parallel synthesis on the SAME model
+       - Prevents memory spikes when 2+ clients use one voice concurrently
+       - Default limit = VOICE_MAX_CONCURRENCY (env, default 4)
     3. Prevents race conditions when multiple users use same voice simultaneously
     """
     def __init__(self, max_size: int = 2):
         self.cache: OrderedDict[str, PiperVoice] = OrderedDict()
         self.max_size = max_size
         self.cache_lock = asyncio.Lock()  # Lock for cache operations (get/put/evict)
-        self.voice_locks: Dict[str, asyncio.Lock] = {}  # Per-voice locks for synthesis
+        # Per-voice semaphores to CAP concurrency per model
+        self.voice_semaphores: Dict[str, asyncio.Semaphore] = {}
         logger.info(f"Initialized VoiceCache with max_size={max_size} models (thread-safe)")
     
     async def get(self, key: str) -> Optional[PiperVoice]:
@@ -119,25 +124,25 @@ class VoiceCache:
                 if len(self.cache) >= self.max_size:
                     # Evict least recently used (first item)
                     evicted_key, evicted_voice = self.cache.popitem(last=False)
-                    # Remove lock for evicted voice
-                    if evicted_key in self.voice_locks:
-                        del self.voice_locks[evicted_key]
+                    # Remove semaphore for evicted voice
+                    if evicted_key in self.voice_semaphores:
+                        del self.voice_semaphores[evicted_key]
                     # Explicitly delete the model to free memory
                     del evicted_voice
                     logger.warning(f"Voice EVICTED from cache (LRU): {evicted_key} - freed memory")
                 
                 self.cache[key] = value
-                # Create lock for this voice
-                if key not in self.voice_locks:
-                    self.voice_locks[key] = asyncio.Lock()
+                # Create semaphore for this voice if missing
+                if key not in self.voice_semaphores:
+                    self.voice_semaphores[key] = asyncio.Semaphore(VOICE_MAX_CONCURRENCY)
                 logger.info(f"Voice LOADED into cache: {key} (cache size: {len(self.cache)}/{self.max_size})")
     
-    async def get_voice_lock(self, key: str) -> asyncio.Lock:
-        """Get lock for specific voice to prevent concurrent synthesis - THREAD-SAFE"""
+    async def get_voice_semaphore(self, key: str) -> asyncio.Semaphore:
+        """Get semaphore for specific voice to limit concurrent synthesis - THREAD-SAFE"""
         async with self.cache_lock:
-            if key not in self.voice_locks:
-                self.voice_locks[key] = asyncio.Lock()
-            return self.voice_locks[key]
+            if key not in self.voice_semaphores:
+                self.voice_semaphores[key] = asyncio.Semaphore(VOICE_MAX_CONCURRENCY)
+            return self.voice_semaphores[key]
     
     async def contains(self, key: str) -> bool:
         """Check if voice is in cache - THREAD-SAFE"""
@@ -148,7 +153,7 @@ class VoiceCache:
         """Clear all voices from cache - THREAD-SAFE"""
         async with self.cache_lock:
             self.cache.clear()
-            self.voice_locks.clear()
+            self.voice_semaphores.clear()
             logger.info("Voice cache cleared")
 
 loaded_voices = VoiceCache(max_size=2)  # Max 2 models in memory (~200MB)
