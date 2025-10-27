@@ -389,17 +389,23 @@ class QueueManager:
         else:
             base_batch = optimal_params['batch_size_free']
         
-        # Снижаем batch при высокой нагрузке для предотвращения OOM
+        # CRITICAL: AGGRESSIVELY reduce batch size with multiple users to prevent OOM
+        # Railway container limit: 8GB. Each task: ~15-20MB
+        # Goal: Keep total concurrent tasks under 30 (450-600MB safe)
         if total_active <= 1:
-            multiplier = 1.0  # Single user: full batch
-        elif total_active <= 3:
-            multiplier = 0.85  # 2-3 users: 85%
+            multiplier = 1.0  # Single user: full batch (Pro: 12, Free: 8)
+        elif total_active == 2:
+            multiplier = 0.5  # 2 users: 50% (Pro: 6, Free: 4) = 10 tasks max
+        elif total_active <= 4:
+            multiplier = 0.4   # 3-4 users: 40% (Pro: 4-5, Free: 3) = 12-20 tasks
         elif total_active <= 6:
-            multiplier = 0.7   # 4-6 users: 70%
+            multiplier = 0.33  # 5-6 users: 33% (Pro: 4, Free: 2-3) = 18-24 tasks
         else:
-            multiplier = 0.5   # 7+ users: 50% для максимальной безопасности
+            multiplier = 0.25  # 7+ users: 25% (Pro: 3, Free: 2) = 15-30 tasks
         
-        batch_size = max(6, int(base_batch * multiplier))  # Минимум 6
+        batch_size = max(4, int(base_batch * multiplier))  # Минимум 4 (safer)
+        
+        logger.debug(f"Batch size calculation: {total_active} active jobs, multiplier={multiplier}, batch={batch_size}")
         
         return batch_size
     
