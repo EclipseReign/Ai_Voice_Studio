@@ -1225,15 +1225,13 @@ async def concat_wav_files_streaming(segment_files: List[Path], out_path: Path) 
                         audio.export(str(out_path), format="wav")
                         return
                     out_wav.writeframes(wf.readframes(wf.getnframes()))
-    except Exception as e:
+    except Exception:
         # Fallback on any error
         final_audio = AudioSegment.empty()
         for seg in segment_files:
             final_audio += AudioSegment.from_wav(str(seg))
         final_audio.export(str(out_path), format="wav")
 
-    
-    return segments
 
 # Helper function to synthesize a single audio segment (optimized - no voice loading)
 async def synthesize_audio_segment_fast(
