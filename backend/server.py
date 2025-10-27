@@ -202,7 +202,6 @@ def calculate_optimal_parameters(resources: dict):
             'voice_cache_size': int  # Сколько моделей в кэше
         }
     """
-    total_ram = resources['total_ram_gb']
     available_ram = resources['available_ram_gb']
     cpu_count = resources['cpu_count']
     
