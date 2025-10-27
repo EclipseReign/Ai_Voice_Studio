@@ -500,10 +500,10 @@ async def fail_generation_job(job_id: str, error_message: str):
     logger.error(f"Failed generation job {job_id}: {error_message}")
 
 async def get_pending_jobs(user_id: str) -> List[dict]:
-    """Get all pending/processing jobs for a user"""
+    """Get all pending/processing/resumable jobs for a user"""
     cursor = db.generation_jobs.find({
         "user_id": user_id,
-        "status": {"$in": ["pending", "processing"]}
+        "status": {"$in": ["pending", "processing", "resumable"]}
     }).sort("created_at", -1)
     return await cursor.to_list(length=10)
 
