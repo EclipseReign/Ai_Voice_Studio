@@ -1786,8 +1786,8 @@ async def download_text(audio_id: str, current_user: User = Depends(get_current_
 
 @api_router.post("/audio/cleanup/{audio_id}")
 async def cleanup_audio_file(audio_id: str, current_user: User = Depends(get_current_user)):
-    """Delete audio file from disk (keeps database record)
-    Use after successful download to free up memory"""
+    """Delete audio file from disk (user-initiated only)
+    Files are stored permanently by default - only user can delete"""
     try:
         # Verify user owns this audio
         audio_doc = await db.audio_generations.find_one({
@@ -1802,11 +1802,13 @@ async def cleanup_audio_file(audio_id: str, current_user: User = Depends(get_cur
         
         # Delete file if it exists
         deleted = False
+        freed_bytes = 0
         if audio_path.exists():
             try:
+                freed_bytes = audio_path.stat().st_size
                 audio_path.unlink()
                 deleted = True
-                logger.info(f"Deleted audio file: {audio_id} ({audio_path.name})")
+                logger.info(f"User deleted audio file: {audio_id} ({audio_path.name}, {freed_bytes/1024/1024:.2f} MB)")
             except Exception as e:
                 logger.warning(f"Could not delete audio file {audio_id}: {str(e)}")
         
@@ -1816,7 +1818,13 @@ async def cleanup_audio_file(audio_id: str, current_user: User = Depends(get_cur
             {"$set": {"file_deleted": True, "deleted_at": datetime.now(timezone.utc).isoformat()}}
         )
         
-        return {"success": True, "deleted": deleted, "message": "Audio file cleaned up"}
+        freed_mb = freed_bytes / (1024 * 1024)
+        return {
+            "success": True, 
+            "deleted": deleted, 
+            "freed_mb": round(freed_mb, 2),
+            "message": f"Audio file deleted ({freed_mb:.2f} MB freed)"
+        }
         
     except HTTPException:
         raise
