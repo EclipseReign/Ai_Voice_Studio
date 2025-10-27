@@ -255,60 +255,36 @@ class QueueManager:
             return None
     
     def get_batch_size_for_user(self, is_pro: bool) -> int:
-        """Dynamic resource allocation with Pro/Free ratio (70/30)
+        """Dynamic resource allocation with memory-aware batch sizing
         
-        When 1 user alone: uses ~90% of resources (leave 10% for stability)
-        When multiple users: ALL threads distributed (no reserve needed - async handles it)
-        When 1 Pro + 1 Free: Pro gets 70%, Free gets 30% (2.33x speed difference)
+        Strategy: Adjust batch_size based on concurrent load to prevent OOM
+        - 1 user: batch=24 (fast, uses more memory)
+        - 2-3 users: batch=12 (balanced)
+        - 4-6 users: batch=8 (conservative)
+        - 7+ users: batch=6 (safe, prevents OOM)
         
-        Optimized for 20+ concurrent users on available CPU cores
+        Pro users get slightly larger batches for faster generation
         """
         active_jobs = list(self.active_jobs.values())
         total_active = len(active_jobs)
         
-        # Use actual ThreadPoolExecutor max_workers (auto-detected based on CPU)
-        global executor
-        MAX_THREADS = executor._max_workers  # Access actual thread pool size
-        
-        # CRITICAL: Cap batch_size to prevent OOM - max 12 concurrent segments
-        # This prevents loading too many audio segments in memory at once
-        MAX_BATCH_SIZE = 12
-        
-        # Single user: give them good allocation but capped for memory safety
-        if total_active == 0:
-            single_user_threads = min(MAX_BATCH_SIZE, int(MAX_THREADS * 0.5))  # 50% of threads, max 12
-            return single_user_threads if is_pro else single_user_threads
-        
-        if total_active == 1:
-            # First user gets good allocation but capped for memory safety
-            single_user_threads = min(MAX_BATCH_SIZE, int(MAX_THREADS * 0.5))
-            return single_user_threads if is_pro else single_user_threads
-        
-        # Multiple users: dynamic allocation with Pro/Free ratio
-        pro_count = sum(1 for job in active_jobs if job.is_pro)
-        free_count = total_active - pro_count
-        
-        # Weight system: Pro = 70 points, Free = 30 points
-        PRO_WEIGHT = 70
-        FREE_WEIGHT = 30
-        
-        # Calculate total weighted points in system
-        total_points = (pro_count * PRO_WEIGHT) + (free_count * FREE_WEIGHT)
-        
-        # Available resources - use ALL threads when multiple users (async handles conflicts)
-        usable_threads = MAX_THREADS  # Use 100% of threads (no reserve for multiple users)
-        
-        if total_points == 0:
-            # Fallback: equal distribution
-            return max(10, usable_threads // total_active)
-        
-        # Calculate this user's share based on their weight
-        if is_pro:
-            # Pro user gets their weighted share
-            user_threads = int((PRO_WEIGHT / total_points) * usable_threads)
+        # Base batch sizes by load level (memory-safe)
+        if total_active <= 1:
+            base_batch = 24  # Single user: fast generation
+        elif total_active <= 3:
+            base_batch = 12  # 2-3 users: balanced
+        elif total_active <= 6:
+            base_batch = 8   # 4-6 users: conservative
         else:
-            # Free user gets their weighted share
-            user_threads = int((FREE_WEIGHT / total_points) * usable_threads)
+            base_batch = 6   # 7+ users: maximum safety
+        
+        # Pro users get 1.5x boost (but capped)
+        if is_pro:
+            batch_size = min(32, int(base_batch * 1.5))
+        else:
+            batch_size = base_batch
+        
+        return batch_size
         
         # Ensure reasonable bounds
         # Min: 10 threads for efficiency
