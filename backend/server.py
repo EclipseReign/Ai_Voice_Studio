@@ -2092,7 +2092,7 @@ async def synthesize_audio(request: AudioSynthesizeRequest):
 
 @api_router.get("/audio/download/{audio_id}")
 async def download_audio(audio_id: str):
-    """Download generated audio file"""
+    """Download generated audio file from MongoDB GridFS"""
     try:
         # Fetch from database
         audio_doc = await db.audio_generations.find_one({"id": audio_id}, {"_id": 0})
@@ -2100,19 +2100,41 @@ async def download_audio(audio_id: str):
         if not audio_doc:
             raise HTTPException(status_code=404, detail="Audio not found")
         
-        audio_path = Path(audio_doc["audio_path"])
+        # Check if file is stored in GridFS (new method) or on disk (legacy)
+        if audio_doc.get("gridfs_id"):
+            # NEW: Fetch from GridFS
+            from bson import ObjectId
+            try:
+                gridfs_id = ObjectId(audio_doc["gridfs_id"])
+                audio_data = fs.get(gridfs_id).read()
+                
+                # Return as streaming response
+                return Response(
+                    content=audio_data,
+                    media_type="audio/wav",
+                    headers={
+                        "Content-Disposition": f"attachment; filename=generated_audio_{audio_id}.wav"
+                    }
+                )
+            except Exception as e:
+                logger.error(f"Error fetching from GridFS: {str(e)}")
+                raise HTTPException(status_code=500, detail=f"Error fetching audio from database: {str(e)}")
         
-        if not audio_path.exists():
-            raise HTTPException(status_code=404, detail="Audio file not found")
-        
-        # Determine media type based on file extension
-        media_type = "audio/wav" if audio_path.suffix == '.wav' else "audio/mpeg"
-        
-        return FileResponse(
-            path=audio_path,
-            media_type=media_type,
-            filename=f"generated_audio_{audio_id}{audio_path.suffix}"
-        )
+        else:
+            # LEGACY: Fetch from disk (for old files)
+            audio_path = Path(audio_doc["audio_path"])
+            
+            if not audio_path.exists():
+                raise HTTPException(status_code=404, detail="Audio file not found")
+            
+            # Determine media type based on file extension
+            media_type = "audio/wav" if audio_path.suffix == '.wav' else "audio/mpeg"
+            
+            return FileResponse(
+                path=audio_path,
+                media_type=media_type,
+                filename=f"generated_audio_{audio_id}{audio_path.suffix}"
+            )
         
     except HTTPException:
         raise
