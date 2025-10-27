@@ -369,7 +369,7 @@ class GenerationJob(BaseModel):
     voice: str
     rate: float
     language: str
-    status: Literal["pending", "processing", "completed", "failed"]
+    status: Literal["pending", "processing", "completed", "failed", "resumable"]
     total_segments: int
     completed_segments: int
     segment_files: List[str] = Field(default_factory=list)  # Paths to generated segments
