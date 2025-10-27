@@ -26,7 +26,7 @@ import subprocess
 import concurrent.futures
 
 class OOMFixTester:
-    def __init__(self, base_url="https://codedoctor-6.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://audio-synth-debug.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.test_results = []
         self.backend_logs = []

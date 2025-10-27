@@ -9,7 +9,7 @@ import time
 import json
 from datetime import datetime
 
-BASE_URL = "https://codedoctor-6.preview.emergentagent.com/api"
+BASE_URL = "https://audio-synth-debug.preview.emergentagent.com/api"
 
 def test_text_generation():
     """Test 1: Text generation (10 minutes) - Speed and accuracy"""

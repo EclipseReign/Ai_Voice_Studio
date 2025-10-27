@@ -18,7 +18,7 @@ def main():
     print("🚀 COMPREHENSIVE URL LENGTH FIX VERIFICATION")
     print("=" * 60)
     
-    base_url = "https://codedoctor-6.preview.emergentagent.com/api"
+    base_url = "https://audio-synth-debug.preview.emergentagent.com/api"
     
     # Test data
     small_text = "Это короткий тест синтеза речи для проверки работоспособности системы."
