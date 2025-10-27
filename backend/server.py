@@ -290,11 +290,11 @@ logger.info(f"  - Voice Cache Size: {optimal_params['voice_cache_size']} models"
 # Thread pool executor for parallel audio synthesis (optimized for high concurrency)
 # Piper TTS is I/O bound, benefits from high worker count (8x CPU cores)
 # Each worker consumes ~10-20MB overhead
-# For 8 vCPU: 8 × 8 = 64 workers (optimal for TTS workload)
-cpu_count = multiprocessing.cpu_count()
-max_workers = min(64, max(cpu_count * 8, 16))  # 8x CPU cores, min 16, max 64
+# АВТОМАТИЧЕСКИ определяется на основе доступных ресурсов
+cpu_count = system_resources['cpu_count']
+max_workers = optimal_params['max_workers']
 executor = ThreadPoolExecutor(max_workers=max_workers)
-logger.info(f"Initialized ThreadPoolExecutor with {max_workers} workers (CPU count: {cpu_count})")
+logger.info(f"✅ Initialized ThreadPoolExecutor with {max_workers} workers (CPU count: {cpu_count})")
 
 # ============================================================================
 # QUEUE MANAGEMENT SYSTEM (Fair Share with Pro Priority)
