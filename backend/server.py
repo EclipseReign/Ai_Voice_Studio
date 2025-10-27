@@ -428,8 +428,8 @@ class QueueManager:
         """Get count of active users"""
         return len(set(job.user_id for job in self.active_jobs.values()))
 
-# Global queue manager - optimized for 10+ concurrent users
-queue_manager = QueueManager(max_concurrent_jobs=10)  # 10 concurrent for 8 vCPU with optimized memory
+# Global queue manager - АВТОМАТИЧЕСКИ оптимизируется под доступные ресурсы
+queue_manager = QueueManager(max_concurrent_jobs=optimal_params['max_concurrent_jobs'])
 
 # Models
 class Voice(BaseModel):
