@@ -419,7 +419,7 @@ const HomePage = () => {
                 setAudioProgressMessage(data.message || "Готово!");
                 setAudioUrl(API + data.audio_url);
                 setAudioDuration(data.duration || 0);
-                setCurrentAudioId(data.audio_id); // NEW: Save audio ID for cleanup
+                setCurrentAudioId(data.audio_id);
                 setGenerationTime(data.generation_time || 0);
                 if (data.speed) {
                   setAudioSpeed(data.speed);
@@ -428,14 +428,8 @@ const HomePage = () => {
                 fetchHistory();
                 setIsSynthesizing(false);
                 
-                // NEW: Auto-cleanup after successful generation (optional - wait a bit for download)
-                // User can still download from history, but this frees the current file
-                setTimeout(() => {
-                  if (data.audio_id) {
-                    // Cleanup happens in background, doesn't affect user
-                    cleanupAudioFile(data.audio_id);
-                  }
-                }, 5000); // Wait 5 seconds for user to start download
+                // Files are now stored permanently - no auto-cleanup
+                // User can manually delete from history if needed
                 
                 // Refresh subscription to update usage count
                 await refreshSubscription();
