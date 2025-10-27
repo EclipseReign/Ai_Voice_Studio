@@ -1631,7 +1631,7 @@ async def synthesize_audio_with_progress(
                         for file in temp_dir.glob("*.wav"):
                             try:
                                 file.unlink()
-                            except:
+                            except Exception:
                                 pass
                         temp_dir.rmdir()
                 except Exception as cleanup_error:
@@ -1675,7 +1675,7 @@ async def synthesize_audio_with_progress(
                         for file in temp_dir.glob("*.wav"):
                             try:
                                 file.unlink()
-                            except:
+                            except Exception:
                                 pass
                         temp_dir.rmdir()
                 except Exception as cleanup_error:
