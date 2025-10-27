@@ -1470,6 +1470,15 @@ async def synthesize_audio_with_progress(
             # Estimate audio duration for ETA calculation
             estimated_audio_duration = estimate_duration(request.text, request.rate)
             estimated_audio_minutes = estimated_audio_duration / 60
+                    # Determine already completed segments when resuming
+                    already_done = 0
+                    try:
+                        if resume_from_job and resume_from_job.get("segment_files"):
+                            already_done = len([p for p in resume_from_job["segment_files"] if Path(p).exists()])
+                            completed_segments = already_done
+                    except Exception:
+                        already_done = 0
+
             
             # Create queue job
             queue_job = QueueJob(
