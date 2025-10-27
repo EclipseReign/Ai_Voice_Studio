@@ -95,7 +95,8 @@ class VoiceCache:
     1. Added asyncio.Lock for thread-safety when multiple users access same model (cache ops)
     2. Added per-voice SEMAPHORE to limit parallel synthesis on the SAME model
        - Prevents memory spikes when 2+ clients use one voice concurrently
-       - Default limit = VOICE_MAX_CONCURRENCY (env, default 4)
+       - Default limit = VOICE_MAX_CONCURRENCY (env, default 32)
+       - Increased from 4 to 32 to support batch_size=24 with multiple users
     3. Prevents race conditions when multiple users use same voice simultaneously
     """
     def __init__(self, max_size: int = 2):
