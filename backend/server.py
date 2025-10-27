@@ -1444,17 +1444,28 @@ async def synthesize_audio_with_progress(
             segments = split_text_into_segments(request.text)
             total_segments = len(segments)
             
-            # NEW: Create generation job for crash recovery
-            generation_job_id = await create_generation_job(
-                user_id=current_user.id,
-                text=request.text,
-                voice=request.voice,
-                rate=request.rate,
-                language=request.language,
-                total_segments=total_segments,
-                temp_dir=str(temp_dir)
-            )
-            logger.info(f"Created generation job {generation_job_id} for audio {audio_id}")
+            # NEW: Create or reuse generation job for crash recovery
+            if resume_from_job and resume_from_job.get("status") in ["pending", "processing", "resumable"]:
+                generation_job_id = resume_from_job["job_id"]
+                # Reuse existing temp_dir if present
+                try:
+                    prev_temp = Path(resume_from_job.get("temp_dir", str(temp_dir)))
+                    if prev_temp.exists():
+                        temp_dir = prev_temp
+                except Exception:
+                    pass
+                logger.info(f"Resuming existing generation job {generation_job_id}")
+            else:
+                generation_job_id = await create_generation_job(
+                    user_id=current_user.id,
+                    text=request.text,
+                    voice=request.voice,
+                    rate=request.rate,
+                    language=request.language,
+                    total_segments=total_segments,
+                    temp_dir=str(temp_dir)
+                )
+                logger.info(f"Created generation job {generation_job_id} for audio {audio_id}")
             
             # Estimate audio duration for ETA calculation
             estimated_audio_duration = estimate_duration(request.text, request.rate)
