@@ -1077,6 +1077,49 @@ async def get_voices():
         logger.error(f"Error fetching voices: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error fetching voices: {str(e)}")
 
+@api_router.get("/system/resources")
+async def get_system_resources_info():
+    """Получить информацию о ресурсах сервера и текущей нагрузке
+    
+    Публичный endpoint для мониторинга - НЕ требует авторизации
+    """
+    try:
+        # Текущие ресурсы
+        current_resources = get_system_resources()
+        
+        # Информация о настройках
+        active_jobs_count = len(queue_manager.active_jobs)
+        active_users_count = queue_manager.get_active_user_count()
+        
+        return {
+            "system": {
+                "total_ram_gb": current_resources['total_ram_gb'],
+                "available_ram_gb": current_resources['available_ram_gb'],
+                "ram_usage_percent": current_resources['ram_usage_percent'],
+                "cpu_count": current_resources['cpu_count']
+            },
+            "configured_limits": {
+                "max_concurrent_jobs": optimal_params['max_concurrent_jobs'],
+                "max_workers": optimal_params['max_workers'],
+                "batch_size_pro": optimal_params['batch_size_pro'],
+                "batch_size_free": optimal_params['batch_size_free'],
+                "voice_cache_size": optimal_params['voice_cache_size']
+            },
+            "current_load": {
+                "active_jobs": active_jobs_count,
+                "active_users": active_users_count,
+                "is_high_load": queue_manager.is_high_load(),
+                "capacity_percent": round((active_jobs_count / optimal_params['max_concurrent_jobs']) * 100, 1)
+            },
+            "recommendations": {
+                "can_handle_more": active_jobs_count < optimal_params['max_concurrent_jobs'],
+                "estimated_max_users": optimal_params['max_concurrent_jobs']
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error getting system resources: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+
 # Text generation with progress tracking via SSE
 @api_router.get("/text/generate-with-progress")
 async def generate_text_with_progress(
