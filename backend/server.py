@@ -1993,81 +1993,33 @@ app.add_middleware(
 )
 
 # ============================================================================
-# BACKGROUND TASK: Auto-cleanup old audio files
+# BACKGROUND TASK: REMOVED - Files are now stored permanently
+# Users can manually delete files if needed via cleanup endpoint
 # ============================================================================
-import asyncio
-
-cleanup_task = None
-
-async def auto_cleanup_old_files():
-    """Background task to automatically delete old audio files
-    Runs every 6 hours, deletes files older than 24 hours"""
-    while True:
-        try:
-            await asyncio.sleep(6 * 60 * 60)  # Wait 6 hours
-            
-            logger.info("Starting automatic cleanup of old audio files...")
-            
-            # Find all audio files older than 24 hours
-            cutoff_time = datetime.now(timezone.utc) - timedelta(hours=24)
-            cutoff_iso = cutoff_time.isoformat()
-            
-            old_files = await db.audio_generations.find({
-                "created_at": {"$lt": cutoff_iso},
-                "file_deleted": {"$ne": True}
-            }, {"_id": 0, "id": 1, "audio_path": 1, "user_id": 1}).to_list(1000)
-            
-            deleted_count = 0
-            freed_bytes = 0
-            
-            for gen in old_files:
-                audio_path = Path(gen["audio_path"])
-                if audio_path.exists():
-                    try:
-                        file_size = audio_path.stat().st_size
-                        audio_path.unlink()
-                        deleted_count += 1
-                        freed_bytes += file_size
-                    except Exception as e:
-                        logger.warning(f"Could not delete {gen['id']}: {str(e)}")
-                
-                # Mark as deleted in DB
-                await db.audio_generations.update_one(
-                    {"id": gen["id"]},
-                    {"$set": {"file_deleted": True, "deleted_at": datetime.now(timezone.utc).isoformat()}}
-                )
-            
-            freed_mb = freed_bytes / (1024 * 1024)
-            logger.info(f"Auto-cleanup complete: deleted {deleted_count} files, freed {freed_mb:.2f} MB")
-            
-        except Exception as e:
-            logger.error(f"Error in auto-cleanup task: {str(e)}")
 
 @app.on_event("startup")
-async def startup_cleanup_task():
-    """Start background cleanup task and reset stuck jobs on app startup"""
-    global cleanup_task
+async def startup_job_recovery():
+    """Job recovery on app startup - mark interrupted jobs as resumable"""
     
-    # Reset stuck generation jobs (from previous crash/restart)
+    # Mark interrupted generation jobs as resumable (not failed!)
+    # This allows jobs to continue after server restart
     try:
         result = await db.generation_jobs.update_many(
             {"status": {"$in": ["pending", "processing"]}},
             {
                 "$set": {
-                    "status": "failed",
-                    "error_message": "Server restarted - job was interrupted",
+                    "status": "resumable",
+                    "error_message": "Server restarted - job can be resumed",
                     "updated_at": datetime.now(timezone.utc).isoformat()
                 }
             }
         )
         if result.modified_count > 0:
-            logger.warning(f"Reset {result.modified_count} stuck generation jobs from previous session")
+            logger.warning(f"Marked {result.modified_count} interrupted jobs as resumable (can be continued)")
     except Exception as e:
-        logger.error(f"Error resetting stuck jobs: {str(e)}")
+        logger.error(f"Error marking interrupted jobs as resumable: {str(e)}")
     
-    # Start background cleanup task
-    cleanup_task = asyncio.create_task(auto_cleanup_old_files())
-    logger.info("Started background auto-cleanup task (runs every 6 hours)")
+    logger.info("Job recovery complete. Permanent file storage enabled (no auto-cleanup)")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
