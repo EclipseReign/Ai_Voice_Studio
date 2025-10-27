@@ -340,6 +340,8 @@ class AudioSynthesizeRequest(BaseModel):
     voice: str
     rate: float = 1.0  # Speed: 0.5 to 2.0 (1.0 = normal)
     language: str = "en-US"
+    # Optional: resume existing unfinished job
+    job_id: Optional[str] = None
 
 class AudioSynthesizeResponse(BaseModel):
     id: str
