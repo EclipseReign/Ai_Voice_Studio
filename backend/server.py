@@ -1473,6 +1473,7 @@ async def synthesize_audio_with_progress(
                 
                 # Get batch size based on user tier and current load
                 batch_size = queue_manager.get_batch_size_for_user(is_pro)
+                logger.info(f"Batch allocation for job {generation_job_id}: batch_size={batch_size}, is_pro={is_pro}, total_segments={total_segments}")
                 completed_segments = 0
                 all_segment_files = []
                 
