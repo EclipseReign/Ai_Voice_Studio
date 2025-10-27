@@ -1909,6 +1909,28 @@ async def synthesize_audio_with_progress(
                 # Get real audio duration
                 audio_duration = get_audio_duration(final_file)
                 
+                # CRITICAL FIX: Save audio to MongoDB GridFS to free memory immediately
+                # Read audio file
+                with open(final_file, 'rb') as audio_file:
+                    audio_data = audio_file.read()
+                
+                # Store in GridFS with metadata
+                gridfs_id = fs.put(
+                    audio_data,
+                    filename=f"audio_{audio_id}.wav",
+                    content_type="audio/wav",
+                    user_id=current_user.id,
+                    audio_id=audio_id,
+                    created_at=datetime.now(timezone.utc)
+                )
+                
+                # Delete file from disk immediately to free memory
+                try:
+                    final_file.unlink()
+                    logger.info(f"Deleted audio file from disk: {final_file}")
+                except Exception as e:
+                    logger.warning(f"Could not delete audio file: {e}")
+                
                 # Clean up temp directory (files already deleted inline during combining)
                 try:
                     if temp_dir.exists():
@@ -1926,7 +1948,7 @@ async def synthesize_audio_with_progress(
                 total_generation_time = time.time() - generation_start_time
                 final_speed = (audio_duration / 60) / total_generation_time if total_generation_time > 0 else 0
                 
-                # Save to database
+                # Save to database with GridFS reference
                 audio_doc = {
                     "id": audio_id,
                     "user_id": current_user.id,
@@ -1934,7 +1956,8 @@ async def synthesize_audio_with_progress(
                     "voice": request.voice,
                     "rate": request.rate,
                     "language": request.language,
-                    "audio_path": str(final_file),
+                    "gridfs_id": str(gridfs_id),  # Reference to GridFS file
+                    "audio_path": None,  # No longer storing on disk
                     "duration": audio_duration,
                     "generation_time": total_generation_time,
                     "generation_speed": final_speed,
@@ -1942,6 +1965,7 @@ async def synthesize_audio_with_progress(
                 }
                 
                 await db.audio_generations.insert_one(audio_doc)
+                logger.info(f"Audio {audio_id} saved to MongoDB GridFS (ID: {gridfs_id}), memory freed")
                 
                 # NEW: Mark generation job as completed
                 if generation_job_id:
