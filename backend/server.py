@@ -1982,13 +1982,5 @@ async def startup_job_recovery():
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
-    # Cancel cleanup task
-    global cleanup_task
-    if cleanup_task:
-        cleanup_task.cancel()
-        try:
-            await cleanup_task
-        except asyncio.CancelledError:
-            pass
-    
+    """Cleanup on shutdown"""
     client.close()
