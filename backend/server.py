@@ -153,12 +153,14 @@ class VoiceCache:
 
 loaded_voices = VoiceCache(max_size=2)  # Max 2 models in memory (~200MB)
 
-# Thread pool executor for parallel audio synthesis (optimized for memory efficiency)
-# CRITICAL: Limit workers to prevent OOM crashes on Railway (8GB RAM)
-# Each worker consumes ~10-20MB overhead, so we cap at 24 to stay within memory limits
-max_workers = min(24, max(multiprocessing.cpu_count() * 2, 8))  # Use 2x CPU cores, max 24
+# Thread pool executor for parallel audio synthesis (optimized for high concurrency)
+# Piper TTS is I/O bound, benefits from high worker count (8x CPU cores)
+# Each worker consumes ~10-20MB overhead
+# For 8 vCPU: 8 × 8 = 64 workers (optimal for TTS workload)
+cpu_count = multiprocessing.cpu_count()
+max_workers = min(64, max(cpu_count * 8, 16))  # 8x CPU cores, min 16, max 64
 executor = ThreadPoolExecutor(max_workers=max_workers)
-logger.info(f"Initialized ThreadPoolExecutor with {max_workers} workers")
+logger.info(f"Initialized ThreadPoolExecutor with {max_workers} workers (CPU count: {cpu_count})")
 
 # ============================================================================
 # QUEUE MANAGEMENT SYSTEM (Fair Share with Pro Priority)
