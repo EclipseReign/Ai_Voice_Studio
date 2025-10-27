@@ -1700,33 +1700,53 @@ async def synthesize_audio_with_progress(
                 batches_completed = 0
                 total_batches = (total_segments + batch_size - 1) // batch_size
                 
-                for batch_start in range(0, total_segments, batch_size):
-                    batch_end = min(batch_start + batch_size, total_segments)
-                    batch_segments = segments[batch_start:batch_end]
-                    batch_segment_count = len(batch_segments)
-                    
-                    # Generate batch in parallel
-                    tasks = []
-                    for idx, segment in enumerate(batch_segments):
-                        global_idx = batch_start + idx
-                        # Skip work if file for this segment already exists (resume)
-                        seg_path = temp_dir / f"segment_{global_idx:04d}.wav"
-                        if seg_path.exists():
-                            all_segment_files.append(seg_path)
-                            continue
-                        task = synthesize_audio_segment_fast(
-                            text=segment,
-                            voice=voice_obj,
-                            voice_key=request.voice,  # NEW: for per-voice locking
-                            rate=request.rate,
-                            segment_idx=global_idx,
-                            temp_dir=temp_dir
-                        )
-                        tasks.append(task)
-                    
-                    # Wait for batch to complete
-                    batch_files = await asyncio.gather(*tasks) if tasks else []
-                    all_segment_files.extend(batch_files)
+                # Track all active tasks for proper cancellation
+                all_active_tasks = []
+                
+                try:
+                    for batch_start in range(0, total_segments, batch_size):
+                        batch_end = min(batch_start + batch_size, total_segments)
+                        batch_segments = segments[batch_start:batch_end]
+                        batch_segment_count = len(batch_segments)
+                        
+                        # Generate batch in parallel
+                        tasks = []
+                        for idx, segment in enumerate(batch_segments):
+                            global_idx = batch_start + idx
+                            # Skip work if file for this segment already exists (resume)
+                            seg_path = temp_dir / f"segment_{global_idx:04d}.wav"
+                            if seg_path.exists():
+                                all_segment_files.append(seg_path)
+                                continue
+                            task = asyncio.create_task(synthesize_audio_segment_fast(
+                                text=segment,
+                                voice=voice_obj,
+                                voice_key=request.voice,  # NEW: for per-voice locking
+                                rate=request.rate,
+                                segment_idx=global_idx,
+                                temp_dir=temp_dir
+                            ))
+                            tasks.append(task)
+                            all_active_tasks.append(task)
+                        
+                        # Wait for batch to complete with timeout (5 minutes per batch)
+                        if tasks:
+                            try:
+                                batch_files = await asyncio.wait_for(
+                                    asyncio.gather(*tasks, return_exceptions=True), 
+                                    timeout=300
+                                )
+                                # Filter out exceptions from results
+                                batch_files = [f for f in batch_files if isinstance(f, Path)]
+                            except asyncio.TimeoutError:
+                                logger.error(f"Batch timeout for job {generation_job_id}, cancelling tasks")
+                                for task in tasks:
+                                    if not task.done():
+                                        task.cancel()
+                                raise HTTPException(status_code=408, detail="Batch generation timeout")
+                            all_segment_files.extend(batch_files)
+                        else:
+                            batch_files = []
                     
                     completed_segments += batch_segment_count
                     batches_completed += 1
