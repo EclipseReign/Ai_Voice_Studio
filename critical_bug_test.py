@@ -20,7 +20,7 @@ from datetime import datetime
 from pathlib import Path
 
 class CriticalBugTester:
-    def __init__(self, base_url="https://voice-session-repair.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://audio-memory.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.session = requests.Session()
         self.test_results = []

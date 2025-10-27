@@ -9,7 +9,7 @@ import httpx
 import asyncio
 
 class PiperTTSAPITester:
-    def __init__(self, base_url="https://voice-session-repair.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://audio-memory.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.tests_run = 0
         self.tests_passed = 0
