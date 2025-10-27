@@ -188,11 +188,14 @@ def get_system_resources():
 def calculate_optimal_parameters(resources: dict):
     """Автоматически вычисляет оптимальные параметры на основе доступных ресурсов
     
+    CRITICAL FIX: Railway/container environments report total server RAM but enforce
+    container limits (typically 8GB). Using CONSERVATIVE values to prevent OOM kills.
+    
     Расчеты основаны на:
     - Piper model: ~50-100MB в памяти
     - Segment processing: ~10-20MB per segment в batch
     - ThreadPoolExecutor worker: ~10-20MB overhead
-    - Target: минимум 10 одновременных пользователей
+    - **Container limit assumption: 8GB max (Railway Hobby)**
     
     Args:
         resources: dict с информацией о ресурсах
@@ -209,60 +212,36 @@ def calculate_optimal_parameters(resources: dict):
     available_ram = resources['available_ram_gb']
     cpu_count = resources['cpu_count']
     
-    # Консервативная оценка: используем 60% доступной памяти для безопасности
-    usable_ram = available_ram * 0.6
+    # CRITICAL: Assume max 5GB usable in container (Railway 8GB limit - OS overhead)
+    # Even if system reports 300GB, container is limited
+    container_limit_gb = 5.0  # Conservative estimate for Railway
+    usable_ram = min(available_ram * 0.6, container_limit_gb)
     
-    # Расчет на основе памяти:
-    # - VoiceCache: 2 модели × 100MB = 200MB
-    # - Каждый concurrent job: ~200-300MB в пике (segments в памяти)
-    # - ThreadPoolExecutor: workers × 15MB overhead
+    logger.info(f"💾 MEMORY SAFETY: Using {usable_ram:.2f}GB limit (container-aware)")
     
-    # Оценка max_concurrent_jobs
-    if usable_ram >= 4.0:  # 4+ GB доступно
-        max_concurrent_jobs = 12
-    elif usable_ram >= 3.0:  # 3-4 GB
-        max_concurrent_jobs = 10
-    elif usable_ram >= 2.0:  # 2-3 GB
-        max_concurrent_jobs = 8
-    elif usable_ram >= 1.5:  # 1.5-2 GB
-        max_concurrent_jobs = 6
-    else:  # < 1.5 GB
-        max_concurrent_jobs = 4
+    # FIXED VALUES for Railway Hobby plan (8GB container)
+    # These prevent OOM kills during concurrent generation
+    max_concurrent_jobs = 10  # Support 10 users
     
-    # Расчет max_workers (ThreadPoolExecutor)
-    # Piper TTS - I/O bound, выигрывает от высокого количества workers
-    # Оптимум: 6-8x CPU cores, но ограничен памятью
-    ideal_workers = cpu_count * 8
+    # ThreadPoolExecutor: DRASTICALLY REDUCED from 96 to 32
+    # 32 workers = ~480-640MB overhead (manageable)
+    max_workers = 32  # Fixed, safe for 8GB container
     
-    # Ограничение по памяти: 15MB per worker
-    max_workers_by_ram = int((usable_ram * 1024 - 200) / 15)  # 200MB для VoiceCache
-    max_workers = min(ideal_workers, max_workers_by_ram, 96)  # Cap at 96
-    max_workers = max(max_workers, 16)  # Minimum 16 workers
+    # Batch sizes: AGGRESSIVELY REDUCED
+    # Pro: 12 segments max (was 24) = ~180-240MB per batch
+    # Free: 8 segments max (was 16) = ~120-160MB per batch
+    # With 2 concurrent users: 12+8=20 tasks max = 300-400MB (SAFE!)
+    batch_size_pro = 12   # Reduced from 24
+    batch_size_free = 8   # Reduced from 16
     
-    # Расчет batch_size
-    # Больше batch = больше параллелизма, но больше памяти
-    # Каждый segment в batch: ~15-20MB в памяти
-    if usable_ram >= 4.0:
-        batch_size_pro = 24
-        batch_size_free = 16
-    elif usable_ram >= 3.0:
-        batch_size_pro = 20
-        batch_size_free = 14
-    elif usable_ram >= 2.0:
-        batch_size_pro = 16
-        batch_size_free = 12
-    else:
-        batch_size_pro = 12
-        batch_size_free = 8
+    # Voice cache: Keep 2 models only
+    voice_cache_size = 2  # ~100-200MB total
     
-    # Voice cache size
-    # Каждая модель: ~50-100MB
-    if usable_ram >= 4.0:
-        voice_cache_size = 3
-    elif usable_ram >= 2.0:
-        voice_cache_size = 2
-    else:
-        voice_cache_size = 1
+    logger.info(f"⚙️ OPTIMIZED FOR CONCURRENT USERS:")
+    logger.info(f"  - Max batch Pro: {batch_size_pro} (2 users = {batch_size_pro*2} tasks)")
+    logger.info(f"  - Max batch Free: {batch_size_free}")
+    logger.info(f"  - Memory footprint per user: ~300-400MB")
+    logger.info(f"  - Safe for {max_concurrent_jobs} concurrent users")
     
     return {
         'max_concurrent_jobs': max_concurrent_jobs,
