@@ -1,0 +1,45 @@
+{
+  "timestamp": "2025-10-27T13:50:01.991322",
+  "base_url": "https://api-server-2.preview.emergentagent.com/api",
+  "credentials_used": "denisrvnk@gmail.com / ***********",
+  "total_tests": 5,
+  "passed_tests": 3,
+  "failed_tests": 2,
+  "test_results": [
+    {
+      "test_name": "Authentication Setup",
+      "success": true,
+      "details": "Ready for testing",
+      "error": "",
+      "timestamp": "2025-10-27T13:50:01.618723"
+    },
+    {
+      "test_name": "System Resources Endpoint",
+      "success": true,
+      "details": "RAM: 15.6GB, CPU: 4, Max Jobs: 12, Workers: 32, Active: 0/0 jobs/users",
+      "error": "",
+      "timestamp": "2025-10-27T13:50:01.694239"
+    },
+    {
+      "test_name": "Audio Synthesis Bug Fix",
+      "success": false,
+      "details": "",
+      "error": "Authentication required - endpoint requires login",
+      "timestamp": "2025-10-27T13:50:01.940876"
+    },
+    {
+      "test_name": "Text Generation Word Count",
+      "success": false,
+      "details": "",
+      "error": "Authentication required - endpoint requires login",
+      "timestamp": "2025-10-27T13:50:01.982011"
+    },
+    {
+      "test_name": "Auto Resource Detection Logs",
+      "success": true,
+      "details": "Found 8/9 patterns, including all critical patterns. Resource values detected.",
+      "error": "",
+      "timestamp": "2025-10-27T13:50:01.991272"
+    }
+  ]
+}
