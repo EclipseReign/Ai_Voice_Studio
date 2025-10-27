@@ -66,6 +66,9 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
+# GridFS for storing audio files in MongoDB (avoid memory leaks)
+fs = gridfs.GridFS(client[os.environ['DB_NAME']].delegate)
+
 # Create the main app
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
