@@ -268,14 +268,18 @@ class QueueManager:
         global executor
         MAX_THREADS = executor._max_workers  # Access actual thread pool size
         
-        # Single user: give them ALMOST all resources (leave 10% for stability)
+        # CRITICAL: Cap batch_size to prevent OOM - max 12 concurrent segments
+        # This prevents loading too many audio segments in memory at once
+        MAX_BATCH_SIZE = 12
+        
+        # Single user: give them good allocation but capped for memory safety
         if total_active == 0:
-            single_user_threads = int(MAX_THREADS * 0.9)  # 90% of available threads
+            single_user_threads = min(MAX_BATCH_SIZE, int(MAX_THREADS * 0.5))  # 50% of threads, max 12
             return single_user_threads if is_pro else single_user_threads
         
         if total_active == 1:
-            # First user gets generous allocation
-            single_user_threads = int(MAX_THREADS * 0.9)
+            # First user gets good allocation but capped for memory safety
+            single_user_threads = min(MAX_BATCH_SIZE, int(MAX_THREADS * 0.5))
             return single_user_threads if is_pro else single_user_threads
         
         # Multiple users: dynamic allocation with Pro/Free ratio
