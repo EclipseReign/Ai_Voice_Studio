@@ -158,8 +158,6 @@ class VoiceCache:
             self.voice_semaphores.clear()
             logger.info("Voice cache cleared")
 
-loaded_voices = VoiceCache(max_size=2)  # Max 2 models in memory (~200MB)
-
 # ============================================================================
 # AUTOMATIC RESOURCE DETECTION (для оптимизации под железо сервера)
 # ============================================================================
