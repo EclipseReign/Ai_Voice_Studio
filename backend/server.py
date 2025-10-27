@@ -1700,7 +1700,7 @@ async def synthesize_audio_with_progress(
                         temp_dir.rmdir()
                     except Exception:
                         pass
-            except:
+            except Exception:
                 pass
             
             if 'generation_start_time' in locals() and generation_start_time:
