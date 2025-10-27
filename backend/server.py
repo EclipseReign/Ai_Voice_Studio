@@ -1698,7 +1698,7 @@ async def synthesize_audio_with_progress(
                             pass
                     try:
                         temp_dir.rmdir()
-                    except:
+                    except Exception:
                         pass
             except:
                 pass
