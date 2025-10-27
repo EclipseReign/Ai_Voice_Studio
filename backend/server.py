@@ -1498,13 +1498,7 @@ async def synthesize_audio_with_progress(
                 yield f"data: {json.dumps({'type': 'high_load', 'message': high_load_msg, 'active_users': active_user_count})}\n\n"
             
             if queue_position > 1:
-                yield f"data: {json.dumps({{'type': 'queue', 'message': f'В очереди (позиция {queue_position})', 'progress': 0, 'queue_position': queue_position}})}\n\n"
-            
-                    # Include any pre-existing files for accurate count
-                    for idx2 in range(batch_start, batch_end):
-                        seg_path2 = temp_dir / f"segment_{idx2:04d}.wav"
-                        if seg_path2.exists() and seg_path2 not in all_segment_files:
-                            all_segment_files.append(seg_path2)
+                yield f"data: {json.dumps({'type': 'queue', 'message': f'В очереди (позиция {queue_position})', 'progress': 0, 'queue_position': queue_position})}\n\n"
 
             # Wait for our turn
             while not await queue_manager.can_start_job(queue_job):
