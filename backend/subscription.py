@@ -1,12 +1,14 @@
 import os
 import uuid
 import logging
+import hmac
+import hashlib
 from datetime import datetime, timezone, timedelta
 from typing import Optional
 from fastapi import HTTPException
 from motor.motor_asyncio import AsyncIOMotorClient
 from models import Subscription, SubscriptionResponse, User
-import paypalrestsdk
+import requests
 from dotenv import load_dotenv
 from pathlib import Path
 
@@ -22,17 +24,23 @@ client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
 # PayPal Configuration
-paypalrestsdk.configure({
-    "mode": os.environ.get('PAYPAL_MODE', 'sandbox'),
-    "client_id": os.environ['PAYPAL_CLIENT_ID'],
-    "client_secret": os.environ['PAYPAL_SECRET']
-})
+PAYPAL_MODE = os.environ.get('PAYPAL_MODE', 'sandbox')
+PAYPAL_CLIENT_ID = os.environ.get('PAYPAL_CLIENT_ID', '')
+PAYPAL_SECRET = os.environ.get('PAYPAL_SECRET', '')
+PAYPAL_WEBHOOK_ID = os.environ.get('PAYPAL_WEBHOOK_ID', '')  # For webhook verification
+
+# PayPal API URLs
+if PAYPAL_MODE == 'live':
+    PAYPAL_API_URL = 'https://api-m.paypal.com'
+else:
+    PAYPAL_API_URL = 'https://api-m.sandbox.paypal.com'
 
 # Constants
 FREE_TEXT_DAILY_LIMIT = 5  # Free users: 5 text generations per day
 FREE_AUDIO_DAILY_LIMIT = 2  # Free users: 2 audio generations per day
 FREE_MAX_DURATION_MINUTES = 30  # Free users: max 30 minutes per generation
 PRO_PRICE_USD = 19.99  # Pro subscription price in USD
+PAYPAL_PLAN_ID = os.environ.get('PAYPAL_PLAN_ID', '')  # Will be created in PayPal dashboard
 
 async def get_or_create_subscription(user_id: str) -> Subscription:
     """Get existing subscription or create free tier"""
