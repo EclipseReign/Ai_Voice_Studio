@@ -1479,7 +1479,7 @@ class MemoryLeakTester:
         return self.run_priority_tests()
 
 def main():
-    tester = PiperTTSAPITester()
+    tester = MemoryLeakTester()
     success = tester.run_all_tests()
     
     # Save detailed results
@@ -1489,7 +1489,8 @@ def main():
             'total_tests': tester.tests_run,
             'passed_tests': tester.tests_passed,
             'success_rate': f"{(tester.tests_passed/tester.tests_run)*100:.1f}%" if tester.tests_run > 0 else "0%",
-            'test_results': tester.test_results
+            'test_results': tester.test_results,
+            'memory_leak_testing': 'completed'
         }, f, indent=2)
     
     return 0 if success else 1
