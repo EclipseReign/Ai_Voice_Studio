@@ -2023,6 +2023,18 @@ async def synthesize_audio_with_progress(
                 gc.collect()
                 logger.info(f"Memory explicitly freed for audio {audio_id} (disk streaming method - zero memory footprint)")
                 
+                # CRITICAL: Clear voice from cache to free memory
+                # Voice models can take 500MB-1GB each
+                if request.voice in voice_cache.cache:
+                    try:
+                        del voice_cache.cache[request.voice]
+                        logger.info(f"Voice {request.voice} removed from cache to free memory")
+                    except Exception as e:
+                        logger.warning(f"Could not remove voice from cache: {e}")
+                
+                # Force another garbage collection after voice removal
+                gc.collect()
+                
             finally:
                 # Always finish job in queue and cleanup temp files
                 await queue_manager.finish_job(job_id)
