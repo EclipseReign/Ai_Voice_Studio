@@ -24,7 +24,7 @@ import re
 class BackendStabilityTester:
     def __init__(self):
         # Use the backend URL from frontend/.env
-        self.base_url = "https://streamvoice.preview.emergentagent.com/api"
+        self.base_url = "https://voice-tier-system.preview.emergentagent.com/api"
         self.test_results = []
         self.passed_tests = 0
         self.total_tests = 0
