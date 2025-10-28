@@ -51,6 +51,7 @@ from subscription import (
     cancel_subscription,
     grant_pro_subscription,
     revoke_pro_subscription,
+    create_paypal_plan,
     FREE_TEXT_DAILY_LIMIT,
     FREE_AUDIO_DAILY_LIMIT,
     FREE_MAX_DURATION_MINUTES,
