@@ -2051,6 +2051,13 @@ async def synthesize_audio_with_progress(
             
             # Cleanup on error
             try:
+                # Close GridFS file if open
+                if 'gridfs_file' in locals() and gridfs_file and not gridfs_file.closed:
+                    try:
+                        gridfs_file.close()
+                    except Exception:
+                        pass
+                
                 if 'temp_dir' in locals() and temp_dir.exists():
                     for file in temp_dir.glob("*.wav"):
                         try:
@@ -2065,12 +2072,12 @@ async def synthesize_audio_with_progress(
                 pass
             
             # Clear any remaining objects in memory
-            if 'all_segment_files' in locals():
-                try:
-                    all_segment_files.clear()
-                    del all_segment_files
-                except:
-                    pass
+            for var_name in ['wav_params', 'gridfs_file', 'combined_audio_buffer']:
+                if var_name in locals():
+                    try:
+                        del locals()[var_name]
+                    except:
+                        pass
             
             if 'all_active_tasks' in locals():
                 try:
