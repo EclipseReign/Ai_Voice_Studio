@@ -1883,6 +1883,8 @@ async def synthesize_audio_with_progress(
                                     for rest in files_sorted[1:]:
                                         temp_audio += AudioSegment.from_wav(str(rest))
                                     temp_audio.export(str(final_file), format="wav")
+                                    # Clear AudioSegment object to free memory
+                                    del temp_audio
                                     break
                                 out_wav.writeframes(wf.readframes(wf.getnframes()))
                                 # Progress during combining (85-98%)
@@ -1895,6 +1897,8 @@ async def synthesize_audio_with_progress(
                     for seg in sorted(all_segment_files):
                         temp_audio += AudioSegment.from_wav(str(seg))
                     temp_audio.export(str(final_file), format="wav")
+                    # Clear AudioSegment object to free memory
+                    del temp_audio
                 
                 # Stage 4: Save file (98-100%)
                 yield f"data: {json.dumps({'type': 'stage', 'stage': 'saving', 'message': 'Сохранение файла...', 'progress': 98})}\n\n"
