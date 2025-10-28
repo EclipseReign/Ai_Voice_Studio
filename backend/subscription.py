@@ -175,14 +175,40 @@ async def get_subscription_status(user_id: str) -> SubscriptionResponse:
     """Get full subscription status for user"""
     try:
         subscription = await get_or_create_subscription(user_id)
-        usage_info = await check_can_generate(user_id)
+        
+        # Get separate usage counts for text and audio
+        text_usage_today = await get_usage_count(user_id, action_type="text_generation", hours=24)
+        audio_usage_today = await get_usage_count(user_id, action_type="audio_generation", hours=24)
+        
+        # Pro users
+        if subscription.tier == "pro" and subscription.status == "active":
+            return SubscriptionResponse(
+                tier=subscription.tier,
+                status=subscription.status,
+                text_usage_today=text_usage_today,
+                audio_usage_today=audio_usage_today,
+                text_limit=None,
+                audio_limit=None,
+                can_generate_text=True,
+                can_generate_audio=True,
+                max_duration_minutes=None,
+                expires_at=subscription.expires_at
+            )
+        
+        # Free users
+        can_generate_text = text_usage_today < FREE_TEXT_DAILY_LIMIT
+        can_generate_audio = audio_usage_today < FREE_AUDIO_DAILY_LIMIT
         
         return SubscriptionResponse(
             tier=subscription.tier,
             status=subscription.status,
-            usage_today=usage_info["usage_today"],
-            limit=usage_info["limit"],
-            can_generate=usage_info["can_generate"],
+            text_usage_today=text_usage_today,
+            audio_usage_today=audio_usage_today,
+            text_limit=FREE_TEXT_DAILY_LIMIT,
+            audio_limit=FREE_AUDIO_DAILY_LIMIT,
+            can_generate_text=can_generate_text,
+            can_generate_audio=can_generate_audio,
+            max_duration_minutes=FREE_MAX_DURATION_MINUTES,
             expires_at=subscription.expires_at
         )
         
