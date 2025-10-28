@@ -112,8 +112,14 @@ async def log_usage(user_id: str, action_type: str):
     except Exception as e:
         logger.error(f"Error logging usage: {str(e)}")
 
-async def check_can_generate(user_id: str) -> dict:
-    """Check if user can generate (rate limiting)"""
+async def check_can_generate(user_id: str, action_type: str, duration_minutes: Optional[float] = None) -> dict:
+    """Check if user can generate (rate limiting and duration check)
+    
+    Args:
+        user_id: User ID
+        action_type: 'text_generation' or 'audio_generation'
+        duration_minutes: Duration in minutes (for Free tier limit check)
+    """
     try:
         subscription = await get_or_create_subscription(user_id)
         
@@ -123,18 +129,42 @@ async def check_can_generate(user_id: str) -> dict:
                 "can_generate": True,
                 "tier": "pro",
                 "usage_today": 0,
-                "limit": None
+                "limit": None,
+                "reason": None
             }
         
-        # Free users have daily limit
-        usage_today = await get_usage_count(user_id, hours=24)
-        can_generate = usage_today < FREE_TIER_DAILY_LIMIT
+        # Free users have daily limits and duration limits
+        if action_type == "text_generation":
+            usage_today = await get_usage_count(user_id, action_type="text_generation", hours=24)
+            limit = FREE_TEXT_DAILY_LIMIT
+            can_generate = usage_today < limit
+            reason = f"Вы достигли дневного лимита текстовых генераций ({limit})" if not can_generate else None
+        elif action_type == "audio_generation":
+            usage_today = await get_usage_count(user_id, action_type="audio_generation", hours=24)
+            limit = FREE_AUDIO_DAILY_LIMIT
+            can_generate = usage_today < limit
+            reason = f"Вы достигли дневного лимита озвучек ({limit})" if not can_generate else None
+        else:
+            # Unknown action type
+            return {
+                "can_generate": False,
+                "tier": "free",
+                "usage_today": 0,
+                "limit": 0,
+                "reason": "Неизвестный тип операции"
+            }
+        
+        # Check duration limit for Free tier
+        if can_generate and duration_minutes is not None and duration_minutes > FREE_MAX_DURATION_MINUTES:
+            can_generate = False
+            reason = f"Бесплатный тариф: максимум {FREE_MAX_DURATION_MINUTES} минут на генерацию. Обновитесь до Pro для безлимита!"
         
         return {
             "can_generate": can_generate,
             "tier": "free",
             "usage_today": usage_today,
-            "limit": FREE_TIER_DAILY_LIMIT
+            "limit": limit,
+            "reason": reason
         }
         
     except Exception as e:
