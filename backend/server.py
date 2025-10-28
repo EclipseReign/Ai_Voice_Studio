@@ -1873,10 +1873,17 @@ async def synthesize_audio_with_progress(
                     # Client disconnected or generation cancelled
                     logger.warning(f"Generation cancelled for job {generation_job_id}: {type(e).__name__}")
                     
-                    # Close GridFS file if open
-                    if gridfs_file:
+                    # Close WAV output file if open
+                    if wav_output:
                         try:
-                            gridfs_file.close()
+                            wav_output.close()
+                        except Exception:
+                            pass
+                    
+                    # Delete partial file
+                    if final_audio_path.exists():
+                        try:
+                            final_audio_path.unlink()
                         except Exception:
                             pass
                     
@@ -1922,35 +1929,42 @@ async def synthesize_audio_with_progress(
                     # Re-raise to stop generator
                     raise
                 
-                # Stage 3: Finalize GridFS file (95-98%)
-                yield f"data: {json.dumps({'type': 'stage', 'stage': 'finalizing', 'message': 'Финализация файла...', 'progress': 95})}\n\n"
-                
-                # Close GridFS file to finalize it
-                if gridfs_file:
-                    gridfs_file.close()
-                    gridfs_id = gridfs_file._id
-                    logger.info(f"GridFS file finalized: {gridfs_id}")
+                # Close WAV output file
+                if wav_output:
+                    wav_output.close()
+                    logger.info(f"WAV file finalized: {final_audio_path}")
                 else:
                     raise HTTPException(status_code=500, detail="No audio data generated")
                 
-                # Calculate audio duration from WAV parameters
-                # We can't use get_audio_duration on file since it's in GridFS
-                # Calculate from total frames written
-                total_frames = 0
+                # Stage 3: Upload to GridFS (95-98%) - streaming from disk
+                yield f"data: {json.dumps({'type': 'stage', 'stage': 'uploading', 'message': 'Загрузка в БД...', 'progress': 95})}\n\n"
+                
+                # Get audio duration before upload
+                audio_duration = get_audio_duration(final_audio_path)
+                
+                # Stream file to GridFS in chunks to avoid loading entire file in memory
+                chunk_size = 1024 * 1024  # 1MB chunks
+                gridfs_id = None
+                
+                with open(final_audio_path, 'rb') as audio_file:
+                    gridfs_id = fs.put(
+                        audio_file,  # Pass file handle for streaming
+                        filename=f"audio_{audio_id}.wav",
+                        content_type="audio/wav",
+                        user_id=current_user.id,
+                        audio_id=audio_id,
+                        created_at=datetime.now(timezone.utc),
+                        chunk_size=chunk_size
+                    )
+                
+                logger.info(f"Audio uploaded to GridFS: {gridfs_id}")
+                
+                # Delete file from disk immediately to free space
                 try:
-                    # Read back from GridFS to get duration
-                    gridfs_out = fs.get(gridfs_id)
-                    temp_audio_buffer = io.BytesIO(gridfs_out.read())
-                    with wave.open(temp_audio_buffer, 'rb') as wav_file:
-                        total_frames = wav_file.getnframes()
-                        framerate = wav_file.getframerate()
-                        audio_duration = total_frames / framerate
-                    del temp_audio_buffer
-                    del gridfs_out
+                    final_audio_path.unlink()
+                    logger.info(f"Deleted audio file from disk: {final_audio_path}")
                 except Exception as e:
-                    logger.warning(f"Could not calculate audio duration: {e}")
-                    # Fallback to estimated duration
-                    audio_duration = estimated_audio_duration
+                    logger.warning(f"Could not delete audio file: {e}")
                 
                 # Clean up temp directory (files already deleted inline during combining)
                 try:
