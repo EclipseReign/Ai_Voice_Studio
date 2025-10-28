@@ -1879,6 +1879,13 @@ async def synthesize_audio_with_progress(
                     # Client disconnected or generation cancelled
                     logger.warning(f"Generation cancelled for job {generation_job_id}: {type(e).__name__}")
                     
+                    # Close GridFS file if open
+                    if gridfs_file:
+                        try:
+                            gridfs_file.close()
+                        except Exception:
+                            pass
+                    
                     # Cancel all active tasks
                     for task in all_active_tasks:
                         if not task.done():
@@ -1921,81 +1928,35 @@ async def synthesize_audio_with_progress(
                     # Re-raise to stop generator
                     raise
                 
-                # Stage 3: Combine audio segments (85-98%) with streaming to save memory
-                yield f"data: {json.dumps({'type': 'stage', 'stage': 'combining', 'message': 'Объединение аудио...', 'progress': 85})}\n\n"
+                # Stage 3: Finalize GridFS file (95-98%)
+                yield f"data: {json.dumps({'type': 'stage', 'stage': 'finalizing', 'message': 'Финализация файла...', 'progress': 95})}\n\n"
                 
-                # Stream concatenate directly to output WAV to avoid high RAM usage
-                total_files = len(all_segment_files)
-                final_file = audio_dir / f"{audio_id}.wav"
+                # Close GridFS file to finalize it
+                if gridfs_file:
+                    gridfs_file.close()
+                    gridfs_id = gridfs_file._id
+                    logger.info(f"GridFS file finalized: {gridfs_id}")
+                else:
+                    raise HTTPException(status_code=500, detail="No audio data generated")
+                
+                # Calculate audio duration from WAV parameters
+                # We can't use get_audio_duration on file since it's in GridFS
+                # Calculate from total frames written
+                total_frames = 0
                 try:
-                    import contextlib
-                    with contextlib.ExitStack() as stack:
-                        files_sorted = sorted(all_segment_files)
-                        first = stack.enter_context(wave.open(str(files_sorted[0]), 'rb'))
-                        params = first.getparams()
-                        with wave.open(str(final_file), 'wb') as out_wav:
-                            out_wav.setparams(params)
-                            out_wav.writeframes(first.readframes(first.getnframes()))
-                            for idx, seg in enumerate(files_sorted[1:], 2):
-                                wf = stack.enter_context(wave.open(str(seg), 'rb'))
-                                if wf.getparams() != params:
-                                    # fallback to pydub if params differ
-                                    temp_audio = AudioSegment.from_wav(str(files_sorted[0]))
-                                    for rest in files_sorted[1:]:
-                                        temp_audio += AudioSegment.from_wav(str(rest))
-                                    temp_audio.export(str(final_file), format="wav")
-                                    # Clear AudioSegment object to free memory
-                                    del temp_audio
-                                    break
-                                out_wav.writeframes(wf.readframes(wf.getnframes()))
-                                # Progress during combining (85-98%)
-                                combine_progress = int(85 + (idx / total_files) * 13)
-                                if idx % 5 == 0 or idx == total_files or idx == 1:
-                                    yield f"data: {json.dumps({'type': 'progress', 'progress': combine_progress, 'message': f'Склейка {idx}/{total_files}', 'stage': 'combining'})}\n\n"
-                except Exception:
-                    # Fallback: pydub concat
-                    temp_audio = AudioSegment.empty()
-                    for seg in sorted(all_segment_files):
-                        temp_audio += AudioSegment.from_wav(str(seg))
-                    temp_audio.export(str(final_file), format="wav")
-                    # Clear AudioSegment object to free memory
-                    del temp_audio
-                
-                # Stage 4: Save file (98-100%)
-                yield f"data: {json.dumps({'type': 'stage', 'stage': 'saving', 'message': 'Сохранение файла...', 'progress': 98})}\n\n"
-                
-                # After saving, delete segment files to free disk
-                for file in all_segment_files:
-                    try:
-                        Path(file).unlink()
-                    except Exception:
-                        pass
-                
-                # Get real audio duration
-                audio_duration = get_audio_duration(final_file)
-                
-                # CRITICAL FIX: Stream audio to MongoDB GridFS to avoid loading entire file in RAM
-                # Use streaming to upload in chunks (1MB at a time) - prevents memory leak
-                gridfs_id = None
-                chunk_size = 1024 * 1024  # 1MB chunks
-                
-                with open(final_file, 'rb') as audio_file:
-                    gridfs_id = fs.put(
-                        audio_file,  # Pass file handle, not data - GridFS will stream it
-                        filename=f"audio_{audio_id}.wav",
-                        content_type="audio/wav",
-                        user_id=current_user.id,
-                        audio_id=audio_id,
-                        created_at=datetime.now(timezone.utc),
-                        chunk_size=chunk_size
-                    )
-                
-                # Delete file from disk immediately to free memory
-                try:
-                    final_file.unlink()
-                    logger.info(f"Deleted audio file from disk: {final_file}")
+                    # Read back from GridFS to get duration
+                    gridfs_out = fs.get(gridfs_id)
+                    temp_audio_buffer = io.BytesIO(gridfs_out.read())
+                    with wave.open(temp_audio_buffer, 'rb') as wav_file:
+                        total_frames = wav_file.getnframes()
+                        framerate = wav_file.getframerate()
+                        audio_duration = total_frames / framerate
+                    del temp_audio_buffer
+                    del gridfs_out
                 except Exception as e:
-                    logger.warning(f"Could not delete audio file: {e}")
+                    logger.warning(f"Could not calculate audio duration: {e}")
+                    # Fallback to estimated duration
+                    audio_duration = estimated_audio_duration
                 
                 # Clean up temp directory (files already deleted inline during combining)
                 try:
