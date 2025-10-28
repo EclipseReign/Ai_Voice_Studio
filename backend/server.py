@@ -398,34 +398,34 @@ class QueueManager:
         Использует предварительно рассчитанные optimal_params
         
         Strategy: Adjust batch_size based on concurrent load to prevent OOM
-        Pro users get 1.5x boost for faster generation
+        Pro users get 2x faster generation than Free users
         """
         active_jobs = list(self.active_jobs.values())
         total_active = len(active_jobs)
         
         # Base batch sizes from automatic resource detection
         if is_pro:
-            base_batch = optimal_params['batch_size_pro']
+            base_batch = optimal_params['batch_size_pro']  # 16
         else:
-            base_batch = optimal_params['batch_size_free']
+            base_batch = optimal_params['batch_size_free']  # 8 (2x slower than Pro)
         
         # CRITICAL: AGGRESSIVELY reduce batch size with multiple users to prevent OOM
         # Railway container limit: 8GB. Each task: ~15-20MB
         # Goal: Keep total concurrent tasks under 30 (450-600MB safe)
         if total_active <= 1:
-            multiplier = 1.0  # Single user: full batch (Pro: 12, Free: 8)
+            multiplier = 1.0  # Single user: full batch (Pro: 16, Free: 8)
         elif total_active == 2:
-            multiplier = 0.5  # 2 users: 50% (Pro: 6, Free: 4) = 10 tasks max
+            multiplier = 0.5  # 2 users: 50% (Pro: 8, Free: 4) = 12 tasks max
         elif total_active <= 4:
-            multiplier = 0.4   # 3-4 users: 40% (Pro: 4-5, Free: 3) = 12-20 tasks
+            multiplier = 0.4   # 3-4 users: 40% (Pro: 6-7, Free: 3) = 12-20 tasks
         elif total_active <= 6:
-            multiplier = 0.33  # 5-6 users: 33% (Pro: 4, Free: 2-3) = 18-24 tasks
+            multiplier = 0.33  # 5-6 users: 33% (Pro: 5, Free: 2-3) = 18-24 tasks
         else:
-            multiplier = 0.25  # 7+ users: 25% (Pro: 3, Free: 2) = 15-30 tasks
+            multiplier = 0.25  # 7+ users: 25% (Pro: 4, Free: 2) = 15-30 tasks
         
         batch_size = max(4, int(base_batch * multiplier))  # Минимум 4 (safer)
         
-        logger.debug(f"Batch size calculation: {total_active} active jobs, multiplier={multiplier}, batch={batch_size}")
+        logger.debug(f"Batch size calculation: {total_active} active jobs, is_pro={is_pro}, base_batch={base_batch}, multiplier={multiplier}, batch={batch_size}")
         
         return batch_size
     
