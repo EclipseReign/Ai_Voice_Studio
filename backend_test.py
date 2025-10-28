@@ -10,7 +10,7 @@ import asyncio
 import subprocess
 
 class MemoryLeakTester:
-    def __init__(self, base_url="https://backend-memory-fix.preview.emergentagent.com/api"):
+    def __init__(self, base_url="http://localhost:8001/api"):
         self.base_url = base_url
         self.tests_run = 0
         self.tests_passed = 0
