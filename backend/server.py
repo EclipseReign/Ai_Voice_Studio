@@ -1150,6 +1150,21 @@ async def admin_revoke_pro(
     """Revoke Pro subscription from user"""
     return await revoke_pro_subscription(user_email)
 
+@api_router.post("/admin/create-paypal-plan")
+async def admin_create_paypal_plan(admin_user: User = Depends(require_admin)):
+    """Create PayPal subscription plan (run once to setup)
+    
+    Returns plan_id that should be added to PAYPAL_PLAN_ID in .env
+    """
+    from subscription import create_paypal_plan
+    
+    try:
+        result = await create_paypal_plan()
+        return result
+    except Exception as e:
+        logger.error(f"Error creating PayPal plan: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ============================================================================
 # TEXT & AUDIO GENERATION ENDPOINTS (Updated with auth)
 # ============================================================================
