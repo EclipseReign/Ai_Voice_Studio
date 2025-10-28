@@ -28,6 +28,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/verify-email" element={<EmailVerification />} />
+            <Route path="/pricing" element={<PricingPage />} />
             
             {/* Protected routes */}
             <Route
