@@ -2011,26 +2011,30 @@ async def synthesize_audio_with_progress(
                 
                 # CRITICAL: Explicitly clear large objects and force garbage collection
                 # Memory already freed incrementally during generation
-                # Just cleanup any remaining references
                 if 'wav_params' in locals():
                     del wav_params
-                if 'gridfs_file' in locals():
-                    del gridfs_file
-                if 'combined_audio_buffer' in locals():
-                    del combined_audio_buffer
+                if 'wav_output' in locals():
+                    del wav_output
                 
                 # Force garbage collection to free memory immediately
                 gc.collect()
-                logger.info(f"Memory explicitly freed for audio {audio_id} (streaming method - minimal footprint)")
+                logger.info(f"Memory explicitly freed for audio {audio_id} (disk streaming method - zero memory footprint)")
                 
             finally:
                 # Always finish job in queue and cleanup temp files
                 await queue_manager.finish_job(job_id)
                 
-                # Close GridFS file if still open
-                if 'gridfs_file' in locals() and gridfs_file and not gridfs_file.closed:
+                # Close WAV output file if still open
+                if 'wav_output' in locals() and wav_output:
                     try:
-                        gridfs_file.close()
+                        wav_output.close()
+                    except Exception:
+                        pass
+                
+                # Delete output file if exists
+                if 'final_audio_path' in locals() and final_audio_path.exists():
+                    try:
+                        final_audio_path.unlink()
                     except Exception:
                         pass
                 
