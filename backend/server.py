@@ -2039,12 +2039,10 @@ async def synthesize_audio_with_progress(
                 
                 # CRITICAL: Clear voice from cache to free memory
                 # Voice models can take 500MB-1GB each
-                if request.voice in voice_cache.cache:
-                    try:
-                        del voice_cache.cache[request.voice]
-                        logger.info(f"Voice {request.voice} removed from cache to free memory")
-                    except Exception as e:
-                        logger.warning(f"Could not remove voice from cache: {e}")
+                try:
+                    await voice_cache.remove(request.voice)
+                except Exception as e:
+                    logger.warning(f"Could not remove voice from cache: {e}")
                 
                 # Force another garbage collection after voice removal
                 gc.collect()
