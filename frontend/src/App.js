@@ -11,6 +11,7 @@ import EmailVerification from "./pages/EmailVerification";
 import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import HomePage from "./pages/HomePage";
+import PricingPage from "./pages/PricingPage";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
