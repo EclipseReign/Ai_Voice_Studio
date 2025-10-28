@@ -2072,19 +2072,15 @@ async def synthesize_audio_with_progress(
                 pass
             
             # Clear any remaining objects in memory
-            for var_name in ['wav_params', 'gridfs_file', 'combined_audio_buffer']:
-                if var_name in locals():
-                    try:
-                        del locals()[var_name]
-                    except:
-                        pass
-            
-            if 'all_active_tasks' in locals():
-                try:
-                    all_active_tasks.clear()
-                    del all_active_tasks
-                except:
-                    pass
+            try:
+                if 'wav_params' in locals():
+                    del wav_params
+                if 'gridfs_file' in locals():
+                    del gridfs_file
+                if 'combined_audio_buffer' in locals():
+                    del combined_audio_buffer
+            except Exception:
+                pass
             
             # Force garbage collection on error
             gc.collect()
