@@ -225,7 +225,7 @@ async def get_subscription_status(user_id: str) -> SubscriptionResponse:
         raise HTTPException(status_code=500, detail="Error getting subscription status")
 
 async def create_paypal_subscription(user_id: str, plan_id: str) -> dict:
-    """Create PayPal subscription"""
+    """Create PayPal subscription - DEPRECATED, use approve_paypal_subscription instead"""
     try:
         # This will be called from frontend after PayPal button approval
         # For now, just upgrade user to pro manually
@@ -262,6 +262,164 @@ async def create_paypal_subscription(user_id: str, plan_id: str) -> dict:
     except Exception as e:
         logger.error(f"Error creating PayPal subscription: {str(e)}")
         raise HTTPException(status_code=500, detail="Error processing subscription")
+
+
+def get_paypal_access_token() -> str:
+    """Get PayPal OAuth access token"""
+    try:
+        url = f"{PAYPAL_API_URL}/v1/oauth2/token"
+        headers = {
+            "Accept": "application/json",
+            "Accept-Language": "en_US",
+        }
+        data = {"grant_type": "client_credentials"}
+        
+        response = requests.post(
+            url,
+            headers=headers,
+            data=data,
+            auth=(PAYPAL_CLIENT_ID, PAYPAL_SECRET)
+        )
+        response.raise_for_status()
+        
+        return response.json()["access_token"]
+        
+    except Exception as e:
+        logger.error(f"Error getting PayPal access token: {str(e)}")
+        raise HTTPException(status_code=500, detail="PayPal authentication error")
+
+
+async def create_paypal_plan() -> dict:
+    """Create PayPal subscription plan (call this once to setup)"""
+    try:
+        access_token = get_paypal_access_token()
+        
+        url = f"{PAYPAL_API_URL}/v1/billing/plans"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {access_token}",
+        }
+        
+        plan_data = {
+            "product_id": "PROD-AIVOICE-PRO",  # You need to create product first
+            "name": "AI Voice Studio Pro",
+            "description": "Безлимитная генерация текста и озвучка с максимальной скоростью",
+            "status": "ACTIVE",
+            "billing_cycles": [
+                {
+                    "frequency": {
+                        "interval_unit": "MONTH",
+                        "interval_count": 1
+                    },
+                    "tenure_type": "REGULAR",
+                    "sequence": 1,
+                    "total_cycles": 0,  # 0 means unlimited (recurring)
+                    "pricing_scheme": {
+                        "fixed_price": {
+                            "value": str(PRO_PRICE_USD),
+                            "currency_code": "USD"
+                        }
+                    }
+                }
+            ],
+            "payment_preferences": {
+                "auto_bill_outstanding": True,
+                "setup_fee": {
+                    "value": "0",
+                    "currency_code": "USD"
+                },
+                "setup_fee_failure_action": "CONTINUE",
+                "payment_failure_threshold": 3
+            }
+        }
+        
+        response = requests.post(url, json=plan_data, headers=headers)
+        response.raise_for_status()
+        
+        plan = response.json()
+        logger.info(f"Created PayPal plan: {plan['id']}")
+        
+        return {
+            "success": True,
+            "plan_id": plan["id"],
+            "name": plan["name"],
+            "status": plan["status"]
+        }
+        
+    except Exception as e:
+        logger.error(f"Error creating PayPal plan: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error creating PayPal plan: {str(e)}")
+
+
+async def approve_paypal_subscription(user_id: str, subscription_id: str) -> dict:
+    """Activate Pro subscription after user approves PayPal subscription
+    
+    Args:
+        user_id: User ID
+        subscription_id: PayPal subscription ID from frontend
+    """
+    try:
+        # Verify subscription with PayPal
+        access_token = get_paypal_access_token()
+        
+        url = f"{PAYPAL_API_URL}/v1/billing/subscriptions/{subscription_id}"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {access_token}",
+        }
+        
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        
+        paypal_sub = response.json()
+        
+        # Check if subscription is active
+        if paypal_sub["status"] not in ["ACTIVE", "APPROVED"]:
+            raise HTTPException(status_code=400, detail="PayPal subscription not active")
+        
+        # Get payer info
+        payer_id = paypal_sub.get("subscriber", {}).get("payer_id", "")
+        
+        # Update user subscription in database
+        subscription = await get_or_create_subscription(user_id)
+        
+        now = datetime.now(timezone.utc)
+        # Set expiration to next billing date
+        next_billing_time = paypal_sub.get("billing_info", {}).get("next_billing_time")
+        if next_billing_time:
+            expires_at = datetime.fromisoformat(next_billing_time.replace('Z', '+00:00'))
+        else:
+            expires_at = now + timedelta(days=30)
+        
+        await db.subscriptions.update_one(
+            {"_id": subscription.id},
+            {
+                "$set": {
+                    "tier": "pro",
+                    "status": "active",
+                    "paypal_subscription_id": subscription_id,
+                    "paypal_payer_id": payer_id,
+                    "started_at": now,
+                    "expires_at": expires_at,
+                    "updated_at": now
+                }
+            }
+        )
+        
+        logger.info(f"User {user_id} upgraded to Pro via PayPal subscription {subscription_id}")
+        
+        return {
+            "success": True,
+            "tier": "pro",
+            "status": "active",
+            "expires_at": expires_at.isoformat()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error approving PayPal subscription: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error approving subscription: {str(e)}")
 
 async def cancel_subscription(user_id: str) -> dict:
     """Cancel user subscription"""
