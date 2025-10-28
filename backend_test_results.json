@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-10-26T18:36:46.840077",
+  "timestamp": "2025-10-28T06:17:34.236185",
   "total_tests": 1,
   "passed_tests": 0,
   "success_rate": "0.0%",
@@ -9,10 +9,11 @@
       "endpoint": "voices",
       "method": "GET",
       "expected_status": 200,
-      "actual_status": 502,
+      "actual_status": 404,
       "success": false,
       "response_data": null,
-      "error": ""
+      "error": "404 page not found\n"
     }
-  ]
+  ],
+  "memory_leak_testing": "completed"
 }
