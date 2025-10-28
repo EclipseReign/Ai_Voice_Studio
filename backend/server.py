@@ -1909,20 +1909,21 @@ async def synthesize_audio_with_progress(
                 # Get real audio duration
                 audio_duration = get_audio_duration(final_file)
                 
-                # CRITICAL FIX: Save audio to MongoDB GridFS to free memory immediately
-                # Read audio file
-                with open(final_file, 'rb') as audio_file:
-                    audio_data = audio_file.read()
+                # CRITICAL FIX: Stream audio to MongoDB GridFS to avoid loading entire file in RAM
+                # Use streaming to upload in chunks (1MB at a time) - prevents memory leak
+                gridfs_id = None
+                chunk_size = 1024 * 1024  # 1MB chunks
                 
-                # Store in GridFS with metadata
-                gridfs_id = fs.put(
-                    audio_data,
-                    filename=f"audio_{audio_id}.wav",
-                    content_type="audio/wav",
-                    user_id=current_user.id,
-                    audio_id=audio_id,
-                    created_at=datetime.now(timezone.utc)
-                )
+                with open(final_file, 'rb') as audio_file:
+                    gridfs_id = fs.put(
+                        audio_file,  # Pass file handle, not data - GridFS will stream it
+                        filename=f"audio_{audio_id}.wav",
+                        content_type="audio/wav",
+                        user_id=current_user.id,
+                        audio_id=audio_id,
+                        created_at=datetime.now(timezone.utc),
+                        chunk_size=chunk_size
+                    )
                 
                 # Delete file from disk immediately to free memory
                 try:
