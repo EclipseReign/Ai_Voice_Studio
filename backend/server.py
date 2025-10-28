@@ -960,26 +960,102 @@ async def verify_email(token: str):
 
 @api_router.get("/subscription/status", response_model=SubscriptionResponse)
 async def get_subscription(current_user: User = Depends(get_current_user)):
-    """Get current user's subscription status"""
+    """Get current user's subscription status with separate text/audio limits"""
     return await get_subscription_status(current_user.id)
 
+@api_router.get("/subscription/config")
+async def get_subscription_config():
+    """Get subscription configuration (prices, limits) - public endpoint"""
+    return {
+        "tiers": {
+            "free": {
+                "name": "Free",
+                "price": 0,
+                "text_limit": FREE_TEXT_DAILY_LIMIT,
+                "audio_limit": FREE_AUDIO_DAILY_LIMIT,
+                "max_duration_minutes": FREE_MAX_DURATION_MINUTES,
+                "speed_multiplier": 0.5,  # 2x slower than Pro
+                "voice_quality": ["low", "medium"],
+                "features": [
+                    f"{FREE_TEXT_DAILY_LIMIT} генераций текста в день",
+                    f"{FREE_AUDIO_DAILY_LIMIT} озвучки в день",
+                    f"До {FREE_MAX_DURATION_MINUTES} минут на генерацию",
+                    "Скорость в 2 раза ниже Pro",
+                    "Голоса: низкое и среднее качество"
+                ]
+            },
+            "pro": {
+                "name": "Pro",
+                "price": PRO_PRICE_USD,
+                "text_limit": None,  # Unlimited
+                "audio_limit": None,  # Unlimited
+                "max_duration_minutes": None,  # Unlimited
+                "speed_multiplier": 1.0,  # Full speed
+                "voice_quality": ["low", "medium", "high"],
+                "features": [
+                    "Безлимитная генерация текста",
+                    "Безлимитная озвучка",
+                    "Любая длительность",
+                    "Максимальная скорость",
+                    "Все качества голосов (включая high)"
+                ]
+            }
+        },
+        "paypal_plan_id": PAYPAL_PLAN_ID,
+        "paypal_mode": PAYPAL_MODE
+    }
+
+@api_router.post("/subscription/paypal/approve")
+async def approve_subscription(
+    subscription_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Approve PayPal subscription after user completes payment"""
+    try:
+        result = await approve_paypal_subscription(current_user.id, subscription_id)
+        return result
+    except Exception as e:
+        logger.error(f"Error approving subscription: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/subscription/paypal/webhook")
+async def paypal_webhook(event: dict):
+    """Handle PayPal webhook events (subscription updates, renewals, cancellations)"""
+    try:
+        event_type = event.get("event_type")
+        resource = event.get("resource", {})
+        
+        if not event_type or not resource:
+            raise HTTPException(status_code=400, detail="Invalid webhook payload")
+        
+        result = await handle_paypal_webhook(event_type, resource)
+        
+        return {"received": True, "processed": result.get("success", False)}
+        
+    except Exception as e:
+        logger.error(f"Error processing PayPal webhook: {str(e)}")
+        # Return 200 to acknowledge receipt even if processing fails
+        # PayPal will retry failed webhooks
+        return {"received": True, "processed": False, "error": str(e)}
+
+@api_router.post("/subscription/cancel")
+async def cancel_user_subscription(current_user: User = Depends(get_current_user)):
+    """Cancel Pro subscription (both in database and PayPal)"""
+    return await cancel_subscription(current_user.id)
+
+# DEPRECATED: Old endpoint for backwards compatibility
 @api_router.post("/subscription/create")
 async def create_subscription(
     request: PayPalSubscriptionRequest,
     current_user: User = Depends(get_current_user)
 ):
-    """Create Pro subscription via PayPal"""
+    """DEPRECATED: Use /subscription/paypal/approve instead"""
     try:
         result = await create_paypal_subscription(current_user.id, request.plan_id)
         return result
     except Exception as e:
         logger.error(f"Error creating subscription: {str(e)}")
         raise HTTPException(status_code=500, detail="Error processing subscription")
-
-@api_router.post("/subscription/cancel")
-async def cancel_user_subscription(current_user: User = Depends(get_current_user)):
-    """Cancel Pro subscription"""
-    return await cancel_subscription(current_user.id)
 
 # ============================================================================
 # ADMIN ENDPOINTS
