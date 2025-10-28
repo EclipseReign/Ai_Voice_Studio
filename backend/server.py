@@ -2083,7 +2083,7 @@ async def synthesize_audio_with_progress(
                 # CRITICAL: Remove voice from cache to free memory in error case too
                 if 'request' in locals():
                     try:
-                        await voice_cache.remove(request.voice)
+                        await loaded_voices.remove(request.voice)
                     except Exception:
                         pass
                 
