@@ -1,6 +1,6 @@
 {
   "timestamp": "2025-10-27T13:50:01.991322",
-  "base_url": "https://backend-memory-fix.preview.emergentagent.com/api",
+  "base_url": "https://streamvoice.preview.emergentagent.com/api",
   "credentials_used": "denisrvnk@gmail.com / ***********",
   "total_tests": 5,
   "passed_tests": 3,
