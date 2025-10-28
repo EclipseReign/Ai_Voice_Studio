@@ -24,7 +24,7 @@ import sys
 import os
 
 class TTSStabilityTester:
-    def __init__(self, base_url="https://audio-memory.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://backend-memory-fix.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.test_results = []
         self.generated_audio_ids = []
