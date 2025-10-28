@@ -161,6 +161,20 @@ class VoiceCache:
         async with self.cache_lock:
             return key in self.cache
     
+    async def remove(self, key: str):
+        """Remove specific voice from cache - THREAD-SAFE"""
+        async with self.cache_lock:
+            if key in self.cache:
+                voice = self.cache.pop(key)
+                # Remove semaphore for this voice
+                if key in self.voice_semaphores:
+                    del self.voice_semaphores[key]
+                # Explicitly delete the model to free memory
+                del voice
+                logger.info(f"Voice REMOVED from cache: {key} (freed memory)")
+                return True
+            return False
+    
     async def clear(self):
         """Clear all voices from cache - THREAD-SAFE"""
         async with self.cache_lock:
