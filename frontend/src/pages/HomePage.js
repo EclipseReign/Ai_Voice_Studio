@@ -465,16 +465,37 @@ const HomePage = () => {
             <div className="flex items-center space-x-4">
               <h1 className="text-xl font-bold text-gray-900">🎙️ AI Voice Studio</h1>
               {subscription && (
-                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                  subscription.tier === 'pro'
-                    ? 'bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border border-purple-200'
-                    : 'bg-gray-100 text-gray-700'
-                }`}>
-                  {subscription.tier === 'pro' ? '✨ Pro' : `Free (${subscription.usage_today || 0}/3)`}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                    subscription.tier === 'pro'
+                      ? 'bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border border-purple-200'
+                      : 'bg-gray-100 text-gray-700'
+                  }`}>
+                    {subscription.tier === 'pro' ? '✨ Pro' : 'Free'}
+                  </span>
+                  {subscription.tier === 'free' && (
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="text-gray-600">
+                        📝 {subscription.text_usage_today}/{subscription.text_limit}
+                      </span>
+                      <span className="text-gray-400">•</span>
+                      <span className="text-gray-600">
+                        🎵 {subscription.audio_usage_today}/{subscription.audio_limit}
+                      </span>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
             <div className="flex items-center space-x-3">
+              {subscription && subscription.tier === 'free' && (
+                <button
+                  onClick={() => navigate('/pricing')}
+                  className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all text-sm font-semibold shadow-md"
+                >
+                  ⚡ Upgrade to Pro
+                </button>
+              )}
               <button
                 onClick={() => navigate('/dashboard')}
                 className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
