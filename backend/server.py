@@ -1835,7 +1835,11 @@ async def synthesize_audio_with_progress(
                             
                             # Force garbage collection after each batch to free memory
                             gc.collect()
-                            logger.debug(f"Batch {batches_completed + 1} streamed to GridFS and memory freed")
+                            
+                            # Log memory usage after batch completion
+                            current_mem = psutil.virtual_memory()
+                            mem_used_gb = (current_mem.total - current_mem.available) / (1024**3)
+                            logger.info(f"Batch {batches_completed + 1}/{total_batches} streamed to GridFS | Memory: {mem_used_gb:.2f}GB used ({current_mem.percent:.1f}%)")
                         
                         completed_segments += batch_segment_count
                         batches_completed += 1
