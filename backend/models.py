@@ -88,9 +88,13 @@ class SubscriptionResponse(BaseModel):
     """Subscription status response"""
     tier: Literal["free", "pro"]
     status: Literal["active", "cancelled", "expired"]
-    usage_today: int
-    limit: Optional[int] = None  # None for pro (unlimited)
-    can_generate: bool
+    text_usage_today: int  # Separate counter for text generations
+    audio_usage_today: int  # Separate counter for audio generations
+    text_limit: Optional[int] = None  # None for pro (unlimited)
+    audio_limit: Optional[int] = None  # None for pro (unlimited)
+    can_generate_text: bool
+    can_generate_audio: bool
+    max_duration_minutes: Optional[int] = None  # Max duration per generation for free tier
     expires_at: Optional[datetime] = None
 
 class PayPalSubscriptionRequest(BaseModel):
