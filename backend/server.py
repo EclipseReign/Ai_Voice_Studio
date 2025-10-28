@@ -1842,6 +1842,10 @@ async def synthesize_audio_with_progress(
                         except asyncio.TimeoutError:
                             logger.error(f"Timeout waiting for tasks to cancel for job {generation_job_id}")
                     
+                    # Clear task list to free memory
+                    all_active_tasks.clear()
+                    del all_active_tasks
+                    
                     # Mark job as failed
                     if generation_job_id:
                         await fail_generation_job(generation_job_id, "Client disconnected")
@@ -1857,6 +1861,10 @@ async def synthesize_audio_with_progress(
                             temp_dir.rmdir()
                         except Exception as cleanup_error:
                             logger.warning(f"Cleanup after cancellation error: {cleanup_error}")
+                    
+                    # Force garbage collection after cancellation
+                    gc.collect()
+                    logger.info(f"Memory freed after cancellation for job {generation_job_id}")
                     
                     # Re-raise to stop generator
                     raise
