@@ -7,8 +7,9 @@ from datetime import datetime
 from pathlib import Path
 import httpx
 import asyncio
+import subprocess
 
-class PiperTTSAPITester:
+class MemoryLeakTester:
     def __init__(self, base_url="https://backend-memory-fix.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.tests_run = 0
