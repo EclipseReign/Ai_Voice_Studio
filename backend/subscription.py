@@ -67,15 +67,26 @@ async def get_or_create_subscription(user_id: str) -> Subscription:
         logger.error(f"Error getting/creating subscription: {str(e)}")
         raise HTTPException(status_code=500, detail="Error managing subscription")
 
-async def get_usage_count(user_id: str, hours: int = 24) -> int:
-    """Get usage count for user in last N hours"""
+async def get_usage_count(user_id: str, action_type: Optional[str] = None, hours: int = 24) -> int:
+    """Get usage count for user in last N hours
+    
+    Args:
+        user_id: User ID
+        action_type: Optional filter by action type ('text_generation' or 'audio_generation')
+        hours: Number of hours to look back (default 24)
+    """
     try:
         cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
         
-        count = await db.usage_logs.count_documents({
+        query = {
             "user_id": user_id,
             "created_at": {"$gte": cutoff}
-        })
+        }
+        
+        if action_type:
+            query["action_type"] = action_type
+        
+        count = await db.usage_logs.count_documents(query)
         
         return count
         
