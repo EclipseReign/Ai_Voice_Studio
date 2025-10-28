@@ -1752,12 +1752,13 @@ async def synthesize_audio_with_progress(
                         
                         # Generate batch in parallel
                         tasks = []
+                        batch_file_paths = []  # Track current batch files only
                         for idx, segment in enumerate(batch_segments):
                             global_idx = batch_start + idx
                             # Skip work if file for this segment already exists (resume)
                             seg_path = temp_dir / f"segment_{global_idx:04d}.wav"
                             if seg_path.exists():
-                                all_segment_files.append(seg_path)
+                                batch_file_paths.append(seg_path)
                                 continue
                             task = asyncio.create_task(synthesize_audio_segment_fast(
                                 text=segment,
@@ -1779,26 +1780,72 @@ async def synthesize_audio_with_progress(
                                 )
                                 # Filter out exceptions from results
                                 batch_files = [f for f in batch_files if isinstance(f, Path)]
+                                batch_file_paths.extend(batch_files)
                             except asyncio.TimeoutError:
                                 logger.error(f"Batch timeout for job {generation_job_id}, cancelling tasks")
                                 for task in tasks:
                                     if not task.done():
                                         task.cancel()
                                 raise HTTPException(status_code=408, detail="Batch generation timeout")
-                            all_segment_files.extend(batch_files)
-                        else:
-                            batch_files = []
+                        
+                        # STREAMING OPTIMIZATION: Save batch to GridFS immediately
+                        # This frees memory after each batch instead of waiting until the end
+                        if batch_file_paths:
+                            # Sort files by index to maintain order
+                            batch_file_paths_sorted = sorted(batch_file_paths)
+                            
+                            # Read WAV params from first segment if not yet set
+                            if wav_params is None:
+                                with wave.open(str(batch_file_paths_sorted[0]), 'rb') as first_wav:
+                                    wav_params = first_wav.getparams()
+                                
+                                # Initialize GridFS file with WAV header
+                                gridfs_file = fs.new_file(
+                                    filename=f"audio_{audio_id}.wav",
+                                    content_type="audio/wav",
+                                    user_id=current_user.id,
+                                    audio_id=audio_id,
+                                    created_at=datetime.now(timezone.utc),
+                                    chunk_size=1024 * 1024  # 1MB chunks
+                                )
+                                
+                                # Write WAV header (we'll update data size at the end)
+                                header_buffer = io.BytesIO()
+                                with wave.open(header_buffer, 'wb') as temp_wav:
+                                    temp_wav.setparams(wav_params)
+                                header_data = header_buffer.getvalue()
+                                gridfs_file.write(header_data[:44])  # WAV header is 44 bytes
+                            
+                            # Stream batch audio data to GridFS
+                            for seg_file in batch_file_paths_sorted:
+                                with wave.open(str(seg_file), 'rb') as seg_wav:
+                                    # Read and write audio frames directly (skip WAV header)
+                                    audio_data = seg_wav.readframes(seg_wav.getnframes())
+                                    gridfs_file.write(audio_data)
+                                
+                                # Delete segment file immediately after streaming to GridFS
+                                try:
+                                    seg_file.unlink()
+                                except Exception as e:
+                                    logger.warning(f"Could not delete segment {seg_file}: {e}")
+                            
+                            # Clear batch file list to free memory
+                            batch_file_paths.clear()
+                            del batch_file_paths
+                            
+                            # Force garbage collection after each batch to free memory
+                            gc.collect()
+                            logger.debug(f"Batch {batches_completed + 1} streamed to GridFS and memory freed")
                         
                         completed_segments += batch_segment_count
                         batches_completed += 1
-                        progress = int(5 + (completed_segments / total_segments) * 80)  # 5-85% for generation
+                        progress = int(5 + (completed_segments / total_segments) * 90)  # 5-95% for generation (including streaming)
                         
                         # NEW: Update generation job progress after each batch (for crash recovery)
-                        segment_file_paths = [str(f) for f in all_segment_files]
                         await update_generation_job_progress(
                             job_id=generation_job_id,
                             completed_segments=completed_segments,
-                            segment_files=segment_file_paths,
+                            segment_files=[],  # No longer storing file paths as we stream directly
                             status="processing"
                         )
                         
