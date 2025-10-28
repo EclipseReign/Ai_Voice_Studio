@@ -1805,9 +1805,12 @@ async def synthesize_audio_with_progress(
                             # Append batch audio data to output file
                             for seg_file in batch_file_paths_sorted:
                                 with wave.open(str(seg_file), 'rb') as seg_wav:
-                                    # Verify params match
-                                    if seg_wav.getparams() != wav_params:
-                                        logger.warning(f"Segment {seg_file} has different params, skipping")
+                                    # Verify critical params match (sample rate, channels, sample width)
+                                    seg_params = seg_wav.getparams()
+                                    if (seg_params.framerate != wav_params.framerate or 
+                                        seg_params.nchannels != wav_params.nchannels or 
+                                        seg_params.sampwidth != wav_params.sampwidth):
+                                        logger.warning(f"Segment {seg_file} has incompatible params, skipping")
                                         continue
                                     # Read and write audio frames directly
                                     audio_data = seg_wav.readframes(seg_wav.getnframes())
