@@ -27,6 +27,7 @@ from concurrent.futures import ThreadPoolExecutor
 import multiprocessing
 import psutil
 import time
+import gc  # For explicit garbage collection to free memory
 
 # Import auth and subscription modules
 from auth import (
