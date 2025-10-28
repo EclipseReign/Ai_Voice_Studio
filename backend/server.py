@@ -1180,12 +1180,16 @@ async def generate_text_with_progress(
     
     async def generate_progress():
         try:
-            # Check if user can generate
-            can_generate_info = await check_can_generate(current_user.id)
+            # Check if user can generate TEXT with duration limit
+            can_generate_info = await check_can_generate(
+                current_user.id, 
+                action_type="text_generation",
+                duration_minutes=duration_minutes
+            )
             
             if not can_generate_info["can_generate"]:
-                error_msg = f'Достигнут дневной лимит ({can_generate_info["limit"]} генераций). Обновитесь до Pro для безлимитного доступа.'
-                yield f"data: {json.dumps({'type': 'error', 'message': error_msg})}\n\n"
+                reason = can_generate_info.get("reason", "Достигнут лимит")
+                yield f"data: {json.dumps({'type': 'error', 'message': reason})}\n\n"
                 return
             
             # Log usage
