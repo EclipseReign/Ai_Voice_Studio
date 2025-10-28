@@ -422,16 +422,41 @@ async def approve_paypal_subscription(user_id: str, subscription_id: str) -> dic
         raise HTTPException(status_code=500, detail=f"Error approving subscription: {str(e)}")
 
 async def cancel_subscription(user_id: str) -> dict:
-    """Cancel user subscription"""
+    """Cancel user subscription and PayPal subscription"""
     try:
         subscription = await get_or_create_subscription(user_id)
         
         if subscription.tier == "free":
             raise HTTPException(status_code=400, detail="Cannot cancel free tier")
         
+        # Cancel PayPal subscription if exists
+        if subscription.paypal_subscription_id:
+            try:
+                access_token = get_paypal_access_token()
+                
+                url = f"{PAYPAL_API_URL}/v1/billing/subscriptions/{subscription.paypal_subscription_id}/cancel"
+                headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {access_token}",
+                }
+                data = {
+                    "reason": "Отмена пользователем"
+                }
+                
+                response = requests.post(url, json=data, headers=headers)
+                
+                if response.status_code == 204:
+                    logger.info(f"PayPal subscription {subscription.paypal_subscription_id} cancelled")
+                else:
+                    logger.warning(f"PayPal cancel response: {response.status_code} - {response.text}")
+                    
+            except Exception as e:
+                logger.error(f"Error cancelling PayPal subscription: {str(e)}")
+                # Continue to cancel in our database even if PayPal fails
+        
         now = datetime.now(timezone.utc)
         
-        # Update subscription
+        # Update subscription to cancelled (but keep Pro until expiration)
         await db.subscriptions.update_one(
             {"_id": subscription.id},
             {
@@ -443,13 +468,12 @@ async def cancel_subscription(user_id: str) -> dict:
             }
         )
         
-        # Note: In production, also cancel PayPal subscription via API
-        
         logger.info(f"User {user_id} cancelled Pro subscription")
         
         return {
             "success": True,
-            "message": "Subscription cancelled"
+            "message": "Подписка отменена. Pro доступ сохранится до окончания оплаченного периода.",
+            "expires_at": subscription.expires_at.isoformat() if subscription.expires_at else None
         }
         
     except HTTPException:
@@ -457,6 +481,138 @@ async def cancel_subscription(user_id: str) -> dict:
     except Exception as e:
         logger.error(f"Error cancelling subscription: {str(e)}")
         raise HTTPException(status_code=500, detail="Error cancelling subscription")
+
+
+async def handle_paypal_webhook(event_type: str, resource: dict) -> dict:
+    """Handle PayPal webhook events
+    
+    Common events:
+    - BILLING.SUBSCRIPTION.ACTIVATED: Subscription activated
+    - BILLING.SUBSCRIPTION.UPDATED: Subscription updated
+    - BILLING.SUBSCRIPTION.CANCELLED: Subscription cancelled by user
+    - BILLING.SUBSCRIPTION.SUSPENDED: Subscription suspended (payment failed)
+    - BILLING.SUBSCRIPTION.EXPIRED: Subscription expired
+    - PAYMENT.SALE.COMPLETED: Payment completed successfully
+    """
+    try:
+        logger.info(f"Processing PayPal webhook: {event_type}")
+        
+        subscription_id = resource.get("id")
+        
+        if not subscription_id:
+            logger.error("No subscription ID in webhook resource")
+            return {"success": False, "message": "No subscription ID"}
+        
+        # Find user by PayPal subscription ID
+        sub_doc = await db.subscriptions.find_one({"paypal_subscription_id": subscription_id})
+        
+        if not sub_doc:
+            logger.warning(f"No user found for PayPal subscription {subscription_id}")
+            return {"success": False, "message": "Subscription not found"}
+        
+        user_id = sub_doc["user_id"]
+        now = datetime.now(timezone.utc)
+        
+        # Handle different event types
+        if event_type == "BILLING.SUBSCRIPTION.ACTIVATED":
+            # Subscription activated (first payment or reactivation)
+            next_billing_time = resource.get("billing_info", {}).get("next_billing_time")
+            if next_billing_time:
+                expires_at = datetime.fromisoformat(next_billing_time.replace('Z', '+00:00'))
+            else:
+                expires_at = now + timedelta(days=30)
+            
+            await db.subscriptions.update_one(
+                {"_id": sub_doc["_id"]},
+                {
+                    "$set": {
+                        "tier": "pro",
+                        "status": "active",
+                        "expires_at": expires_at,
+                        "updated_at": now
+                    }
+                }
+            )
+            logger.info(f"Activated Pro subscription for user {user_id}")
+            
+        elif event_type == "BILLING.SUBSCRIPTION.CANCELLED":
+            # Subscription cancelled
+            await db.subscriptions.update_one(
+                {"_id": sub_doc["_id"]},
+                {
+                    "$set": {
+                        "status": "cancelled",
+                        "cancelled_at": now,
+                        "updated_at": now
+                    }
+                }
+            )
+            logger.info(f"Cancelled subscription for user {user_id}")
+            
+        elif event_type == "BILLING.SUBSCRIPTION.SUSPENDED":
+            # Subscription suspended (payment failed)
+            await db.subscriptions.update_one(
+                {"_id": sub_doc["_id"]},
+                {
+                    "$set": {
+                        "status": "cancelled",
+                        "cancelled_at": now,
+                        "updated_at": now
+                    }
+                }
+            )
+            logger.warning(f"Suspended subscription for user {user_id} (payment failed)")
+            
+        elif event_type == "BILLING.SUBSCRIPTION.EXPIRED":
+            # Subscription expired
+            await db.subscriptions.update_one(
+                {"_id": sub_doc["_id"]},
+                {
+                    "$set": {
+                        "tier": "free",
+                        "status": "expired",
+                        "updated_at": now
+                    }
+                }
+            )
+            logger.info(f"Expired subscription for user {user_id}, downgraded to free")
+            
+        elif event_type == "PAYMENT.SALE.COMPLETED":
+            # Recurring payment completed - extend expiration
+            next_billing_time = resource.get("billing_agreement_id")  # This needs to be fetched from subscription
+            # We should fetch the subscription details to get next billing time
+            # For now, extend by 30 days
+            current_expires = sub_doc.get("expires_at")
+            if current_expires:
+                if isinstance(current_expires, str):
+                    current_expires = datetime.fromisoformat(current_expires.replace('Z', '+00:00'))
+                if current_expires > now:
+                    # Extend from current expiration
+                    new_expires = current_expires + timedelta(days=30)
+                else:
+                    # Extend from now
+                    new_expires = now + timedelta(days=30)
+            else:
+                new_expires = now + timedelta(days=30)
+            
+            await db.subscriptions.update_one(
+                {"_id": sub_doc["_id"]},
+                {
+                    "$set": {
+                        "tier": "pro",
+                        "status": "active",
+                        "expires_at": new_expires,
+                        "updated_at": now
+                    }
+                }
+            )
+            logger.info(f"Extended Pro subscription for user {user_id} to {new_expires}")
+        
+        return {"success": True, "message": f"Processed {event_type}"}
+        
+    except Exception as e:
+        logger.error(f"Error handling PayPal webhook: {str(e)}")
+        return {"success": False, "message": str(e)}
 
 async def grant_pro_subscription(user_email: str, duration_months: int = 1) -> dict:
     """Admin: Grant Pro subscription to user by email"""
