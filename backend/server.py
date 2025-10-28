@@ -2063,10 +2063,17 @@ async def synthesize_audio_with_progress(
             
             # Cleanup on error
             try:
-                # Close GridFS file if open
-                if 'gridfs_file' in locals() and gridfs_file and not gridfs_file.closed:
+                # Close WAV output file if open
+                if 'wav_output' in locals() and wav_output:
                     try:
-                        gridfs_file.close()
+                        wav_output.close()
+                    except Exception:
+                        pass
+                
+                # Delete partial output file
+                if 'final_audio_path' in locals() and final_audio_path.exists():
+                    try:
+                        final_audio_path.unlink()
                     except Exception:
                         pass
                 
@@ -2087,10 +2094,8 @@ async def synthesize_audio_with_progress(
             try:
                 if 'wav_params' in locals():
                     del wav_params
-                if 'gridfs_file' in locals():
-                    del gridfs_file
-                if 'combined_audio_buffer' in locals():
-                    del combined_audio_buffer
+                if 'wav_output' in locals():
+                    del wav_output
             except Exception:
                 pass
             
