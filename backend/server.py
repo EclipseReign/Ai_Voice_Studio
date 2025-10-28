@@ -1857,10 +1857,8 @@ async def synthesize_audio_with_progress(
                             time_per_batch = elapsed / batches_completed
                             remaining_batches = total_batches - batches_completed
                             
-                            # ETA for remaining batches + estimated combine time (5% of total)
-                            batches_eta = time_per_batch * remaining_batches
-                            combine_eta = elapsed * 0.05  # Combine typically takes ~5% of generation time
-                            eta_seconds = batches_eta + combine_eta
+                            # ETA for remaining batches (no more combine step needed)
+                            eta_seconds = time_per_batch * remaining_batches
                             
                             # Calculate generation speed (audio_minutes per second of real time)
                             audio_generated_minutes = (completed_segments / total_segments) * estimated_audio_minutes
@@ -1872,10 +1870,10 @@ async def synthesize_audio_with_progress(
                             else:
                                 eta_formatted = f"{int(eta_seconds)}с"
                             
-                            yield f"data: {json.dumps({'type': 'progress', 'progress': progress, 'message': f'Генерация {completed_segments}/{total_segments} сегментов', 'stage': 'generating_segments', 'completed_segments': completed_segments, 'total_segments': total_segments, 'eta': eta_formatted, 'speed': round(speed, 1), 'elapsed': round(elapsed, 1)})}\n\n"
+                            yield f"data: {json.dumps({'type': 'progress', 'progress': progress, 'message': f'Генерация и сохранение {completed_segments}/{total_segments}', 'stage': 'generating_segments', 'completed_segments': completed_segments, 'total_segments': total_segments, 'eta': eta_formatted, 'speed': round(speed, 1), 'elapsed': round(elapsed, 1)})}\n\n"
                         else:
                             # First batch or very fast - show basic progress
-                            yield f"data: {json.dumps({'type': 'progress', 'progress': progress, 'message': f'Генерация {completed_segments}/{total_segments} сегментов', 'stage': 'generating_segments', 'completed_segments': completed_segments, 'total_segments': total_segments})}\n\n"
+                            yield f"data: {json.dumps({'type': 'progress', 'progress': progress, 'message': f'Генерация и сохранение {completed_segments}/{total_segments}', 'stage': 'generating_segments', 'completed_segments': completed_segments, 'total_segments': total_segments})}\n\n"
                 
                 except (asyncio.CancelledError, GeneratorExit) as e:
                     # Client disconnected or generation cancelled
