@@ -2081,10 +2081,9 @@ async def synthesize_audio_with_progress(
                 gc.collect()
                 
                 # CRITICAL: Remove voice from cache to free memory in error case too
-                if 'request' in locals() and request.voice in voice_cache.cache:
+                if 'request' in locals():
                     try:
-                        del voice_cache.cache[request.voice]
-                        logger.info(f"Voice {request.voice} removed from cache (cleanup)")
+                        await voice_cache.remove(request.voice)
                     except Exception:
                         pass
                 
