@@ -1737,6 +1737,13 @@ async def synthesize_audio_with_progress(
                 # Track all active tasks for proper cancellation
                 all_active_tasks = []
                 
+                # STREAMING OPTIMIZATION: Create GridFS file for incremental writing
+                # This allows us to save audio chunks as they're generated, not all at once
+                gridfs_id = None
+                gridfs_file = None
+                wav_params = None  # Store WAV params from first segment
+                combined_audio_buffer = io.BytesIO()  # Temporary buffer for batch combining
+                
                 try:
                     for batch_start in range(0, total_segments, batch_size):
                         batch_end = min(batch_start + batch_size, total_segments)
