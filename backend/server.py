@@ -1631,12 +1631,21 @@ async def synthesize_audio_with_progress(
         generation_start_time = None
         
         try:
-            # Check if user can generate
-            can_generate_info = await check_can_generate(current_user.id)
+            # Calculate approximate duration from text length
+            # Average speaking rate: ~150 words per minute
+            word_count = len(request.text.split())
+            estimated_duration_minutes = word_count / 150.0
+            
+            # Check if user can generate AUDIO with duration limit
+            can_generate_info = await check_can_generate(
+                current_user.id,
+                action_type="audio_generation", 
+                duration_minutes=estimated_duration_minutes
+            )
             
             if not can_generate_info["can_generate"]:
-                error_msg = f'Достигнут дневной лимит ({can_generate_info["limit"]} генераций). Обновитесь до Pro для безлимитного доступа.'
-                yield f"data: {json.dumps({'type': 'error', 'message': error_msg})}\n\n"
+                reason = can_generate_info.get("reason", "Достигнут лимит")
+                yield f"data: {json.dumps({'type': 'error', 'message': reason})}\n\n"
                 return
             
             # Log usage
