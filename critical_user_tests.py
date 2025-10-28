@@ -18,7 +18,7 @@ from urllib.parse import quote
 import httpx
 
 class CriticalUserTests:
-    def __init__(self, base_url="https://voice-tier-system.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://subvoice.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.results = []
         
