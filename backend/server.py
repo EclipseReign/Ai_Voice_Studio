@@ -1787,7 +1787,7 @@ async def synthesize_audio_with_progress(
                                         task.cancel()
                                 raise HTTPException(status_code=408, detail="Batch generation timeout")
                         
-                        # STREAMING OPTIMIZATION: Save batch to GridFS immediately
+                        # STREAMING OPTIMIZATION: Save batch to disk immediately
                         # This frees memory after each batch instead of waiting until the end
                         if batch_file_paths:
                             # Sort files by index to maintain order
@@ -1798,31 +1798,22 @@ async def synthesize_audio_with_progress(
                                 with wave.open(str(batch_file_paths_sorted[0]), 'rb') as first_wav:
                                     wav_params = first_wav.getparams()
                                 
-                                # Initialize GridFS file with WAV header
-                                gridfs_file = fs.new_file(
-                                    filename=f"audio_{audio_id}.wav",
-                                    content_type="audio/wav",
-                                    user_id=current_user.id,
-                                    audio_id=audio_id,
-                                    created_at=datetime.now(timezone.utc),
-                                    chunk_size=1024 * 1024  # 1MB chunks
-                                )
-                                
-                                # Write WAV header (we'll update data size at the end)
-                                header_buffer = io.BytesIO()
-                                with wave.open(header_buffer, 'wb') as temp_wav:
-                                    temp_wav.setparams(wav_params)
-                                header_data = header_buffer.getvalue()
-                                gridfs_file.write(header_data[:44])  # WAV header is 44 bytes
+                                # Initialize output WAV file
+                                wav_output = wave.open(str(final_audio_path), 'wb')
+                                wav_output.setparams(wav_params)
                             
-                            # Stream batch audio data to GridFS
+                            # Append batch audio data to output file
                             for seg_file in batch_file_paths_sorted:
                                 with wave.open(str(seg_file), 'rb') as seg_wav:
-                                    # Read and write audio frames directly (skip WAV header)
+                                    # Verify params match
+                                    if seg_wav.getparams() != wav_params:
+                                        logger.warning(f"Segment {seg_file} has different params, skipping")
+                                        continue
+                                    # Read and write audio frames directly
                                     audio_data = seg_wav.readframes(seg_wav.getnframes())
-                                    gridfs_file.write(audio_data)
+                                    wav_output.writeframes(audio_data)
                                 
-                                # Delete segment file immediately after streaming to GridFS
+                                # Delete segment file immediately after writing
                                 try:
                                     seg_file.unlink()
                                 except Exception as e:
@@ -1838,7 +1829,7 @@ async def synthesize_audio_with_progress(
                             # Log memory usage after batch completion
                             current_mem = psutil.virtual_memory()
                             mem_used_gb = (current_mem.total - current_mem.available) / (1024**3)
-                            logger.info(f"Batch {batches_completed + 1}/{total_batches} streamed to GridFS | Memory: {mem_used_gb:.2f}GB used ({current_mem.percent:.1f}%)")
+                            logger.info(f"Batch {batches_completed + 1}/{total_batches} written to disk | Memory: {mem_used_gb:.2f}GB used ({current_mem.percent:.1f}%)")
                         
                         completed_segments += batch_segment_count
                         batches_completed += 1
