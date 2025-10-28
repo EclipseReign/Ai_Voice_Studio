@@ -976,8 +976,6 @@ async def get_subscription(current_user: User = Depends(get_current_user)):
 @api_router.get("/subscription/config")
 async def get_subscription_config():
     """Get subscription configuration (prices, limits) - public endpoint"""
-    from subscription import PAYPAL_CLIENT_ID
-    
     return {
         "tiers": {
             "free": {
