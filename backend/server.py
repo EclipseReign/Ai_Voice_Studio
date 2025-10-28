@@ -2041,6 +2041,25 @@ async def synthesize_audio_with_progress(
             except Exception:
                 pass
             
+            # Clear any remaining objects in memory
+            if 'all_segment_files' in locals():
+                try:
+                    all_segment_files.clear()
+                    del all_segment_files
+                except:
+                    pass
+            
+            if 'all_active_tasks' in locals():
+                try:
+                    all_active_tasks.clear()
+                    del all_active_tasks
+                except:
+                    pass
+            
+            # Force garbage collection on error
+            gc.collect()
+            logger.info(f"Memory freed after error in job {job_id if 'job_id' in locals() else 'unknown'}")
+            
             if 'generation_start_time' in locals() and generation_start_time:
                 await queue_manager.finish_job(job_id)
             
