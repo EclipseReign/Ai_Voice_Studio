@@ -29,7 +29,10 @@ paypalrestsdk.configure({
 })
 
 # Constants
-FREE_TIER_DAILY_LIMIT = 3
+FREE_TEXT_DAILY_LIMIT = 5  # Free users: 5 text generations per day
+FREE_AUDIO_DAILY_LIMIT = 2  # Free users: 2 audio generations per day
+FREE_MAX_DURATION_MINUTES = 30  # Free users: max 30 minutes per generation
+PRO_PRICE_USD = 19.99  # Pro subscription price in USD
 
 async def get_or_create_subscription(user_id: str) -> Subscription:
     """Get existing subscription or create free tier"""
