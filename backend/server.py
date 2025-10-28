@@ -1071,10 +1071,22 @@ async def admin_revoke_pro(
 # ============================================================================
 
 @api_router.get("/voices", response_model=List[Voice])
-async def get_voices():
-    """Get available voices from Piper"""
+async def get_voices(current_user: User = Depends(get_current_user_optional)):
+    """Get available voices from Piper
+    Free users: only low and medium quality
+    Pro users: all qualities including high
+    """
     try:
         voices_data = await fetch_available_voices()
+        
+        # Get user subscription tier if authenticated
+        is_pro = False
+        if current_user:
+            try:
+                subscription = await get_subscription_status(current_user.id)
+                is_pro = subscription.tier == "pro" and subscription.status == "active"
+            except:
+                pass
         
         # Priority languages mapping
         lang_map = {
@@ -1104,6 +1116,10 @@ async def get_voices():
                 
                 # Get quality from voice_info
                 quality = voice_info.get('quality', 'medium')
+                
+                # Filter high quality for Free users
+                if not is_pro and quality == 'high':
+                    continue  # Skip high quality voices for Free users
                 
                 # Extract voice name from key (e.g., en_US-lessac-medium -> Lessac)
                 voice_name = voice_info.get('name', voice_key.split('-')[1] if '-' in voice_key else voice_key)
