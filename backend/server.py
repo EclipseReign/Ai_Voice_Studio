@@ -57,7 +57,8 @@ from subscription import (
     FREE_MAX_DURATION_MINUTES,
     PRO_PRICE_USD,
     PAYPAL_PLAN_ID,
-    PAYPAL_MODE
+    PAYPAL_MODE,
+    PAYPAL_CLIENT_ID
 )
 from models import (
     User, 
