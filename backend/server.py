@@ -2150,18 +2150,29 @@ async def download_audio(audio_id: str):
         
         # Check if file is stored in GridFS (new method) or on disk (legacy)
         if audio_doc.get("gridfs_id"):
-            # NEW: Fetch from GridFS
+            # NEW: Stream from GridFS to avoid loading entire file in memory
             from bson import ObjectId
             try:
                 gridfs_id = ObjectId(audio_doc["gridfs_id"])
-                audio_data = fs.get(gridfs_id).read()
+                grid_out = fs.get(gridfs_id)
+                
+                # Stream response in chunks to avoid loading entire file in RAM
+                def stream_gridfs():
+                    chunk_size = 1024 * 1024  # 1MB chunks
+                    while True:
+                        chunk = grid_out.read(chunk_size)
+                        if not chunk:
+                            break
+                        yield chunk
+                    grid_out.close()
                 
                 # Return as streaming response
-                return Response(
-                    content=audio_data,
+                return StreamingResponse(
+                    stream_gridfs(),
                     media_type="audio/wav",
                     headers={
-                        "Content-Disposition": f"attachment; filename=generated_audio_{audio_id}.wav"
+                        "Content-Disposition": f"attachment; filename=generated_audio_{audio_id}.wav",
+                        "Content-Length": str(grid_out.length)
                     }
                 )
             except Exception as e:
