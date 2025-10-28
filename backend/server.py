@@ -247,12 +247,12 @@ def calculate_optimal_parameters(resources: dict):
     # 32 workers = ~480-640MB overhead (manageable)
     max_workers = 32  # Fixed, safe for 8GB container
     
-    # Batch sizes: AGGRESSIVELY REDUCED
-    # Pro: 12 segments max (was 24) = ~180-240MB per batch
-    # Free: 8 segments max (was 16) = ~120-160MB per batch
-    # With 2 concurrent users: 12+8=20 tasks max = 300-400MB (SAFE!)
-    batch_size_pro = 12   # Reduced from 24
-    batch_size_free = 8   # Reduced from 16
+    # Batch sizes: Pro users get 2x faster generation than Free users
+    # Pro: 16 segments max = ~240-320MB per batch
+    # Free: 8 segments max (2x slower) = ~120-160MB per batch  
+    # With 2 concurrent users: 16+8=24 tasks max = 360-480MB (SAFE!)
+    batch_size_pro = 16   # Pro gets full speed
+    batch_size_free = 8   # Free gets 2x slower (half the batch size)
     
     # Voice cache: Keep 2 models only
     voice_cache_size = 2  # ~100-200MB total
