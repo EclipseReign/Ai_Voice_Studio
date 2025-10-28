@@ -2067,6 +2067,15 @@ async def synthesize_audio_with_progress(
                 
                 # Force garbage collection in finally block to ensure memory is freed
                 gc.collect()
+                
+                # CRITICAL: Remove voice from cache to free memory in error case too
+                if 'request' in locals() and request.voice in voice_cache.cache:
+                    try:
+                        del voice_cache.cache[request.voice]
+                        logger.info(f"Voice {request.voice} removed from cache (cleanup)")
+                    except Exception:
+                        pass
+                
                 logger.debug(f"Garbage collection forced in finally block for job {job_id}")
             
         except Exception as e:
