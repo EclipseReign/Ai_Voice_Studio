@@ -2006,6 +2006,10 @@ async def synthesize_audio_with_progress(
                         temp_dir.rmdir()
                 except Exception as cleanup_error:
                     logger.warning(f"Final cleanup warning: {cleanup_error}")
+                
+                # Force garbage collection in finally block to ensure memory is freed
+                gc.collect()
+                logger.debug(f"Garbage collection forced in finally block for job {job_id}")
             
         except Exception as e:
             logger.error(f"Error in SSE audio synthesis: {str(e)}", exc_info=True)
