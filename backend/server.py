@@ -46,9 +46,17 @@ from subscription import (
     check_can_generate,
     log_usage,
     create_paypal_subscription,
+    approve_paypal_subscription,
+    handle_paypal_webhook,
     cancel_subscription,
     grant_pro_subscription,
-    revoke_pro_subscription
+    revoke_pro_subscription,
+    FREE_TEXT_DAILY_LIMIT,
+    FREE_AUDIO_DAILY_LIMIT,
+    FREE_MAX_DURATION_MINUTES,
+    PRO_PRICE_USD,
+    PAYPAL_PLAN_ID,
+    PAYPAL_MODE
 )
 from models import (
     User, 
