@@ -2002,19 +2002,29 @@ async def synthesize_audio_with_progress(
                 yield f"data: {json.dumps({'type': 'complete', 'progress': 100, 'audio_id': audio_id, 'audio_url': f'/audio/download/{audio_id}', 'duration': audio_duration, 'generation_time': round(total_generation_time, 1), 'speed': round(final_speed, 2), 'message': f'Готово! ({round(audio_duration/60, 1)} мин за {round(total_generation_time, 1)}с, скорость {round(final_speed, 1)}x)'})}\n\n"
                 
                 # CRITICAL: Explicitly clear large objects and force garbage collection
-                # This frees several GB of RAM that would otherwise hang until Python GC
-                if 'all_segment_files' in locals():
-                    all_segment_files.clear()
-                    del all_segment_files
+                # Memory already freed incrementally during generation
+                # Just cleanup any remaining references
+                if 'wav_params' in locals():
+                    del wav_params
+                if 'gridfs_file' in locals():
+                    del gridfs_file
+                if 'combined_audio_buffer' in locals():
+                    del combined_audio_buffer
                 
                 # Force garbage collection to free memory immediately
-                import gc
                 gc.collect()
-                logger.info(f"Memory explicitly freed for audio {audio_id} (garbage collection forced)")
+                logger.info(f"Memory explicitly freed for audio {audio_id} (streaming method - minimal footprint)")
                 
             finally:
                 # Always finish job in queue and cleanup temp files
                 await queue_manager.finish_job(job_id)
+                
+                # Close GridFS file if still open
+                if 'gridfs_file' in locals() and gridfs_file and not gridfs_file.closed:
+                    try:
+                        gridfs_file.close()
+                    except Exception:
+                        pass
                 
                 # Cleanup temp directory if it still exists (in case of error)
                 try:
