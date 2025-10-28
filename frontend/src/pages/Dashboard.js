@@ -2,14 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
-import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
+import { Crown, Zap, TrendingUp } from 'lucide-react';
 
 const Dashboard = () => {
   const { user, subscription, logout, refreshSubscription, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showPayPal, setShowPayPal] = useState(false);
 
   const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -42,43 +41,10 @@ const Dashboard = () => {
       await axios.post(`${API}/subscription/cancel`, {}, {
         withCredentials: true
       });
-      alert('Подписка отменена');
+      alert('Подписка отменена. Pro доступ сохранится до конца оплаченного периода.');
       await refreshSubscription();
     } catch (error) {
       alert('Ошибка отмены подписки');
-    }
-  };
-
-  const createPayPalSubscription = async (data, actions) => {
-    try {
-      const response = await axios.post(
-        `${API}/subscription/create`,
-        { subscription_id: 'temp' },
-        { withCredentials: true }
-      );
-      
-      // Create PayPal subscription
-      return actions.subscription.create({
-        plan_id: 'P-XXXXXXXXXXXXXXXXXXXXXXXX', // Replace with your PayPal plan ID
-      });
-    } catch (error) {
-      console.error('Error creating subscription:', error);
-      throw error;
-    }
-  };
-
-  const onPayPalApprove = async (data, actions) => {
-    try {
-      const response = await axios.post(
-        `${API}/subscription/create`,
-        { subscription_id: data.subscriptionID },
-        { withCredentials: true }
-      );
-      alert('Подписка Pro активирована!');
-      await refreshSubscription();
-      setShowPayPal(false);
-    } catch (error) {
-      alert('Ошибка активации подписки');
     }
   };
 
@@ -91,6 +57,10 @@ const Dashboard = () => {
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
+
+  // Get current tier (tier is the new field name, fallback to plan for backwards compatibility)
+  const currentTier = subscription?.tier || subscription?.plan || 'free';
+  const isPro = currentTier === 'pro' && subscription?.status === 'active';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -150,71 +120,104 @@ const Dashboard = () => {
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
           <h3 className="text-xl font-bold text-gray-900 mb-4">💳 Подписка</h3>
           
-          {subscription?.plan === 'free' && (
+          {/* Free Tier */}
+          {!isPro && subscription && (
             <div className="space-y-4">
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-lg font-semibold text-gray-900">Free Plan</span>
+              <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg p-4 border-2 border-purple-200">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Zap className="w-5 h-5 text-purple-600" />
+                    <span className="text-lg font-semibold text-gray-900">Free Tier</span>
+                  </div>
                   <span className="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm font-semibold">
                     Бесплатно
                   </span>
                 </div>
-                <p className="text-gray-600">
-                  Использовано сегодня: {subscription.usage_today || 0} / 3 генераций
-                </p>
+                
+                {/* Separate counters for text and audio */}
+                <div className="space-y-3">
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-gray-700 font-medium">📝 Генерация текста</span>
+                      <span className="text-gray-900 font-bold">
+                        {subscription.text_usage_today || 0} / {subscription.text_limit || 5}
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-purple-600 h-2 rounded-full transition-all"
+                        style={{
+                          width: `${Math.min(100, ((subscription.text_usage_today || 0) / (subscription.text_limit || 5)) * 100)}%`
+                        }}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-gray-700 font-medium">🎤 Озвучка</span>
+                      <span className="text-gray-900 font-bold">
+                        {subscription.audio_usage_today || 0} / {subscription.audio_limit || 2}
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full transition-all"
+                        style={{
+                          width: `${Math.min(100, ((subscription.audio_usage_today || 0) / (subscription.audio_limit || 2)) * 100)}%`
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-3 pt-3 border-t border-purple-200">
+                  <p className="text-xs text-gray-600">
+                    ⏱ Максимум {subscription.max_duration_minutes || 30} минут на генерацию<br/>
+                    🐢 Скорость в 2 раза ниже Pro<br/>
+                    🎵 Только низкое и среднее качество голосов
+                  </p>
+                </div>
               </div>
               
-              {!showPayPal ? (
-                <button
-                  onClick={() => setShowPayPal(true)}
-                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 px-6 rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-all"
-                >
-                  ⬆️ Перейти на Pro ($15/мес) - Безлимитно ✨
-                </button>
-              ) : (
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <PayPalScriptProvider
-                    options={{
-                      "client-id": process.env.REACT_APP_PAYPAL_CLIENT_ID || "test",
-                      vault: true,
-                      intent: "subscription"
-                    }}
-                  >
-                    <PayPalButtons
-                      createSubscription={createPayPalSubscription}
-                      onApprove={onPayPalApprove}
-                      onError={(err) => {
-                        console.error('PayPal Error:', err);
-                        alert('Ошибка PayPal. Попробуйте позже.');
-                      }}
-                      style={{ layout: 'vertical' }}
-                    />
-                  </PayPalScriptProvider>
-                  <button
-                    onClick={() => setShowPayPal(false)}
-                    className="mt-2 text-gray-600 hover:text-gray-900"
-                  >
-                    Отмена
-                  </button>
-                </div>
-              )}
+              <button
+                onClick={() => navigate('/pricing')}
+                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 px-6 rounded-lg font-semibold hover:from-purple-700 hover:to-indigo-700 transition-all flex items-center justify-center gap-2"
+              >
+                <TrendingUp className="w-5 h-5" />
+                Обновить до Pro ($19.99/мес) - Безлимитно ✨
+              </button>
             </div>
           )}
 
-          {subscription?.plan === 'pro' && (
+          {/* Pro Tier */}
+          {isPro && subscription && (
             <div className="space-y-4">
-              <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-4 border-2 border-purple-200">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-lg font-semibold text-purple-900">Pro Plan</span>
-                  <span className="bg-purple-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
+              <div className="bg-gradient-to-br from-purple-600 to-indigo-600 rounded-lg p-4 border-2 border-yellow-400 text-white">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Crown className="w-6 h-6 text-yellow-400" />
+                    <span className="text-lg font-semibold">Pro Tier</span>
+                  </div>
+                  <span className="bg-yellow-400 text-purple-900 px-3 py-1 rounded-full text-sm font-semibold">
                     ✨ Активна
                   </span>
                 </div>
-                <p className="text-purple-700">Безлимитные генерации</p>
+                
+                <div className="space-y-2 text-sm">
+                  <p>✅ Безлимитная генерация текста</p>
+                  <p>✅ Безлимитная озвучка</p>
+                  <p>✅ Любая длительность</p>
+                  <p>✅ Максимальная скорость</p>
+                  <p>✅ Все качества голосов (включая high)</p>
+                </div>
+                
                 {subscription.expires_at && (
-                  <p className="text-sm text-purple-600 mt-2">
-                    Действует до: {formatDate(subscription.expires_at)}
-                  </p>
+                  <div className="mt-3 pt-3 border-t border-purple-400">
+                    <p className="text-sm text-purple-100">
+                      🔄 Продлевается: {formatDate(subscription.expires_at)}
+                    </p>
+                  </div>
                 )}
               </div>
               
@@ -224,6 +227,10 @@ const Dashboard = () => {
               >
                 Отменить подписку
               </button>
+              
+              <p className="text-xs text-gray-500 text-center">
+                После отмены Pro доступ сохранится до конца оплаченного периода
+              </p>
             </div>
           )}
         </div>
@@ -253,6 +260,11 @@ const Dashboard = () => {
                         {item.audio_url && (
                           <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-semibold">
                             АУДИО
+                          </span>
+                        )}
+                        {item.duration && (
+                          <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-semibold">
+                            {formatDuration(item.duration)}
                           </span>
                         )}
                       </div>
