@@ -2734,7 +2734,7 @@ async def generate_video_with_progress(
                         "status": "completed",
                         "progress": 100,
                         "gridfs_id": str(gridfs_id),
-                        "video_url": f"/api/video/download/{job_id}",
+                        "video_url": f"/video/download/{job_id}",
                         "duration": video_duration,
                         "completed_at": datetime.now(timezone.utc)
                     }
@@ -2742,7 +2742,7 @@ async def generate_video_with_progress(
             )
             
             # Success!
-            yield f"data: {json.dumps({'type': 'complete', 'job_id': job_id, 'video_url': f'/api/video/download/{job_id}', 'duration': video_duration, 'message': 'Видео успешно создано!'})}\n\n"
+            yield f"data: {json.dumps({'type': 'complete', 'job_id': job_id, 'video_url': f'/video/download/{job_id}', 'duration': video_duration, 'message': 'Видео успешно создано!'})}\n\n"
             
         except Exception as e:
             logger.error(f"Error generating video: {e}", exc_info=True)
