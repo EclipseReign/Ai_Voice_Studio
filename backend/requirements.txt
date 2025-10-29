@@ -133,13 +133,10 @@ aiosmtplib==3.0.1
 email-validator==2.3.0
 psutil==7.0.0
 nest-asyncio==1.6.0
-# Video generation dependencies
-torch==2.5.1
-torchvision==0.20.1
-diffusers==0.32.2
-transformers==4.47.1
-accelerate==1.4.0
+# Video generation dependencies (CPU-optimized)
 ffmpeg-python==0.2.0
 opencv-python-headless==4.10.0.84
 imageio==2.37.0
 imageio-ffmpeg==0.5.1
+# For API-based image generation via Hugging Face
+aiohttp==3.13.1
