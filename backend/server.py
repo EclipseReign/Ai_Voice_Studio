@@ -2716,7 +2716,6 @@ async def generate_video_with_progress(
             # Upload to GridFS
             yield f"data: {json.dumps({'type': 'stage', 'stage': 'uploading', 'message': 'Сохранение видео...'})}\n\n"
             
-            fs = gridfs.GridFS(db.get_database())
             with open(video_path, "rb") as video_file:
                 gridfs_id = fs.put(
                     video_file,
