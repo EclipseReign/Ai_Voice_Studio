@@ -288,6 +288,7 @@ const HomePage = () => {
                 setTextProgress(100);
                 setTextProgressMessage("Готово!");
                 setGeneratedText(data.text);
+                setCurrentTextId(data.text_id); // Save text ID for video generation
                 toast.success(`Сгенерировано ${data.word_count} слов!`);
                 setIsGeneratingText(false);
                 // Refresh subscription to update usage count
