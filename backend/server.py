@@ -2778,7 +2778,6 @@ async def download_video(video_id: str, current_user: User = Depends(get_current
             raise HTTPException(status_code=404, detail="Video file not found in storage")
         
         # Get from GridFS and stream
-        fs = gridfs.GridFS(db.get_database())
         try:
             grid_out = fs.get(gridfs_id)
         except NoFile:
