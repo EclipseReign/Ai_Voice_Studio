@@ -2656,6 +2656,8 @@ async def generate_video_with_progress(
             
             gridfs_id = audio_record.get("gridfs_id")
             if gridfs_id:
+                from bson import ObjectId
+                gridfs_id = ObjectId(gridfs_id)  # Convert string to ObjectId
                 grid_out = fs.get(gridfs_id)
                 
                 # Save to temp file
