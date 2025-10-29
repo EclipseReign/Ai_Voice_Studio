@@ -12,7 +12,7 @@ import subprocess
 from datetime import datetime
 
 class LRUCacheTest:
-    def __init__(self, base_url="https://api-platform-4.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://api-logger.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.test_voices = [
             "en_US-hfc_male-medium",      # Voice A
