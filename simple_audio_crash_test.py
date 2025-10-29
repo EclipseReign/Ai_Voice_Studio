@@ -158,7 +158,7 @@ def test_voices_endpoint_no_crash():
     try:
         start_time = time.time()
         response = requests.get(
-            "https://subvoice.preview.emergentagent.com/api/voices",
+            "https://voicetoscreen.preview.emergentagent.com/api/voices",
             timeout=30
         )
         response_time = time.time() - start_time

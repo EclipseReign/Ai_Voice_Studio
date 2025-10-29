@@ -25,7 +25,7 @@ import httpx
 import asyncio
 
 class ProgressBarTester:
-    def __init__(self, base_url="https://subvoice.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://voicetoscreen.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.session_token = None
         self.test_results = []
