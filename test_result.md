@@ -304,6 +304,18 @@ backend:
         agent: "main"
         comment: "🔧 ИСПРАВЛЕНИЕ HISTORY DOWNLOAD: Пользователь сообщил что файлы скачиваются только через history, основная загрузка показывает 404. Проблема в двойном /api префиксе (/api/api/audio/download/). Исправлено в /app/frontend/src/pages/HomePage.js строка 593: изменено process.env.REACT_APP_BACKEND_URL на API. Требуется повторное тестирование скачивания из history."
 
+  - task: "Video generation with HuggingFace images"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/video_service.py, /app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "🔧 КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ ВИДЕО-ГЕНЕРАЦИИ: ПРОБЛЕМЫ: 1) ❌ HuggingFace API deprecated endpoint - был https://api-inference.huggingface.co/, но с November 2025 возвращает 404. 2) ❌ Двойной /api префикс в video download URL (/api/api/video/download/ вместо /api/video/download/). РЕШЕНИЯ: 1) ✅ Обновлен HF_API_URL на новый endpoint: https://router.huggingface.co/hf-inference/models (согласно email от HuggingFace team). 2) ✅ Исправлен video_url в backend: убран префикс /api (backend возвращает /video/download/{id}, frontend добавляет API prefix). ИЗМЕНЕНИЯ: 1) /app/backend/video_service.py строка 23: изменён HF_API_URL на новый Inference Providers endpoint. 2) /app/backend/server.py строки 2737, 2745: изменён video_url с /api/video/download/{id} на /video/download/{id}. ОЖИДАЕМЫЙ РЕЗУЛЬТАТ: 1) Изображения генерируются успешно через новый HF API. 2) Скачивание видео работает без 404 ошибки. 3) Все 3 типа видео работают: youtube_images (слайдшоу из AI картинок), youtube_continuous (непрерывное видео Sora-стиль), shorts (вертикальное для TikTok/Reels). Требуется тестирование генерации видео!"
+
   - task: "History endpoint"
     implemented: true
     working: true
