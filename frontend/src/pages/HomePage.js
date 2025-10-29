@@ -463,6 +463,108 @@ const HomePage = () => {
     }
   };
   
+  const handleGenerateVideo = async () => {
+    if (!currentTextId || !currentAudioId) {
+      toast.error("Сначала создайте текст и аудио");
+      return;
+    }
+    
+    setIsGeneratingVideo(true);
+    setVideoProgress(0);
+    setVideoProgressMessage("Начало генерации видео...");
+    setVideoUrl(null);
+    setVideoStage("");
+    
+    try {
+      const response = await fetch(
+        `${API}/video/generate-with-progress`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Accept': 'text/event-stream',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            text_id: currentTextId,
+            audio_id: currentAudioId,
+            video_type: videoType
+          })
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        
+        if (done) break;
+        
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              
+              if (data.type === 'started') {
+                setVideoProgressMessage(data.message);
+                setCurrentVideoId(data.job_id);
+              } else if (data.type === 'stage') {
+                setVideoStage(data.stage);
+                setVideoProgressMessage(data.message);
+                if (data.progress !== undefined) {
+                  setVideoProgress(data.progress);
+                }
+              } else if (data.type === 'progress') {
+                setVideoProgress(data.progress);
+                setVideoProgressMessage(data.message);
+                setVideoStage(data.stage);
+              } else if (data.type === 'complete') {
+                setVideoProgress(100);
+                setVideoProgressMessage("Видео готово!");
+                setVideoUrl(API + data.video_url);
+                setVideoDuration(data.duration || 0);
+                toast.success("Видео успешно создано!");
+                fetchVideoHistory();
+                setIsGeneratingVideo(false);
+              } else if (data.type === 'error') {
+                toast.error(data.message);
+                setIsGeneratingVideo(false);
+              }
+            } catch (e) {
+              console.error("Error parsing SSE data:", e);
+            }
+          }
+        }
+      }
+      
+    } catch (error) {
+      console.error("Error generating video:", error);
+      toast.error("Не удалось сгенерировать видео");
+      setIsGeneratingVideo(false);
+    }
+  };
+  
+  const fetchVideoHistory = async () => {
+    try {
+      const response = await axios.get(`${API}/video/history`, {
+        withCredentials: true
+      });
+      setVideoHistory(response.data.videos || []);
+    } catch (error) {
+      console.error("Error fetching video history:", error);
+    }
+  };
+  
   const getVoicesByLanguage = () => {
     const langCode = language.split('-')[0].toLowerCase();
     return voices.filter(v => v.locale.toLowerCase().startsWith(langCode));
