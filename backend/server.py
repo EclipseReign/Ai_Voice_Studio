@@ -2604,22 +2604,6 @@ async def resume_generation_job(job_id: str, current_user: User = Depends(get_cu
         logger.error(f"Error resuming job: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error resuming job: {str(e)}")
 
-# Include router
-app.include_router(api_router)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# ============================================================================
-# BACKGROUND TASK: REMOVED - Files are now stored permanently
-# Users can manually delete files if needed via cleanup endpoint
-# ============================================================================
-
 # ============================================================================
 # VIDEO GENERATION ENDPOINTS
 # ============================================================================
