@@ -1907,3 +1907,154 @@ agent_communication:
       RECOMMENDATION: Main agent can proceed with confidence that the audio 
       synthesis crash issue is completely resolved. The server infrastructure 
       is now memory-safe and stable for audio generation workloads.
+  - agent: "main"
+    message: |
+      🔧 КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ ВИДЕО-ГЕНЕРАЦИИ (November 2025)
+      
+      ОБНАРУЖЕННЫЕ ПРОБЛЕМЫ:
+      
+      1. ❌ HuggingFace API deprecated endpoint (404 errors)
+         - Старый URL: https://api-inference.huggingface.co/models
+         - Ошибка: "HF API error: 404 - Not Found"
+         - Все 18 изображений не генерировались
+         - HuggingFace отправили email о deprecation с 1 ноября 2025
+      
+      2. ❌ Двойной /api префикс в video download URL
+         - Frontend получал: /api/video/download/{id} от backend
+         - Frontend добавлял: API + video_url
+         - Результат: /api/api/video/download/{id} (404 error)
+      
+      ВЫПОЛНЕННЫЕ ИСПРАВЛЕНИЯ:
+      
+      ═══════════════════════════════════════════════════════════════════════
+      1. ✅ ОБНОВЛЕН HUGGINGFACE API ENDPOINT
+      ═══════════════════════════════════════════════════════════════════════
+      
+      Файл: /app/backend/video_service.py (строка 23)
+      
+      БЫЛО:
+      ```python
+      HF_API_URL = "https://api-inference.huggingface.co/models"
+      ```
+      
+      СТАЛО:
+      ```python
+      HF_API_URL = "https://router.huggingface.co/hf-inference/models"
+      ```
+      
+      ПРИЧИНА ИЗМЕНЕНИЯ (из email HuggingFace):
+      - Старый endpoint api-inference.huggingface.co deprecated с January 2025
+      - С 1 November 2025 все запросы возвращают 404
+      - Новый Inference Providers API: router.huggingface.co/hf-inference/
+      - Просто замена URL в коде - API остается совместимым
+      
+      ═══════════════════════════════════════════════════════════════════════
+      2. ✅ ИСПРАВЛЕН VIDEO DOWNLOAD URL (DOUBLE /api PREFIX)
+      ═══════════════════════════════════════════════════════════════════════
+      
+      Файл: /app/backend/server.py (строки 2737, 2745)
+      
+      БЫЛО:
+      ```python
+      "video_url": f"/api/video/download/{job_id}"
+      ```
+      
+      СТАЛО:
+      ```python
+      "video_url": f"/video/download/{job_id}"
+      ```
+      
+      ОБЪЯСНЕНИЕ:
+      - Backend возвращает video_url БЕЗ префикса /api
+      - Frontend добавляет API (который уже содержит /api)
+      - Итоговый URL: API + /video/download/{id} = /api/video/download/{id} ✅
+      - Та же схема что используется для audio download
+      
+      ═══════════════════════════════════════════════════════════════════════
+      ТИПЫ ВИДЕО (ПОДТВЕРЖДЕНО ПОЛЬЗОВАТЕЛЕМ)
+      ═══════════════════════════════════════════════════════════════════════
+      
+      1. YOUTUBE FORMAT - IMAGE SLIDESHOW (youtube_images):
+         - Формат: 16:9 (1280x720)
+         - AI-генерируемые картинки по контексту текста
+         - Смена изображения каждые 10 секунд (6 картинок/минуту)
+         - Красивые переходы с монтажом
+         - Картинки соответствуют контексту озвучки
+      
+      2. YOUTUBE FORMAT - CONTINUOUS VIDEO (youtube_continuous):
+         - Формат: 16:9 (1280x720)
+         - Sora-стиль: непрерывное видео
+         - Генерация покадрово по тексту
+         - Для длинных озвучек (10+ минут)
+         - Беспрерывное видео на всю длительность аудио
+      
+      3. SHORTS/TIKTOK/REELS FORMAT (shorts):
+         - Формат: 9:16 вертикальное (720x1280)
+         - Обычно 1-2 минуты (короткие ролики)
+         - Быстрая смена изображений (каждые 6 секунд)
+         - Оптимизировано для соцсетей
+      
+      ═══════════════════════════════════════════════════════════════════════
+      ТЕХНИЧЕСКИЕ ДЕТАЛИ ВИДЕО СИСТЕМЫ
+      ═══════════════════════════════════════════════════════════════════════
+      
+      ENDPOINTS:
+      - POST /api/video/generate-with-progress: генерация с SSE прогрессом
+      - GET /api/video/download/{video_id}: скачивание из GridFS (streaming)
+      - GET /api/video/status/{job_id}: статус генерации
+      - GET /api/video/history: история видео пользователя
+      
+      IMAGE GENERATION:
+      - Model: stabilityai/stable-diffusion-2-1 (через HuggingFace)
+      - Промпты генерируются из текста автоматически
+      - Asynchronous generation для скорости
+      - Retry логика (3 попытки) для надежности
+      
+      VIDEO CREATION:
+      - FFmpeg для склейки изображений и аудио
+      - Красивые переходы между изображениями
+      - Правильное соотношение сторон для каждого типа
+      - Streaming upload/download через GridFS (экономия памяти)
+      
+      ═══════════════════════════════════════════════════════════════════════
+      ОЖИДАЕМЫЕ РЕЗУЛЬТАТЫ
+      ═══════════════════════════════════════════════════════════════════════
+      
+      ✅ Изображения генерируются успешно через новый HF API endpoint
+      ✅ Все 3 типа видео работают:
+         - YouTube slideshow (16:9 с картинками)
+         - YouTube continuous (16:9 Sora-стиль)
+         - Shorts/TikTok (9:16 вертикальное)
+      ✅ Скачивание видео работает без 404 ошибки
+      ✅ Видео создаются с правильной длительностью
+      ✅ Прогресс отображается в реальном времени
+      ✅ Файлы хранятся в GridFS (не занимают место на диске)
+      
+      ═══════════════════════════════════════════════════════════════════════
+      BACKEND ПЕРЕЗАПУЩЕН
+      ═══════════════════════════════════════════════════════════════════════
+      
+      - sudo supervisorctl restart backend ✅
+      - Backend RUNNING (pid 381, uptime 0:00:10) ✅
+      - Application startup complete ✅
+      - ThreadPoolExecutor: 32 workers ✅
+      - VoiceCache: 2 models (thread-safe) ✅
+      
+      ═══════════════════════════════════════════════════════════════════════
+      ПРИОРИТЕТ ТЕСТИРОВАНИЯ
+      ═══════════════════════════════════════════════════════════════════════
+      
+      1. КРИТИЧНО: Генерация видео YouTube slideshow (2 минуты)
+         - Проверить что изображения генерируются (не 404)
+         - Проверить что видео создается
+         - Проверить скачивание
+      
+      2. КРИТИЧНО: Генерация Shorts видео (1 минута)
+         - Проверить вертикальный формат
+         - Проверить скорость смены изображений
+      
+      3. ВЫСОКИЙ: Проверить прогресс-бар (SSE events)
+      
+      4. СРЕДНИЙ: YouTube continuous (может требовать больше времени)
+      
+      Готово к тестированию через deep_testing_backend_v2!
