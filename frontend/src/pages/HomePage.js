@@ -69,6 +69,7 @@ const HomePage = () => {
   useEffect(() => {
     fetchVoices();
     fetchHistory();
+    fetchVideoHistory(); // Fetch video history on mount
     checkPendingJobs(); // NEW: Check for pending jobs on mount (recovery)
   }, []);
   
