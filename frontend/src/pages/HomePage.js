@@ -53,6 +53,18 @@ const HomePage = () => {
   const [currentAudioId, setCurrentAudioId] = useState(null); // Track current audio ID for cleanup
   const [history, setHistory] = useState([]);
   
+  // Video generation state
+  const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
+  const [videoType, setVideoType] = useState("youtube_images");
+  const [videoProgress, setVideoProgress] = useState(0);
+  const [videoProgressMessage, setVideoProgressMessage] = useState("");
+  const [videoStage, setVideoStage] = useState("");
+  const [currentVideoId, setCurrentVideoId] = useState(null);
+  const [videoUrl, setVideoUrl] = useState(null);
+  const [videoDuration, setVideoDuration] = useState(0);
+  const [currentTextId, setCurrentTextId] = useState(null); // Track text ID for video generation
+  const [videoHistory, setVideoHistory] = useState([]);
+  
   // Fetch voices on mount
   useEffect(() => {
     fetchVoices();
