@@ -66,8 +66,12 @@ from models import (
     SubscriptionResponse, 
     PayPalSubscriptionRequest,
     AdminGrantProRequest,
-    AdminStatsResponse
+    AdminStatsResponse,
+    VideoGeneration,
+    VideoGenerationRequest,
+    VideoGenerationResponse
 )
+import video_service
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
