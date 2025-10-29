@@ -113,3 +113,37 @@ class AdminStatsResponse(BaseModel):
     pro_users: int
     total_generations_today: int
     total_generations_all_time: int
+
+# Video generation models
+class VideoGeneration(BaseModel):
+    """Video generation record"""
+    model_config = ConfigDict(extra="ignore")
+    
+    id: str
+    user_id: str
+    text_id: str  # Reference to text generation
+    audio_id: str  # Reference to audio generation
+    video_type: Literal["youtube_images", "youtube_continuous", "shorts"]
+    video_url: Optional[str] = None
+    gridfs_id: Optional[str] = None  # For GridFS storage
+    status: Literal["pending", "processing", "completed", "failed"] = "pending"
+    progress: int = 0
+    duration: Optional[float] = None
+    error_message: Optional[str] = None
+    created_at: datetime
+    completed_at: Optional[datetime] = None
+
+class VideoGenerationRequest(BaseModel):
+    """Request to generate video"""
+    text_id: str
+    audio_id: str
+    video_type: Literal["youtube_images", "youtube_continuous", "shorts"]
+    
+class VideoGenerationResponse(BaseModel):
+    """Video generation response"""
+    id: str
+    status: Literal["pending", "processing", "completed", "failed"]
+    progress: int
+    video_url: Optional[str] = None
+    duration: Optional[float] = None
+    error_message: Optional[str] = None
