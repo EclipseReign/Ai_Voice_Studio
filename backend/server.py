@@ -2868,6 +2868,17 @@ async def get_video_history(current_user: User = Depends(get_current_user), limi
 # END VIDEO GENERATION ENDPOINTS
 # ============================================================================
 
+# Include router - MUST be after all route definitions
+app.include_router(api_router)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_credentials=True,
+    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # ============================================================================
 # BACKGROUND TASK: REMOVED - Files are now stored permanently
 # Users can manually delete files if needed via cleanup endpoint
