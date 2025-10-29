@@ -1094,6 +1094,104 @@ const HomePage = () => {
               </Card>
             )}
             
+            {/* Video Generation Section */}
+            {audioUrl && (
+              <Card className="backdrop-blur-sm bg-white/80 border-slate-200 shadow-xl">
+                <CardHeader>
+                  <CardTitle>🎬 Создать видео</CardTitle>
+                  <CardDescription>
+                    Создайте видео из текста и аудио. Это займет от 5 до 60 минут в зависимости от длительности.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="video-type">Тип видео</Label>
+                    <Select value={videoType} onValueChange={setVideoType} disabled={isGeneratingVideo}>
+                      <SelectTrigger id="video-type" className="mt-2">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="youtube_images">
+                          📺 YouTube (картинки со сменой)
+                        </SelectItem>
+                        <SelectItem value="youtube_continuous">
+                          🎞️ YouTube (непрерывное видео как Sora)
+                        </SelectItem>
+                        <SelectItem value="shorts">
+                          📱 Shorts/Reels/TikTok формат
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-slate-500 mt-2">
+                      {videoType === "youtube_images" && "Видео из сгенерированных картинок с плавными переходами (16:9)"}
+                      {videoType === "youtube_continuous" && "Непрерывное AI-видео (очень медленно без GPU, ~1-2 часа)"}
+                      {videoType === "shorts" && "Вертикальное видео для соцсетей (9:16)"}
+                    </p>
+                  </div>
+                  
+                  {isGeneratingVideo && (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-slate-700">{videoProgressMessage}</span>
+                        <span className="font-semibold text-blue-600">{videoProgress}%</span>
+                      </div>
+                      <Progress value={videoProgress} className="h-2" />
+                      {videoStage && (
+                        <p className="text-xs text-slate-600">
+                          Этап: {videoStage}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  
+                  <Button 
+                    onClick={handleGenerateVideo}
+                    disabled={isGeneratingVideo || !currentTextId || !currentAudioId}
+                    className="w-full"
+                    size="lg"
+                  >
+                    {isGeneratingVideo ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Генерация видео...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Создать видео
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+            
+            {/* Video Player */}
+            {videoUrl && (
+              <Card className="backdrop-blur-sm bg-white/80 border-slate-200 shadow-xl">
+                <CardHeader>
+                  <CardTitle>🎬 Сгенерированное видео</CardTitle>
+                  {videoDuration > 0 && (
+                    <p className="text-sm text-slate-600">
+                      Длительность: {Math.floor(videoDuration / 60)}:{String(Math.floor(videoDuration % 60)).padStart(2, '0')}
+                    </p>
+                  )}
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <video controls className="w-full rounded-lg" key={videoUrl}>
+                    <source src={videoUrl} type="video/mp4" />
+                    Your browser does not support the video element.
+                  </video>
+                  <a href={videoUrl} download className="w-full">
+                    <Button className="w-full" variant="outline">
+                      <Download className="w-4 h-4 mr-2" />
+                      Скачать видео
+                    </Button>
+                  </a>
+                </CardContent>
+              </Card>
+            )}
+            
             {/* History */}
             {history.length > 0 && (
               <Card className="backdrop-blur-sm bg-white/80 border-slate-200 shadow-xl" data-testid="history-card">
