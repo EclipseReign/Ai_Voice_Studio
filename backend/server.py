@@ -2780,7 +2780,9 @@ async def download_video(video_id: str, current_user: User = Depends(get_current
             raise HTTPException(status_code=404, detail="Video file not found in storage")
         
         # Get from GridFS and stream
+        from bson import ObjectId
         try:
+            gridfs_id = ObjectId(gridfs_id)  # Convert string to ObjectId
             grid_out = fs.get(gridfs_id)
         except NoFile:
             raise HTTPException(status_code=404, detail="Video file not found in GridFS")
