@@ -2620,6 +2620,275 @@ app.add_middleware(
 # Users can manually delete files if needed via cleanup endpoint
 # ============================================================================
 
+# ============================================================================
+# VIDEO GENERATION ENDPOINTS
+# ============================================================================
+
+@api_router.post("/video/generate-with-progress")
+async def generate_video_with_progress(
+    request: VideoGenerationRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """Generate video from text and audio with SSE progress updates"""
+    
+    async def generate_progress():
+        job_id = str(uuid.uuid4())
+        video_path = None
+        temp_audio_path = None
+        
+        try:
+            # Fetch text generation
+            text_record = await db.text_generations.find_one({"id": request.text_id, "user_id": current_user.id})
+            if not text_record:
+                yield f"data: {json.dumps({'type': 'error', 'message': 'Текст не найден'})}\n\n"
+                return
+            
+            # Fetch audio generation
+            audio_record = await db.audio_generations.find_one({"id": request.audio_id, "user_id": current_user.id})
+            if not audio_record:
+                yield f"data: {json.dumps({'type': 'error', 'message': 'Аудио не найдено'})}\n\n"
+                return
+            
+            text = text_record.get("text", "")
+            audio_duration = audio_record.get("duration", 0)
+            
+            # Create video generation record
+            video_record = {
+                "id": job_id,
+                "user_id": current_user.id,
+                "text_id": request.text_id,
+                "audio_id": request.audio_id,
+                "video_type": request.video_type,
+                "status": "processing",
+                "progress": 0,
+                "created_at": datetime.now(timezone.utc)
+            }
+            await db.video_generations.insert_one(video_record)
+            
+            yield f"data: {json.dumps({'type': 'started', 'job_id': job_id, 'message': 'Начало генерации видео...'})}\n\n"
+            
+            # Download audio from GridFS to temp file
+            yield f"data: {json.dumps({'type': 'stage', 'stage': 'downloading_audio', 'message': 'Подготовка аудио...'})}\n\n"
+            
+            gridfs_id = audio_record.get("gridfs_id")
+            if gridfs_id:
+                fs = gridfs.GridFS(db.get_database())
+                grid_out = fs.get(gridfs_id)
+                
+                # Save to temp file
+                temp_audio_path = f"/tmp/audio_{job_id}.wav"
+                with open(temp_audio_path, "wb") as f:
+                    f.write(grid_out.read())
+            else:
+                # Fallback to old audio_path if available
+                audio_path = audio_record.get("audio_url", "")
+                if os.path.exists(audio_path):
+                    temp_audio_path = audio_path
+                else:
+                    yield f"data: {json.dumps({'type': 'error', 'message': 'Аудио файл не найден'})}\n\n"
+                    return
+            
+            # Progress callback
+            async def progress_callback(stage, current, total, message):
+                progress = int((current / total) * 100) if total > 0 else 0
+                await db.video_generations.update_one(
+                    {"id": job_id},
+                    {"$set": {"progress": progress, "status": "processing"}}
+                )
+                yield f"data: {json.dumps({'type': 'progress', 'stage': stage, 'progress': progress, 'current': current, 'total': total, 'message': message})}\n\n"
+            
+            # Generate video based on type
+            output_path = f"/tmp/video_{job_id}.mp4"
+            
+            if request.video_type in ["youtube_images", "shorts"]:
+                # Image-based video
+                async for event in progress_callback("setup", 0, 100, f"Настройка генерации {request.video_type}..."):
+                    yield event
+                
+                video_path = await video_service.create_video_with_images(
+                    text=text,
+                    audio_path=temp_audio_path,
+                    audio_duration=audio_duration,
+                    output_path=output_path,
+                    video_type=request.video_type,
+                    progress_callback=lambda stage, curr, tot, msg: progress_callback(stage, curr, tot, msg).__anext__()
+                )
+            
+            elif request.video_type == "youtube_continuous":
+                # Continuous video (Sora-like)
+                async for event in progress_callback("setup", 0, 100, "Настройка continuous video генерации..."):
+                    yield event
+                
+                video_path = await video_service.create_continuous_video(
+                    text=text,
+                    audio_path=temp_audio_path,
+                    audio_duration=audio_duration,
+                    output_path=output_path,
+                    progress_callback=lambda stage, curr, tot, msg: progress_callback(stage, curr, tot, msg).__anext__()
+                )
+            
+            # Get video duration
+            video_duration = video_service.get_video_duration(video_path)
+            
+            # Upload to GridFS
+            yield f"data: {json.dumps({'type': 'stage', 'stage': 'uploading', 'message': 'Сохранение видео...'})}\n\n"
+            
+            fs = gridfs.GridFS(db.get_database())
+            with open(video_path, "rb") as video_file:
+                gridfs_id = fs.put(
+                    video_file,
+                    filename=f"video_{job_id}.mp4",
+                    content_type="video/mp4",
+                    chunk_size=1024 * 1024  # 1MB chunks for streaming
+                )
+            
+            # Update database
+            await db.video_generations.update_one(
+                {"id": job_id},
+                {
+                    "$set": {
+                        "status": "completed",
+                        "progress": 100,
+                        "gridfs_id": str(gridfs_id),
+                        "video_url": f"/api/video/download/{job_id}",
+                        "duration": video_duration,
+                        "completed_at": datetime.now(timezone.utc)
+                    }
+                }
+            )
+            
+            # Success!
+            yield f"data: {json.dumps({'type': 'complete', 'job_id': job_id, 'video_url': f'/api/video/download/{job_id}', 'duration': video_duration, 'message': 'Видео успешно создано!'})}\n\n"
+            
+        except Exception as e:
+            logger.error(f"Error generating video: {e}", exc_info=True)
+            await db.video_generations.update_one(
+                {"id": job_id},
+                {"$set": {"status": "failed", "error_message": str(e)}}
+            )
+            yield f"data: {json.dumps({'type': 'error', 'message': f'Ошибка генерации видео: {str(e)}'})}\n\n"
+        
+        finally:
+            # Cleanup temp files
+            try:
+                if temp_audio_path and os.path.exists(temp_audio_path) and temp_audio_path.startswith("/tmp/"):
+                    os.remove(temp_audio_path)
+                if video_path and os.path.exists(video_path):
+                    os.remove(video_path)
+            except Exception as e:
+                logger.warning(f"Error cleaning up temp files: {e}")
+    
+    return StreamingResponse(generate_progress(), media_type="text/event-stream")
+
+
+@api_router.get("/video/download/{video_id}")
+async def download_video(video_id: str, current_user: User = Depends(get_current_user)):
+    """Download generated video file from MongoDB GridFS"""
+    try:
+        # Fetch from database
+        video = await db.video_generations.find_one({"id": video_id, "user_id": current_user.id})
+        
+        if not video:
+            raise HTTPException(status_code=404, detail="Video not found")
+        
+        gridfs_id = video.get("gridfs_id")
+        if not gridfs_id:
+            raise HTTPException(status_code=404, detail="Video file not found in storage")
+        
+        # Get from GridFS and stream
+        fs = gridfs.GridFS(db.get_database())
+        try:
+            grid_out = fs.get(gridfs_id)
+        except NoFile:
+            raise HTTPException(status_code=404, detail="Video file not found in GridFS")
+        
+        # Stream video in chunks
+        def generate_chunks():
+            try:
+                while True:
+                    chunk = grid_out.read(1024 * 1024)  # 1MB chunks
+                    if not chunk:
+                        break
+                    yield chunk
+            finally:
+                grid_out.close()
+        
+        return StreamingResponse(
+            generate_chunks(),
+            media_type="video/mp4",
+            headers={
+                "Content-Disposition": f"attachment; filename=video_{video_id}.mp4"
+            }
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error downloading video: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error downloading video: {str(e)}")
+
+
+@api_router.get("/video/status/{job_id}")
+async def get_video_status(job_id: str, current_user: User = Depends(get_current_user)):
+    """Get status of video generation job"""
+    try:
+        video = await db.video_generations.find_one({"id": job_id, "user_id": current_user.id})
+        
+        if not video:
+            raise HTTPException(status_code=404, detail="Video generation job not found")
+        
+        return VideoGenerationResponse(
+            id=video["id"],
+            status=video.get("status", "pending"),
+            progress=video.get("progress", 0),
+            video_url=video.get("video_url"),
+            duration=video.get("duration"),
+            error_message=video.get("error_message")
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting video status: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+
+
+@api_router.get("/video/history")
+async def get_video_history(current_user: User = Depends(get_current_user), limit: int = 10):
+    """Get user's video generation history"""
+    try:
+        cursor = db.video_generations.find(
+            {"user_id": current_user.id, "status": "completed"}
+        ).sort("created_at", -1).limit(limit)
+        
+        videos = await cursor.to_list(length=limit)
+        
+        return {
+            "videos": [
+                {
+                    "id": v["id"],
+                    "video_type": v.get("video_type"),
+                    "video_url": v.get("video_url"),
+                    "duration": v.get("duration"),
+                    "created_at": v.get("created_at").isoformat() if v.get("created_at") else None
+                }
+                for v in videos
+            ]
+        }
+    
+    except Exception as e:
+        logger.error(f"Error fetching video history: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+
+# ============================================================================
+# END VIDEO GENERATION ENDPOINTS
+# ============================================================================
+
+# ============================================================================
+# BACKGROUND TASK: REMOVED - Files are now stored permanently
+# Users can manually delete files if needed via cleanup endpoint
+# ============================================================================
+
 @app.on_event("startup")
 async def startup_job_recovery():
     """Job recovery on app startup - mark interrupted jobs as resumable"""
