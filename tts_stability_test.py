@@ -24,7 +24,7 @@ import sys
 import os
 
 class TTSStabilityTester:
-    def __init__(self, base_url="https://voicetoscreen.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://api-platform-4.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.test_results = []
         self.generated_audio_ids = []
