@@ -2656,7 +2656,6 @@ async def generate_video_with_progress(
             
             gridfs_id = audio_record.get("gridfs_id")
             if gridfs_id:
-                fs = gridfs.GridFS(db.get_database())
                 grid_out = fs.get(gridfs_id)
                 
                 # Save to temp file
