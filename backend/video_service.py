@@ -131,6 +131,51 @@ async def generate_image_with_pollinations(prompt: str, width: int, height: int,
                 continue
     raise Exception(f"Pollinations.ai image generation failed after {max_retries} attempts")
 
+async def generate_single_image(
+    index: int,
+    prompt: str,
+    width: int,
+    height: int,
+    output_dir: str,
+    session: aiohttp.ClientSession
+) -> Tuple[int, str]:
+    \"\"\"
+    Generate a single image with retry logic.
+    
+    Args:
+        index: Image index for ordering
+        prompt: Text prompt for image generation
+        width: Image width
+        height: Image height
+        output_dir: Directory to save image
+        session: aiohttp session for API calls
+        
+    Returns:
+        Tuple of (index, image_path)
+    \"\"\"
+    image_path = os.path.join(output_dir, f\"image_{index:04d}.png\")
+    
+    try:
+        logger.info(f\"Generating image {index + 1}: {prompt[:50]}...\")
+        
+        # Generate image (already has 3 retry attempts built-in)
+        image_data = await generate_image_with_pollinations(prompt, width, height, session)
+        
+        # Save image
+        with open(image_path, \"wb\") as f:
+            f.write(image_data)
+        
+        logger.info(f\"✅ Saved image {index + 1} to {image_path}\")
+        return (index, image_path)
+        
+    except Exception as e:
+        logger.error(f\"❌ Error generating image {index + 1} after retries: {e}\")
+        # Create a placeholder black image on error
+        create_placeholder_image(image_path, width, height, f\"Error: {str(e)[:50]}\")
+        return (index, image_path)
+
+
+
 async def generate_images_for_video(
     prompts: List[str],
     width: int,
@@ -152,41 +197,65 @@ async def generate_images_for_video(
         List of image file paths
     """
     os.makedirs(output_dir, exist_ok=True)
-    image_paths = []
+    BATCH_SIZE = 20  # Generate 20 images in parallel
+    total_images = len(prompts)
+    
+    # Dictionary to store results with index as key (preserves order)
+    results_dict = {}
     
     async with aiohttp.ClientSession() as session:
-        for i, prompt in enumerate(prompts):
-            try:
+        for batch_start in range(0, total_images, BATCH_SIZE):
+            batch_end = min(batch_start + BATCH_SIZE, total_images)
+            batch_size = batch_end - batch_start
+            
+            logger.info(f\"🚀 Starting parallel batch {batch_start // BATCH_SIZE + 1}: images {batch_start + 1}-{batch_end} of {total_images}\")
+            
+            # Create tasks for this batch
+            tasks = []
+            for i in range(batch_start, batch_end):
+                task = generate_single_image(
+                    index=i,
+                    prompt=prompts[i],
+                    width=width,
+                    height=height,
+                    output_dir=output_dir,
+                    session=session
+                )
+                tasks.append(task)
+            
+            # Generate all images in this batch in parallel
+            batch_results = await asyncio.gather(*tasks, return_exceptions=True)
+            
+            # Process results
+            for result in batch_results:
+                if isinstance(result, Exception):
+                    logger.error(f\"Batch task failed with exception: {result}\")
+                    continue
+                
+                index, image_path = result
+                results_dict[index] = image_path
+            
+            # Progress callback after each batch
                 if progress_callback:
+                    completed = len(results_dict)
                     await progress_callback(
                         "image_generation",
-                        i + 1,
-                        len(prompts),
-                        f"Генерация изображения {i + 1}/{len(prompts)}"
+                        completed,
+                        total_images,
+                        f"Сгенерировано {completed}/{total_images} изображений (батч {batch_start // BATCH_SIZE + 1})"
                     )
                 
-                logger.info(f"Generating image {i + 1}/{len(prompts)}: {prompt[:50]}...")
+                logger.info(f"✅ Batch {batch_start // BATCH_SIZE + 1} completed: {batch_size} images generated")
                 
-                # Generate image
-                image_data = await generate_image_with_pollinations(prompt, width, height, session)
-                
-                # Save image
-                image_path = os.path.join(output_dir, f"image_{i:04d}.png")
-                with open(image_path, "wb") as f:
-                    f.write(image_data)
-                
-                image_paths.append(image_path)
-                logger.info(f"Saved image {i + 1} to {image_path}")
-                
-                # Small delay to avoid rate limiting
-                await asyncio.sleep(1)
-                
-            except Exception as e:
-                logger.error(f"Error generating image {i + 1}: {e}")
-                # Create a placeholder black image on error
-                placeholder_path = os.path.join(output_dir, f"image_{i:04d}.png")
-                create_placeholder_image(placeholder_path, width, height, f"Error: {str(e)[:50]}")
-                image_paths.append(placeholder_path)
+                # Small delay between batches to avoid overwhelming the API
+            if batch_end < total_images:
+                await asyncio.sleep(2)
+    
+    # Sort results by index to maintain correct order
+    sorted_indices = sorted(results_dict.keys())
+    image_paths = [results_dict[i] for i in sorted_indices]
+    
+    logger.info(f"🎉 All {len(image_paths)} images generated successfully in correct order")
     
     return image_paths
 
