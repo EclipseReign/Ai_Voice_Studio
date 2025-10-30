@@ -71,7 +71,6 @@ async def generate_image_prompts_from_text(text: str, num_prompts: int, video_ty
             if len(selected_sentences) >= num_prompts:
                 break
             selected_sentences.append(sentences[i])
-        
         # Fill up to num_prompts if needed
         while len(selected_sentences) < num_prompts:
             selected_sentences.append(sentences[len(selected_sentences) % len(sentences)])
@@ -121,13 +120,13 @@ async def generate_image_with_pollinations(prompt: str, width: int, height: int,
                 else:
                     err_text = await response.text()
                     logger.warning(f"Pollinations.ai attempt {attempt+1}/{max_retries} failed: {response.status} - {err_text[:100]}")
-                        continue
+                    continue
         except asyncio.TimeoutError:
             logger.warning(f"Timeout on Pollinations.ai attempt {attempt+1}/{max_retries}")
-                continue
+            continue
         except Exception as e:
             logger.error(f"Error on Pollinations.ai attempt {attempt+1}/{max_retries}: {e}")
-                continue
+            continue
     raise Exception(f"Pollinations.ai image generation failed after {max_retries} attempts")
 
 async def generate_single_image(
