@@ -452,11 +452,9 @@ async def create_video_with_images(
         finally:
             # Cleanup temp images
             try:
-                import shutil
-                shutil.rmtree(temp_dir)
-                logger.info(f"Cleaned up temp directory: {temp_dir}")
+                logger.info(f"Video generation complete. Temp directory {temp_dir} will be cleaned up automatically after 2 hours")
             except Exception as e:
-                logger.warning(f"Failed to cleanup temp directory: {e}")
+                pass
     
     except Exception as e:
         logger.error(f"Error in create_video_with_images: {e}")
