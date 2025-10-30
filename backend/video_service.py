@@ -229,7 +229,7 @@ async def generate_images_for_video(
             # Process results
             for result in batch_results:
                 if isinstance(result, Exception):
-                    logger.error(f\"Batch task failed with exception: {result}\")
+                    logger.error(f"Batch task failed with exception: {result}")
                     continue
                 
                 index, image_path = result
