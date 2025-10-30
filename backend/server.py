@@ -2935,3 +2935,23 @@ async def startup_job_recovery():
 async def shutdown_db_client():
     """Cleanup on shutdown"""
     client.close()
+
+@api_router.get("/video/health")
+async def video_health():
+    """
+    Simple health check for image generation backends.
+    Returns which HF model works first, or error message.
+    """
+    import aiohttp
+    from video_service import generate_image_with_hf
+    ok_model = None
+    error = None
+    try:
+        async with aiohttp.ClientSession() as session:
+            # tiny dry-run (fast prompt)
+            prompt = "minimal test image"
+            img = await generate_image_with_hf(prompt, width=256, height=256, session=session, steps=5)
+            ok_model = True if img else False
+    except Exception as e:
+        error = str(e)[:200]
+    return {"ok": bool(ok_model), "error": error}
