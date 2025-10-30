@@ -536,3 +536,75 @@ def get_video_duration(video_path: str) -> float:
     except Exception as e:
         logger.error(f"Error getting video duration: {e}")
         return 0.0
+
+import time 
+async def cleanup_old_video_temp_directories(max_age_hours: float = 2.0):
+    """
+    Clean up old video temp directories that are older than max_age_hours.
+    This runs as a background task to prevent immediate cleanup during video generation.
+    
+    For video generation with many images (e.g., 278 images), generation can take
+    80+ minutes, so we need to keep temp directories for a long time.
+    
+    Args:
+        max_age_hours: Maximum age in hours before cleanup (default: 2 hours = 120 minutes)
+    """
+    try:
+        import shutil
+        max_age_seconds = max_age_hours * 3600
+        current_time = time.time()
+        
+        # Check /tmp for video_images_* directories
+        tmp_dir = Path("/tmp")
+        cleaned_count = 0
+        
+        for temp_dir in tmp_dir.glob("video_images_*"):
+            if not temp_dir.is_dir():
+                continue
+            
+            try:
+                # Get directory creation/modification time
+                dir_mtime = temp_dir.stat().st_mtime
+                age_seconds = current_time - dir_mtime
+                
+                # Only cleanup if older than max_age
+                if age_seconds > max_age_seconds:
+                    shutil.rmtree(temp_dir)
+                    age_minutes = age_seconds / 60
+                    logger.info(f"🧹 Cleaned up old temp directory: {temp_dir.name} (age: {age_minutes:.1f} minutes)")
+                    cleaned_count += 1
+                else:
+                    age_minutes = age_seconds / 60
+                    logger.debug(f"⏳ Keeping temp directory: {temp_dir.name} (age: {age_minutes:.1f} minutes, max: {max_age_hours*60:.1f} minutes)")
+            except Exception as e:
+                logger.warning(f"Failed to cleanup temp directory {temp_dir.name}: {e}")
+        
+        if cleaned_count > 0:
+            logger.info(f"✅ Cleaned up {cleaned_count} old video temp directories")
+        else:
+            logger.debug(f"No old video temp directories to clean (max age: {max_age_hours} hours)")
+            
+    except Exception as e:
+        logger.error(f"Error in cleanup_old_video_temp_directories: {e}")
+
+async def start_video_cleanup_task(interval_minutes: int = 30, max_age_hours: float = 2.0):
+    """
+    Background task that periodically cleans up old video temp directories.
+    
+    Args:
+        interval_minutes: How often to run cleanup (default: 30 minutes)
+        max_age_hours: Maximum age before cleanup (default: 2 hours)
+    """
+    logger.info(f"🚀 Started video temp directory cleanup task (interval: {interval_minutes}min, max_age: {max_age_hours}h)")
+    
+    while True:
+        try:
+            await asyncio.sleep(interval_minutes * 60)
+            await cleanup_old_video_temp_directories(max_age_hours)
+        except asyncio.CancelledError:
+            logger.info("Video cleanup task cancelled")
+            break
+        except Exception as e:
+            logger.error(f"Error in video cleanup task: {e}")
+            # Continue running even if cleanup fails
+            await asyncio.sleep(60)  # Wait 1 minute before retry
