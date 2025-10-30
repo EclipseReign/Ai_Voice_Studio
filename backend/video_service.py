@@ -19,8 +19,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Hugging Face API settings - NEW ENDPOINT (November 2025)
-HF_API_URL = "https://router.huggingface.co/hf-inference/models"
+# Hugging Face API settings - CORRECTED ENDPOINT
+HF_API_URL = \"https://api-inference.huggingface.co/models\"
 HF_API_TOKEN = os.getenv("HUGGINGFACE_API_TOKEN", "")  # Optional, higher rate limits with token
 
 # Video settings by type
