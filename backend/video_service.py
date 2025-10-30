@@ -105,31 +105,30 @@ async def generate_image_with_pollinations(prompt: str, width: int, height: int,
     import urllib.parse
     encoded_prompt = urllib.parse.quote(prompt)
     api_url = f"{POLLINATIONS_API_URL}/{encoded_prompt}?width={width}&height={height}&nologo=true&enhance=true"
-        for attempt in range(max_retries):
-            try:
-                logger.info(f"Pollinations.ai attempt {attempt+1}/{max_retries} for: {prompt[:50]}...")
-            
-                async with session.get(api_url, timeout=60 as response:
-                    if response.status == 200:
-                        image_data = await response.read()
-                        logger.info(f\"✅ Pollinations.ai generated image successfully ({len(image_data)} bytes)\")
-                        return image_data
-                    else:
-                        err_text = await response.text()
-                        logger.warning(f"Pollinations.ai attempt {attempt+1}/{max_retries} failed: {response.status} - {err_text[:100]}")
-                        if attempt < max_retries - 1:
-                            await asyncio.sleep(retry_delay * (attempt + 1))
-                            continue
-            except asyncio.TimeoutError:
+    for attempt in range(max_retries):
+        try:
+            logger.info(f"Pollinations.ai attempt {attempt+1}/{max_retries} for: {prompt[:50]}...")
+            async with session.get(api_url, timeout=60 as response:
+                if response.status == 200:
+                    image_data = await response.read()
+                    logger.info(f\"✅ Pollinations.ai generated image successfully ({len(image_data)} bytes)\")
+                    return image_data
+                else:
+                    err_text = await response.text()
+                    logger.warning(f"Pollinations.ai attempt {attempt+1}/{max_retries} failed: {response.status} - {err_text[:100]}")
+                    if attempt < max_retries - 1:
+                        await asyncio.sleep(retry_delay * (attempt + 1))
+                        continue
+        except asyncio.TimeoutError:
             logger.warning(f"Timeout on Pollinations.ai attempt {attempt+1}/{max_retries}")
             if attempt < max_retries - 1:
                 await asyncio.sleep(retry_delay * (attempt + 1))
                 continue
         except Exception as e:
             logger.error(f"Error on Pollinations.ai attempt {attempt+1}/{max_retries}: {e}")
-                if attempt < max_retries - 1:
-                    await asyncio.sleep(retry_delay * (attempt + 1))
-                    continue
+            if attempt < max_retries - 1:
+                await asyncio.sleep(retry_delay * (attempt + 1))
+                continue
     raise Exception(f"Pollinations.ai image generation failed after {max_retries} attempts")
 
 async def generate_images_for_video(
