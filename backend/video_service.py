@@ -14,13 +14,6 @@ import aiohttp
 import tempfile
 import subprocess
 from typing import List, Dict, Tuple, Optional
-
-HF_API_URL = os.getenv("HF_API_URL", "https://api-inference.huggingface.co/models")
-HF_API_TOKEN = os.getenv("HUGGINGFACE_API_TOKEN", "")
-HF_IMAGE_MODELS = [m.strip() for m in os.getenv(
-    "HF_IMAGE_MODELS",
-    "stabilityai/sdxl-turbo,black-forest-labs/FLUX.1-schnell,stabilityai/stable-diffusion-2-1"
-).split(",") if m.strip()]
 from pathlib import Path
 import logging
 
@@ -29,6 +22,7 @@ logger = logging.getLogger(__name__)
 # Hugging Face API settings - CORRECTED ENDPOINT
 HF_API_URL = "https://api-inference.huggingface.co/models"
 HF_API_TOKEN = os.getenv("HUGGINGFACE_API_TOKEN", "")  # Optional, higher rate limits with token
+HF_IMAGE_MODELS = [m.strip() for m in os.getenv("HF_IMAGE_MODELS", "stabilityai/sdxl-turbo,black-forest-labs/FLUX.1-schnell,stabilityai/stable-diffusion-2-1").split(",") if m.strip()]
 
 # Video settings by type
 VIDEO_SETTINGS = {
@@ -104,66 +98,54 @@ async def generate_image_prompts_from_text(text: str, num_prompts: int, video_ty
         return [f"Scene {i+1}: {text[:100]}" for i in range(num_prompts)]
 
 
+
 async def generate_image_with_hf(prompt: str, width: int, height: int, session: aiohttp.ClientSession) -> bytes:
-    """
-    Generate image using Hugging Face Inference API (free tier).
-    Uses Stable Diffusion model.
-    
-    Args:
-        prompt: Text prompt for image generation
-        width: Image width
-        height: Image height
-        session: aiohttp client session
-        
-    Returns:
-        Image data as bytes
-    """
-    # Using Stable Diffusion 2.1 (good quality, reasonable speed)
-    model = "stabilityai/stable-diffusion-2-1"
-    api_url = f"{HF_API_URL}/{model}"
-    
-    headers = {}
+    """Generate image using Hugging Face Inference API with model fallback and retries."""
+    headers = {"Accept": "image/png", "Content-Type": "application/json"}
     if HF_API_TOKEN:
         headers["Authorization"] = f"Bearer {HF_API_TOKEN}"
-    
-    payload = {
-        "inputs": prompt,
-        "parameters": {
-            "width": width,
-            "height": height,
-            "num_inference_steps": 25,  # Lower for speed (25-30 is good balance)
-        }
-    }
-    
-    max_retries = 3
-    retry_delay = 5
-    
-    for attempt in range(max_retries):
-        try:
-            async with session.post(api_url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=60)) as response:
-                if response.status == 200:
-                    image_data = await response.read()
-                    return image_data
-                elif response.status == 503:
-                    # Model is loading, wait and retry
-                    logger.warning(f"Model loading, attempt {attempt + 1}/{max_retries}")
-                    await asyncio.sleep(retry_delay)
+    # retry settings
+    max_retries = 2
+    retry_delay = 2
+    last_error = None
+    for model in HF_IMAGE_MODELS:
+        api_url = f"{HF_API_URL}/{model}"
+        for attempt in range(max_retries):
+            try:
+                payload = {
+                    "inputs": prompt,
+                    "parameters": {
+                        "width": width,
+                        "height": height,
+                        "num_inference_steps": 25
+                    },
+                    "options": {"wait_for_model": True}
+                }
+                async with session.post(api_url, headers=headers, json=payload, timeout=120) as response:
+                    if response.status == 200:
+                        return await response.read()
+                    # read text for diagnostics
+                    err_text = await response.text()
+                    logger.warning(f"HF {model} attempt {attempt+1}/{max_retries} -> {response.status}: {err_text[:180]}")
+                    # If 404/410: model not available on serverless; switch model
+                    if response.status in (404, 410):
+                        break
+                    # If transient: retry same model
+                    if response.status in (429, 500, 502, 503, 504):
+                        last_error = Exception(f"{response.status} {err_text[:180]}")
+                        await asyncio.sleep(retry_delay * (attempt + 1))
+                        continue
+                    # Other errors: do not retry same model
+                    last_error = Exception(f"{response.status} {err_text[:180]}")
+                    break
+            except asyncio.TimeoutError as e:
+                last_error = e
+                logger.warning(f"Timeout on {model} attempt {attempt+1}/{max_retries}")
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(retry_delay * (attempt + 1))
                     continue
-                else:
-                    error_text = await response.text()
-                    logger.error(f"HF API error: {response.status} - {error_text}")
-                    raise Exception(f"Failed to generate image: {response.status}")
-        
-        except asyncio.TimeoutError:
-            logger.warning(f"Timeout generating image, attempt {attempt + 1}/{max_retries}")
-            if attempt < max_retries - 1:
-                await asyncio.sleep(retry_delay)
-                continue
-            raise
-    
-    raise Exception("Failed to generate image after all retries")
-
-
+        # try next model
+    raise Exception(f"HF image generation failed for all models: {', '.join(HF_IMAGE_MODELS)}. Last error: {last_error}")
 async def generate_images_for_video(
     prompts: List[str],
     width: int,
@@ -228,19 +210,17 @@ def create_placeholder_image(path: str, width: int, height: int, text: str):
     """Create a simple placeholder image when generation fails"""
     import cv2
     import numpy as np
-
-    msg = (text or "Error").replace("
-", " ").strip()
-    if len(msg) > 80:
-        msg = msg[:77] + "..."
-
+    
+    # Create black image
     img = np.zeros((height, width, 3), dtype=np.uint8)
+    
+    # Add text
     font = cv2.FONT_HERSHEY_SIMPLEX
-    # Compute text size and center
-    text_size, baseline = cv2.getTextSize(msg, font, 1, 2)
-    text_x = max((width - text_size[0]) // 2, 10)
-    text_y = max((height + text_size[1]) // 2, 10)
-    cv2.putText(img, msg, (text_x, text_y), font, 1, (255, 255, 255), 2)
+    text_size = cv2.getTextSize(text, font, 1, 2)[0]
+    text_x = (width - text_size[0]) // 2
+    text_y = (height + text_size[1]) // 2
+    cv2.putText(img, text, (text_x, text_y), font, 1, (255, 255, 255), 2)
+    
     cv2.imwrite(path, img)
 
 
