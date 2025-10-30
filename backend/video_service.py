@@ -101,7 +101,7 @@ async def generate_image_with_pollinations(prompt: str, width: int, height: int,
     """Generate image using Hugging Face Inference API with model fallback and retries."""
     
     max_retries = 3
-    retry_delay = 2
+    retry_delay = 3
     import urllib.parse
     encoded_prompt = urllib.parse.quote(prompt)
     api_url = f"{POLLINATIONS_API_URL}/{encoded_prompt}?width={width}&height={height}&nologo=true&enhance=true"
@@ -197,7 +197,7 @@ async def generate_images_for_video(
         List of image file paths
     """
     os.makedirs(output_dir, exist_ok=True)
-    BATCH_SIZE = 20  # Generate 20 images in parallel
+    BATCH_SIZE = 5  # Generate 5 images in parallel
     total_images = len(prompts)
     
     # Dictionary to store results with index as key (preserves order)
@@ -249,7 +249,7 @@ async def generate_images_for_video(
                 
                 # Small delay between batches to avoid overwhelming the API
             if batch_end < total_images:
-                await asyncio.sleep(2)
+                await asyncio.sleep(3)
     
     # Sort results by index to maintain correct order
     sorted_indices = sorted(results_dict.keys())
