@@ -139,7 +139,7 @@ async def generate_single_image(
     output_dir: str,
     session: aiohttp.ClientSession
 ) -> Tuple[int, str]:
-    \"\"\"
+    """
     Generate a single image with retry logic.
     
     Args:
@@ -152,26 +152,26 @@ async def generate_single_image(
         
     Returns:
         Tuple of (index, image_path)
-    \"\"\"
-    image_path = os.path.join(output_dir, f\"image_{index:04d}.png\")
+    """
+    image_path = os.path.join(output_dir, f"image_{index:04d}.png")
     
     try:
-        logger.info(f\"Generating image {index + 1}: {prompt[:50]}...\")
+        logger.info(f"Generating image {index + 1}: {prompt[:50]}...")
         
         # Generate image (already has 3 retry attempts built-in)
         image_data = await generate_image_with_pollinations(prompt, width, height, session)
         
         # Save image
-        with open(image_path, \"wb\") as f:
+        with open(image_path, "wb") as f:
             f.write(image_data)
         
-        logger.info(f\"✅ Saved image {index + 1} to {image_path}\")
+        logger.info(f"✅ Saved image {index + 1} to {image_path}")
         return (index, image_path)
         
     except Exception as e:
-        logger.error(f\"❌ Error generating image {index + 1} after retries: {e}\")
+        logger.error(f"❌ Error generating image {index + 1} after retries: {e}")
         # Create a placeholder black image on error
-        create_placeholder_image(image_path, width, height, f\"Error: {str(e)[:50]}\")
+        create_placeholder_image(image_path, width, height, f"Error: {str(e)[:50]}")
         return (index, image_path)
 
 
