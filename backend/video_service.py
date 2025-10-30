@@ -111,7 +111,7 @@ async def generate_image_with_pollinations(prompt: str, width: int, height: int,
             async with session.get(api_url, timeout=60) as response:
                 if response.status == 200:
                     image_data = await response.read()
-                    logger.info(f\"✅ Pollinations.ai generated image successfully ({len(image_data)} bytes)\")
+                    logger.info(f"✅ Pollinations.ai generated image successfully ({len(image_data)} bytes)")
                     return image_data
                 else:
                     err_text = await response.text()
