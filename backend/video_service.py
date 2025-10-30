@@ -14,6 +14,13 @@ import aiohttp
 import tempfile
 import subprocess
 from typing import List, Dict, Tuple, Optional
+
+HF_API_URL = os.getenv("HF_API_URL", "https://api-inference.huggingface.co/models")
+HF_API_TOKEN = os.getenv("HUGGINGFACE_API_TOKEN", "")
+HF_IMAGE_MODELS = [m.strip() for m in os.getenv(
+    "HF_IMAGE_MODELS",
+    "stabilityai/sdxl-turbo,black-forest-labs/FLUX.1-schnell,stabilityai/stable-diffusion-2-1"
+).split(",") if m.strip()]
 from pathlib import Path
 import logging
 
@@ -221,17 +228,19 @@ def create_placeholder_image(path: str, width: int, height: int, text: str):
     """Create a simple placeholder image when generation fails"""
     import cv2
     import numpy as np
-    
-    # Create black image
+
+    msg = (text or "Error").replace("
+", " ").strip()
+    if len(msg) > 80:
+        msg = msg[:77] + "..."
+
     img = np.zeros((height, width, 3), dtype=np.uint8)
-    
-    # Add text
     font = cv2.FONT_HERSHEY_SIMPLEX
-    text_size = cv2.getTextSize(text, font, 1, 2)[0]
-    text_x = (width - text_size[0]) // 2
-    text_y = (height + text_size[1]) // 2
-    cv2.putText(img, text, (text_x, text_y), font, 1, (255, 255, 255), 2)
-    
+    # Compute text size and center
+    text_size, baseline = cv2.getTextSize(msg, font, 1, 2)
+    text_x = max((width - text_size[0]) // 2, 10)
+    text_y = max((height + text_size[1]) // 2, 10)
+    cv2.putText(img, msg, (text_x, text_y), font, 1, (255, 255, 255), 2)
     cv2.imwrite(path, img)
 
 
