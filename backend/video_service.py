@@ -13,16 +13,14 @@ import asyncio
 import aiohttp
 import tempfile
 import subprocess
+import urllib.parse
 from typing import List, Dict, Tuple, Optional
 from pathlib import Path
 import logging
 
 logger = logging.getLogger(__name__)
 
-# Hugging Face API settings - CORRECTED ENDPOINT
-HF_API_URL = "https://api-inference.huggingface.co/models"
-HF_API_TOKEN = os.getenv("HUGGINGFACE_API_TOKEN", "")  # Optional, higher rate limits with token
-HF_IMAGE_MODELS = [m.strip() for m in os.getenv("HF_IMAGE_MODELS", "stabilityai/sdxl-turbo,black-forest-labs/FLUX.1-schnell,stabilityai/stable-diffusion-2-1").split(",") if m.strip()]
+POLLINATIONS_API_URL = "https://image.pollinations.ai/prompt"
 
 # Video settings by type
 VIDEO_SETTINGS = {
@@ -99,53 +97,41 @@ async def generate_image_prompts_from_text(text: str, num_prompts: int, video_ty
 
 
 
-async def generate_image_with_hf(prompt: str, width: int, height: int, session: aiohttp.ClientSession) -> bytes:
+async def generate_image_with_pollinations(prompt: str, width: int, height: int, session: aiohttp.ClientSession) -> bytes:
     """Generate image using Hugging Face Inference API with model fallback and retries."""
-    headers = {"Accept": "image/png", "Content-Type": "application/json"}
-    if HF_API_TOKEN:
-        headers["Authorization"] = f"Bearer {HF_API_TOKEN}"
-    # retry settings
-    max_retries = 2
+    
+    max_retries = 3
     retry_delay = 2
-    last_error = None
-    for model in HF_IMAGE_MODELS:
-        api_url = f"{HF_API_URL}/{model}"
+    import urllib.parse
+    encoded_prompt = urllib.parse.quote(prompt)
+    api_url = f"{POLLINATIONS_API_URL}/{encoded_prompt}?width={width}&height={height}&nologo=true&enhance=true"
         for attempt in range(max_retries):
             try:
-                payload = {
-                    "inputs": prompt,
-                    "parameters": {
-                        "width": width,
-                        "height": height,
-                        "num_inference_steps": 25
-                    },
-                    "options": {"wait_for_model": True}
-                }
-                async with session.post(api_url, headers=headers, json=payload, timeout=120) as response:
+                logger.info(f"Pollinations.ai attempt {attempt+1}/{max_retries} for: {prompt[:50]}...")
+            
+                async with session.get(api_url, timeout=60 as response:
                     if response.status == 200:
-                        return await response.read()
-                    # read text for diagnostics
-                    err_text = await response.text()
-                    logger.warning(f"HF {model} attempt {attempt+1}/{max_retries} -> {response.status}: {err_text[:180]}")
-                    # If 404/410: model not available on serverless; switch model
-                    if response.status in (404, 410):
-                        break
-                    # If transient: retry same model
-                    if response.status in (429, 500, 502, 503, 504):
-                        last_error = Exception(f"{response.status} {err_text[:180]}")
-                        await asyncio.sleep(retry_delay * (attempt + 1))
-                        continue
-                    # Other errors: do not retry same model
-                    last_error = Exception(f"{response.status} {err_text[:180]}")
-                    break
-            except asyncio.TimeoutError as e:
-                last_error = e
-                logger.warning(f"Timeout on {model} attempt {attempt+1}/{max_retries}")
+                        image_data = await response.read()
+                        logger.info(f\"✅ Pollinations.ai generated image successfully ({len(image_data)} bytes)\")
+                        return image_data
+                    else:
+                        err_text = await response.text()
+                        logger.warning(f"Pollinations.ai attempt {attempt+1}/{max_retries} failed: {response.status} - {err_text[:100]}")
+                        if attempt < max_retries - 1:
+                            await asyncio.sleep(retry_delay * (attempt + 1))
+                            continue
+            except asyncio.TimeoutError:
+            logger.warning(f"Timeout on Pollinations.ai attempt {attempt+1}/{max_retries}")
+            if attempt < max_retries - 1:
+                await asyncio.sleep(retry_delay * (attempt + 1))
+                continue
+        except Exception as e:
+            logger.error(f"Error on Pollinations.ai attempt {attempt+1}/{max_retries}: {e}")
                 if attempt < max_retries - 1:
                     await asyncio.sleep(retry_delay * (attempt + 1))
                     continue
-        # try next model
-    raise Exception(f"HF image generation failed for all models: {', '.join(HF_IMAGE_MODELS)}. Last error: {last_error}")
+    raise Exception(f"Pollinations.ai image generation failed after {max_retries} attempts")
+
 async def generate_images_for_video(
     prompts: List[str],
     width: int,
@@ -183,7 +169,7 @@ async def generate_images_for_video(
                 logger.info(f"Generating image {i + 1}/{len(prompts)}: {prompt[:50]}...")
                 
                 # Generate image
-                image_data = await generate_image_with_hf(prompt, width, height, session)
+                image_data = await generate_image_with_pollinations(prompt, width, height, session)
                 
                 # Save image
                 image_path = os.path.join(output_dir, f"image_{i:04d}.png")
