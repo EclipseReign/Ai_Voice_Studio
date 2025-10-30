@@ -208,7 +208,7 @@ async def generate_images_for_video(
             batch_end = min(batch_start + BATCH_SIZE, total_images)
             batch_size = batch_end - batch_start
             
-            logger.info(f\"🚀 Starting parallel batch {batch_start // BATCH_SIZE + 1}: images {batch_start + 1}-{batch_end} of {total_images}\")
+            logger.info(f"🚀 Starting parallel batch {batch_start // BATCH_SIZE + 1}: images {batch_start + 1}-{batch_end} of {total_images}")
             
             # Create tasks for this batch
             tasks = []
