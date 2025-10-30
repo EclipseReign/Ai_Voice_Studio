@@ -2947,6 +2947,18 @@ async def startup_job_recovery():
         logger.error(f"Error during temp directory cleanup: {str(e)}")
     
     logger.info("Job recovery complete. Permanent file storage enabled (no auto-cleanup)")
+    # Start background task for video temp directory cleanup
+    # This cleans up old temp directories (2+ hours old) every 30 minutes
+    # This is critical for video generation which can take 80+ minutes
+    try:
+        import asyncio
+        asyncio.create_task(video_service.start_video_cleanup_task(
+            interval_minutes=30,  # Check every 30 minutes
+            max_age_hours=2.0     # Delete directories older than 2 hours (120 minutes)
+        ))
+        logger.info("🚀 Started video temp directory cleanup task (runs every 30min, cleans 2h+ old dirs)")
+    except Exception as e:
+        logger.error(f"Error starting video cleanup task: {e}")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
