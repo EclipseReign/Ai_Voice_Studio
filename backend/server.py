@@ -1141,6 +1141,69 @@ async def get_admin_stats(admin_user: User = Depends(require_admin)):
         logger.error(f"Error getting stats: {str(e)}")
         raise HTTPException(status_code=500, detail="Error fetching statistics")
 
+@api_router.get("/admin/stats/detailed")
+async def get_detailed_stats(
+    timeframe: str = "day",  # hour, day, week, month
+    admin_user: User = Depends(require_admin)
+):
+    """Get detailed generation statistics by type and timeframe"""
+    try:
+        now = datetime.now(timezone.utc)
+        
+        # Calculate time threshold based on timeframe
+        if timeframe == "hour":
+            time_threshold = now - timedelta(hours=1)
+        elif timeframe == "day":
+            time_threshold = now - timedelta(days=1)
+        elif timeframe == "week":
+            time_threshold = now - timedelta(weeks=1)
+        elif timeframe == "month":
+            time_threshold = now - timedelta(days=30)
+        else:
+            raise HTTPException(status_code=400, detail="Invalid timeframe")
+        
+        # Count text generations
+        text_count = await db.text_generations.count_documents({
+            "created_at": {"$gte": time_threshold.isoformat()}
+        })
+        
+        # Count audio generations
+        audio_count = await db.audio_generations.count_documents({
+            "created_at": {"$gte": time_threshold.isoformat()}
+        })
+        
+        # Count video generations
+        video_count = await db.video_generations.count_documents({
+            "created_at": {"$gte": time_threshold.isoformat()}
+        })
+        
+        # Total for all time
+        text_total = await db.text_generations.count_documents({})
+        audio_total = await db.audio_generations.count_documents({})
+        video_total = await db.video_generations.count_documents({})
+        
+        return {
+            "timeframe": timeframe,
+            "period_stats": {
+                "text": text_count,
+                "audio": audio_count,
+                "video": video_count,
+                "total": text_count + audio_count + video_count
+            },
+            "all_time_stats": {
+                "text": text_total,
+                "audio": audio_total,
+                "video": video_total,
+                "total": text_total + audio_total + video_total
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting detailed stats: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error fetching detailed statistics")
+
 @api_router.post("/admin/grant-pro")
 async def admin_grant_pro(
     request: AdminGrantProRequest,
@@ -2134,12 +2197,30 @@ async def synthesize_audio_with_progress(
                 # Calculate total generation time and final speed
                 total_generation_time = time.time() - generation_start_time
                 final_speed = (audio_duration / 60) / total_generation_time if total_generation_time > 0 else 0
+
+                # NEW: Save text to text_generations collection (for video generation)
+                # This enables video generation from manual input mode
+                text_id = str(uuid.uuid4())
+                word_count = len(request.text.split())
+                text_doc = {
+                    "id": text_id,
+                    "user_id": current_user.id,
+                    "text": request.text,
+                    "prompt": "Manual Input",  # Indicator that this is manual input
+                    "language": request.language,
+                    "word_count": word_count,
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
+                await db.text_generations.insert_one(text_doc)
+                logger.info(f"Text {text_id} saved for manual input (enables video generation)")
+                
                 
                 # Save to database with GridFS reference
                 audio_doc = {
                     "id": audio_id,
                     "user_id": current_user.id,
                     "text": request.text,
+                    "text_id": text_id,  # NEW: Link to text_generations for video
                     "voice": request.voice,
                     "rate": request.rate,
                     "language": request.language,
@@ -2157,10 +2238,8 @@ async def synthesize_audio_with_progress(
                 # NEW: Mark generation job as completed
                 if generation_job_id:
                     await complete_generation_job(generation_job_id, audio_id)
-                
-                # Send completion with stats
-                yield f"data: {json.dumps({'type': 'complete', 'progress': 100, 'audio_id': audio_id, 'audio_url': f'/audio/download/{audio_id}', 'duration': audio_duration, 'generation_time': round(total_generation_time, 1), 'speed': round(final_speed, 2), 'message': f'Готово! ({round(audio_duration/60, 1)} мин за {round(total_generation_time, 1)}с, скорость {round(final_speed, 1)}x)'})}\n\n"
-                
+                # Send completion with stats (NOW INCLUDING text_id for video generation)
+                yield f"data: {json.dumps({'type': 'complete', 'progress': 100, 'audio_id': audio_id, 'text_id': text_id, 'audio_url': f'/audio/download/{audio_id}', 'duration': audio_duration, 'generation_time': round(total_generation_time, 1), 'speed': round(final_speed, 2), 'message': f'Готово! ({round(audio_duration/60, 1)} мин за {round(total_generation_time, 1)}с, скорость {round(final_speed, 1)}x)'})}"
                 # CRITICAL: Explicitly clear large objects and force garbage collection
                 # Memory already freed incrementally during generation
                 if 'wav_params' in locals():
