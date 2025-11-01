@@ -225,6 +225,35 @@ const HomePage = () => {
       toast.error("Не удалось скачать текст");
     }
   };
+
+// NEW: Download video as .mp4 file
+  const downloadVideo = async (videoId) => {
+    try {
+      const response = await fetch(API + `/video/download/${videoId}`, {
+        method: 'GET',
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Download failed');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `video_${videoId}.mp4`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast.success("Видео скачано!");
+    } catch (error) {
+      console.error("Error downloading video:", error);
+      toast.error("Не удалось скачать видео");
+    }
+  };
   
   const handleGenerateText = async () => {
     if (!prompt.trim()) {
@@ -434,6 +463,9 @@ const HomePage = () => {
                 setAudioUrl(API + data.audio_url);
                 setAudioDuration(data.duration || 0);
                 setCurrentAudioId(data.audio_id);
+                if (data.text_id) {
+                  setCurrentTextId(data.text_id);
+                }
                 setGenerationTime(data.generation_time || 0);
                 if (data.speed) {
                   setAudioSpeed(data.speed);
@@ -1231,6 +1263,50 @@ const HomePage = () => {
                               className="text-red-500 hover:text-red-700"
                             >
                               🗑️
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+              {/* Video History */}
+            {videoHistory.length > 0 && (
+              <Card className="backdrop-blur-sm bg-white/80 border-slate-200 shadow-xl">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>🎬 История видео</span>
+                    <span className="text-xs text-slate-500">{videoHistory.length} видео</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {videoHistory.slice(0, 10).map((video) => (
+                      <div key={video.id} className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-slate-700">
+                            {video.video_type === 'youtube_images' && '📺 YouTube (картинки)'}
+                            {video.video_type === 'youtube_continuous' && '🎞️ YouTube (непрерывное)'}
+                            {video.video_type === 'shorts' && '📱 Shorts/Reels'}
+                          </span>
+                          {video.duration && (
+                            <span className="text-xs text-slate-500">
+                              {Math.floor(video.duration / 60)}:{String(Math.floor(video.duration % 60)).padStart(2, '0')}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-slate-500">{new Date(video.created_at).toLocaleString()}</span>
+                          <div className="flex gap-2">
+                            <Button 
+                              size="sm" 
+                              variant="ghost"
+                              onClick={() => downloadVideo(video.id)}
+                              title="Скачать видео"
+                            >
+                              🎬
                             </Button>
                           </div>
                         </div>
