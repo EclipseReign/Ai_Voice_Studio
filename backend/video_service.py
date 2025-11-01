@@ -26,21 +26,13 @@ import urllib.parse
 from typing import List, Dict, Tuple, Optional
 from pathlib import Path
 import logging
-from emergentintegrations.llm.gemeni.image_generation import GeminiImageGeneration
 
 logger = logging.getLogger(__name__)
 
-#POLLINATIONS_API_URL = "https://image.pollinations.ai/prompt"
+POLLINATIONS_API_URL = "https://image.pollinations.ai/prompt"
 
-#POLLINATIONS_SEMAPHORE = asyncio.Semaphore(3)
-GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
-if not GEMINI_API_KEY:
-    logger.warning("⚠️ EMERGENT_LLM_KEY not found in environment! Image generation will fail.")
+POLLINATIONS_SEMAPHORE = asyncio.Semaphore(3)
 
-gemini_image_gen = GeminiImageGeneration(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
-
-# Semaphore to limit concurrent Gemini API calls (fair distribution)
-GEMINI_SEMAPHORE = asyncio.Semaphore(5)
 # Video settings by type
 VIDEO_SETTINGS = {
     "youtube_images": {
@@ -114,40 +106,22 @@ async def generate_image_prompts_from_text(text: str, num_prompts: int, video_ty
         return [f"Scene {i+1}: {text[:100]}" for i in range(num_prompts)]
 
 
-"""
+
 async def generate_image_with_pollinations(prompt: str, width: int, height: int, session: aiohttp.ClientSession) -> bytes:
-    '''Generate image using Hugging Face Inference API with model fallback and retries.'''
+    """Generate image using Hugging Face Inference API with model fallback and retries."""
     
     max_retries = 5  # Increased retries for unstable API
     base_retry_delay = 5  # Base delay for exponential backoff
     import urllib.parse
     encoded_prompt = urllib.parse.quote(prompt)
     api_url = f"{POLLINATIONS_API_URL}/{encoded_prompt}?width={width}&height={height}&nologo=true&enhance=true"
-"""
-async def generate_image_with_gemini(prompt: str, width: int, height: int) -> bytes:
-    """
-    Generate image using Gemini Imagen-3.0 with retry logic.
-    
-    Args:
-        prompt: Text description of the image
-        width: Desired image width
-        height: Desired image height
-    
-    Returns:
-        Image data as bytes
-    """
-    if not gemini_image_gen:
-        raise Exception("Gemini Image Generator not initialized (EMERGENT_LLM_KEY missing)")
-    
-    max_retries = 3
-    base_retry_delay = 2
     for attempt in range(max_retries):
         try:
+            # Exponential backoff: 5s, 10s, 20s, 40s, 80s
             if attempt > 0:
                 delay = base_retry_delay * (2 ** (attempt - 1))
                 logger.info(f"Waiting {delay}s before retry {attempt+1}/{max_retries}...")
                 await asyncio.sleep(delay)
-            """
             logger.info(f"Pollinations.ai attempt {attempt+1}/{max_retries} for: {prompt[:50]}...")
             async with POLLINATIONS_SEMAPHORE:
                 logger.debug(f"Acquired Pollinations semaphore slot (attempt {attempt+1})")
@@ -155,45 +129,26 @@ async def generate_image_with_gemini(prompt: str, width: int, height: int) -> by
                     if response.status == 200:
                         image_data = await response.read()
                         logger.info(f"✅ Pollinations.ai generated image successfully ({len(image_data)} bytes)")
-                        """
-            logger.info(f"Gemini Imagen-3.0 attempt {attempt+1}/{max_retries} for: {prompt[:50]}...")
-            
-            # Generate image with Gemini (returns list of image bytes)
-            # Note: Gemini returns up to 4 images, we take the first one
-            images = await gemini_image_gen.generate_images(
-                prompt=prompt,
-                model="imagen-3.0-generate-002",
-                number_of_images=1  # Generate only 1 image per prompt
-            )
-            
-            if images and len(images) > 0:
-                image_data = images[0]
-                logger.info(f"✅ Gemini generated image successfully ({len(image_data)} bytes)")
-                return image_data
-            else:
-                logger.warning(f"Gemini returned empty result on attempt {attempt+1}/{max_retries}")
-                        #err_text = await response.text()
-                        #logger.warning(f"Pollinations.ai attempt {attempt+1}/{max_retries} failed: {response.status} - {err_text[:100]}")
-                continue
-        #except asyncio.TimeoutError:
-            #logger.warning(f"Timeout on Pollinations.ai attempt {attempt+1}/{max_retries}")
-            #continue
-        except Exception as e:
-            #logger.error(f"Error on Pollinations.ai attempt {attempt+1}/{max_retries}: {e}")
-            logger.error(f"Error on Gemini attempt {attempt+1}/{max_retries}: {e}")
-            if attempt == max_retries - 1:
-                raise
+                        return image_data
+                    else:
+                        err_text = await response.text()
+                        logger.warning(f"Pollinations.ai attempt {attempt+1}/{max_retries} failed: {response.status} - {err_text[:100]}")
+                        continue
+        except asyncio.TimeoutError:
+            logger.warning(f"Timeout on Pollinations.ai attempt {attempt+1}/{max_retries}")
             continue
-    #raise Exception(f"Pollinations.ai image generation failed after {max_retries} attempts")
-    raise Exception(f"Gemini image generation failed after {max_retries} attempts")
+        except Exception as e:
+            logger.error(f"Error on Pollinations.ai attempt {attempt+1}/{max_retries}: {e}")
+            continue
+    raise Exception(f"Pollinations.ai image generation failed after {max_retries} attempts")
 
 async def generate_single_image(
     index: int,
     prompt: str,
     width: int,
     height: int,
-    output_dir: str
-    #session: aiohttp.ClientSession
+    output_dir: str,
+    session: aiohttp.ClientSession
 ) -> Tuple[int, str]:
     """
     Generate a single image with retry logic.
@@ -204,7 +159,7 @@ async def generate_single_image(
         width: Image width
         height: Image height
         output_dir: Directory to save image
-        ---!session: aiohttp session for API calls
+        session: aiohttp session for API calls
         
     Returns:
         Tuple of (index, image_path)
@@ -215,15 +170,11 @@ async def generate_single_image(
         logger.info(f"Generating image {index + 1}: {prompt[:50]}...")
         
         # Generate image (already has 3 retry attempts built-in)
-        #image_data = await generate_image_with_pollinations(prompt, width, height, session)
-        async with GEMINI_SEMAPHORE:
-            logger.debug(f"Acquired Gemini semaphore slot for image {index + 1}")
-            
-            # Generate image using Gemini
-            image_data = await generate_image_with_gemini(prompt, width, height)
-            # Save image
-            with open(image_path, "wb") as f:
-                f.write(image_data)
+        image_data = await generate_image_with_pollinations(prompt, width, height, session)
+        
+        # Save image
+        with open(image_path, "wb") as f:
+            f.write(image_data)
         
         logger.info(f"✅ Saved image {index + 1} to {image_path}")
         return (index, image_path)
@@ -257,67 +208,67 @@ async def generate_images_for_video(
         List of image file paths
     """
     os.makedirs(output_dir, exist_ok=True)
-    BATCH_SIZE = 5
+    BATCH_SIZE = 3  # Generate 5 images in parallel
     total_images = len(prompts)
-    logger.info(f"🎨 Starting Gemini image generation: {total_images} images total, BATCH_SIZE={BATCH_SIZE}, global semaphore limit=5")
+    logger.info(f"🎨 Starting image generation: {total_images} images total, BATCH_SIZE={BATCH_SIZE}, global semaphore limit=3")
     # Dictionary to store results with index as key (preserves order)
     results_dict = {}
     
-    #async with aiohttp.ClientSession() as session:
-    for batch_start in range(0, total_images, BATCH_SIZE):
-        batch_end = min(batch_start + BATCH_SIZE, total_images)
-        batch_size = batch_end - batch_start
+    async with aiohttp.ClientSession() as session:
+        for batch_start in range(0, total_images, BATCH_SIZE):
+            batch_end = min(batch_start + BATCH_SIZE, total_images)
+            batch_size = batch_end - batch_start
             
-        logger.info(f"🚀 Starting parallel batch {batch_start // BATCH_SIZE + 1}: images {batch_start + 1}-{batch_end} of {total_images}")
-        
-        # Create tasks for this batch
-        tasks = []
-        for i in range(batch_start, batch_end):
-            task = generate_single_image(
-                index=i,
-                prompt=prompts[i],
-                width=width,
-                height=height,
-                output_dir=output_dir
-                    #session=session
-            )
-            tasks.append(task)
+            logger.info(f"🚀 Starting parallel batch {batch_start // BATCH_SIZE + 1}: images {batch_start + 1}-{batch_end} of {total_images}")
+            
+            # Create tasks for this batch
+            tasks = []
+            for i in range(batch_start, batch_end):
+                task = generate_single_image(
+                    index=i,
+                    prompt=prompts[i],
+                    width=width,
+                    height=height,
+                    output_dir=output_dir,
+                    session=session
+                )
+                tasks.append(task)
             
             # Generate all images in this batch in parallel
-        batch_results = await asyncio.gather(*tasks, return_exceptions=True)
+            batch_results = await asyncio.gather(*tasks, return_exceptions=True)
             
             # Process results
-        for result in batch_results:
-            if isinstance(result, Exception):
-                logger.error(f"Batch task failed with exception: {result}")
-                continue
+            for result in batch_results:
+                if isinstance(result, Exception):
+                    logger.error(f"Batch task failed with exception: {result}")
+                    continue
                 
-            index, image_path = result
-            results_dict[index] = image_path
+                index, image_path = result
+                results_dict[index] = image_path
             
             # Progress callback after each batch
-            if progress_callback:
-                completed = len(results_dict)
-                await progress_callback(
-                    "image_generation",
-                    completed,
-                    total_images,
-                    f"Сгенерировано {completed}/{total_images} изображений (батч {batch_start // BATCH_SIZE + 1})"
-                )
+                if progress_callback:
+                    completed = len(results_dict)
+                    await progress_callback(
+                        "image_generation",
+                        completed,
+                        total_images,
+                        f"Сгенерировано {completed}/{total_images} изображений (батч {batch_start // BATCH_SIZE + 1})"
+                    )
                 
-            logger.info(f"✅ Batch {batch_start // BATCH_SIZE + 1} completed: {batch_size} images generated")
+                logger.info(f"✅ Batch {batch_start // BATCH_SIZE + 1} completed: {batch_size} images generated")
                 
-            # Small delay between batches to avoid overwhelming the API
+                # Small delay between batches to avoid overwhelming the API
             if batch_end < total_images:
-                await asyncio.sleep(2)
+                await asyncio.sleep(3)
     
-        # Sort results by index to maintain correct order
-        sorted_indices = sorted(results_dict.keys())
-        image_paths = [results_dict[i] for i in sorted_indices]
-        
-        #logger.info(f"🎉 All {len(image_paths)} images generated successfully in correct order")
-        logger.info(f"🎉 All {len(image_paths)} images generated successfully via Gemini in correct order")
-        return image_paths
+    # Sort results by index to maintain correct order
+    sorted_indices = sorted(results_dict.keys())
+    image_paths = [results_dict[i] for i in sorted_indices]
+    
+    logger.info(f"🎉 All {len(image_paths)} images generated successfully in correct order")
+    
+    return image_paths
 
 
 def create_placeholder_image(path: str, width: int, height: int, text: str):
