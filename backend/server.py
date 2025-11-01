@@ -2242,7 +2242,7 @@ async def synthesize_audio_with_progress(
                 if generation_job_id:
                     await complete_generation_job(generation_job_id, audio_id)
                 # Send completion with stats (NOW INCLUDING text_id for video generation)
-                yield f"data: {json.dumps({'type': 'complete', 'progress': 100, 'audio_id': audio_id, 'text_id': text_id, 'audio_url': f'/audio/download/{audio_id}', 'duration': audio_duration, 'generation_time': round(total_generation_time, 1), 'speed': round(final_speed, 2), 'message': f'Готово! ({round(audio_duration/60, 1)} мин за {round(total_generation_time, 1)}с, скорость {round(final_speed, 1)}x)'})}"
+                yield f"data: {json.dumps({'type': 'complete', 'progress': 100, 'audio_id': audio_id, 'text_id': text_id, 'audio_url': f'/audio/download/{audio_id}', 'duration': audio_duration, 'generation_time': round(total_generation_time, 1), 'speed': round(final_speed, 2), 'message': f'Готово! ({round(audio_duration/60, 1)} мин за {round(total_generation_time, 1)}с, скорость {round(final_speed, 1)}x)'})}\n\n"
                 # CRITICAL: Explicitly clear large objects and force garbage collection
                 # Memory already freed incrementally during generation
                 if 'wav_params' in locals():
