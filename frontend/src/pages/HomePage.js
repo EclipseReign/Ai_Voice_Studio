@@ -686,19 +686,19 @@ const HomePage = () => {
           <div className="lg:col-span-2">
             <Card className="backdrop-blur-sm bg-white/80 border-slate-200 shadow-xl" data-testid="main-card">
               <CardHeader>
-                <CardTitle className="text-2xl">Create Voice Narration</CardTitle>
-                <CardDescription>Choose your generation method</CardDescription>
+                <CardTitle className="text-2xl">{t('home.createVoiceNarration')}</CardTitle>
+                <CardDescription>{t('home.chooseGenerationMethod')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
                   <TabsList className="grid w-full grid-cols-2 mb-6" data-testid="mode-tabs">
                     <TabsTrigger value="ai-generate" data-testid="ai-generate-tab">
                       <Sparkles className="w-4 h-4 mr-2" />
-                      AI Generate
+                      {t('home.aiGeneration')}
                     </TabsTrigger>
                     <TabsTrigger value="manual-input" data-testid="manual-input-tab">
                       <Mic className="w-4 h-4 mr-2" />
-                      Manual Input
+                      {t('home.manualInput')}
                     </TabsTrigger>
                   </TabsList>
                   
@@ -706,11 +706,11 @@ const HomePage = () => {
                   <TabsContent value="ai-generate" className="space-y-6">
                     <div className="space-y-4">
                       <div>
-                        <Label htmlFor="prompt">Topic / Prompt</Label>
+                        <Label htmlFor="prompt">{t('home.topicPrompt')}</Label>
                         <Textarea
                           id="prompt"
                           data-testid="ai-prompt-input"
-                          placeholder="Enter a topic or prompt for text generation (e.g., 'The history of artificial intelligence')"
+                          placeholder={t('home.promptPlaceholderLong')}
                           value={prompt}
                           onChange={(e) => setPrompt(e.target.value)}
                           rows={3}
@@ -722,7 +722,7 @@ const HomePage = () => {
                         <div>
                           <Label htmlFor="duration">
                             <Clock className="w-4 h-4 inline mr-2" />
-                            Target Duration: {duration} minute{duration !== 1 ? 's' : ''}
+                            {t('home.targetDuration')}: {duration} {duration !== 1 ? t('home.minutes') : t('home.minute')}
                           </Label>
                           <Slider
                             id="duration"
@@ -737,7 +737,7 @@ const HomePage = () => {
                         </div>
                         
                         <div>
-                          <Label htmlFor="ai-language">Language</Label>
+                          <Label htmlFor="ai-language">{t('home.language')}</Label>
                           <Select value={language} onValueChange={setLanguage}>
                             <SelectTrigger id="ai-language" data-testid="ai-language-select" className="mt-2">
                               <SelectValue />
@@ -794,7 +794,7 @@ const HomePage = () => {
                       {generatedText && (
                         <div className="space-y-4">
                           <div>
-                            <Label htmlFor="generated-text">Generated Text (editable)</Label>
+                            <Label htmlFor="generated-text">{t('home.generatedTextEditable')}</Label>
                             <Textarea
                               id="generated-text"
                               data-testid="generated-text-display"
@@ -831,7 +831,7 @@ const HomePage = () => {
                               {queuePosition > 0 && (
                                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center">
                                   <p className="text-sm text-blue-700 font-medium">
-                                    В очереди - позиция {queuePosition}
+                                    {t('home.inQueue')} {queuePosition}
                                   </p>
                                 </div>
                               )}
@@ -849,27 +849,27 @@ const HomePage = () => {
                               {audioStage === 'generating_segments' && totalSegments > 0 && (
                                 <div className="grid grid-cols-2 gap-3 text-sm">
                                   <div className="bg-gray-50 rounded-lg p-2">
-                                    <p className="text-xs text-gray-500">Прогресс</p>
+                                    <p className="text-xs text-gray-500">{t('home.progress')}</p>
                                     <p className="font-semibold text-gray-900">
-                                      {completedSegments}/{totalSegments} сегментов
+                                      {completedSegments}/{totalSegments} {t('home.segments')}
                                     </p>
                                   </div>
                                   {audioEta && (
                                     <div className="bg-blue-50 rounded-lg p-2">
-                                      <p className="text-xs text-blue-600">Осталось</p>
+                                      <p className="text-xs text-blue-600">{t('home.remaining')}</p>
                                       <p className="font-semibold text-blue-900">{audioEta}</p>
                                     </div>
                                   )}
                                   {audioSpeed > 0 && (
                                     <div className="bg-green-50 rounded-lg p-2">
-                                      <p className="text-xs text-green-600">Скорость</p>
+                                      <p className="text-xs text-green-600">{t('home.speed')}</p>
                                       <p className="font-semibold text-green-900">{audioSpeed.toFixed(1)}x</p>
                                     </div>
                                   )}
                                   {subscription?.tier === 'pro' && (
                                     <div className="bg-purple-50 rounded-lg p-2">
-                                      <p className="text-xs text-purple-600">Статус</p>
-                                      <p className="font-semibold text-purple-900">⚡ Pro Priority</p>
+                                      <p className="text-xs text-purple-600">{t('home.status')}</p>
+                                      <p className="font-semibold text-purple-900">{t('home.proPriority')}</p>
                                     </div>
                                   )}
                                 </div>
@@ -895,11 +895,11 @@ const HomePage = () => {
                   <TabsContent value="manual-input" className="space-y-6">
                     <div className="space-y-4">
                       <div>
-                        <Label htmlFor="manual-text">Your Text</Label>
+                        <Label htmlFor="manual-text">{t('home.yourText')}</Label>
                         <Textarea
                           id="manual-text"
                           data-testid="manual-text-input"
-                          placeholder="Paste or type your text here..."
+                          placeholder={t('home.manualTextPlaceholder')}
                           value={manualText}
                           onChange={(e) => setManualText(e.target.value)}
                           rows={15}
@@ -908,7 +908,7 @@ const HomePage = () => {
                       </div>
                       
                       <div>
-                        <Label htmlFor="manual-language">Language</Label>
+                        <Label htmlFor="manual-language">{t('home.language')}</Label>
                         <Select value={language} onValueChange={setLanguage}>
                           <SelectTrigger id="manual-language" data-testid="manual-language-select" className="mt-2">
                             <SelectValue />
@@ -957,7 +957,7 @@ const HomePage = () => {
                           {queuePosition > 0 && (
                             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center">
                               <p className="text-sm text-blue-700 font-medium">
-                                В очереди - позиция {queuePosition}
+                                {t('home.inQueue')} {queuePosition}
                               </p>
                             </div>
                           )}
@@ -975,27 +975,27 @@ const HomePage = () => {
                           {audioStage === 'generating_segments' && totalSegments > 0 && (
                             <div className="grid grid-cols-2 gap-3 text-sm">
                               <div className="bg-gray-50 rounded-lg p-2">
-                                <p className="text-xs text-gray-500">Прогресс</p>
+                                <p className="text-xs text-gray-500">{t('home.progress')}</p>
                                 <p className="font-semibold text-gray-900">
-                                  {completedSegments}/{totalSegments} сегментов
+                                  {completedSegments}/{totalSegments} {t('home.segments')}
                                 </p>
                               </div>
                               {audioEta && (
                                 <div className="bg-blue-50 rounded-lg p-2">
-                                  <p className="text-xs text-blue-600">Осталось</p>
+                                  <p className="text-xs text-blue-600">{t('home.remaining')}</p>
                                   <p className="font-semibold text-blue-900">{audioEta}</p>
                                 </div>
                               )}
                               {audioSpeed > 0 && (
                                 <div className="bg-green-50 rounded-lg p-2">
-                                  <p className="text-xs text-green-600">Скорость</p>
+                                  <p className="text-xs text-green-600">{t('home.speed')}</p>
                                   <p className="font-semibold text-green-900">{audioSpeed.toFixed(1)}x</p>
                                 </div>
                               )}
                               {subscription?.tier === 'pro' && (
                                 <div className="bg-purple-50 rounded-lg p-2">
-                                  <p className="text-xs text-purple-600">Статус</p>
-                                  <p className="font-semibold text-purple-900">⚡ Pro Priority</p>
+                                  <p className="text-xs text-purple-600">{t('home.status')}</p>
+                                  <p className="font-semibold text-purple-900">{t('home.proPriority')}</p>
                                 </div>
                               )}
                             </div>
@@ -1023,11 +1023,11 @@ const HomePage = () => {
           <div className="space-y-6">
             <Card className="backdrop-blur-sm bg-white/80 border-slate-200 shadow-xl" data-testid="settings-card">
               <CardHeader>
-                <CardTitle>Voice Settings</CardTitle>
+                <CardTitle>{t('home.voiceSettings')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label htmlFor="language-setting">Language</Label>
+                  <Label htmlFor="language-setting">{t('home.language')}</Label>
                   <Select value={language} onValueChange={setLanguage}>
                     <SelectTrigger id="language-setting" data-testid="language-setting-select" className="mt-2">
                       <SelectValue />
@@ -1051,10 +1051,10 @@ const HomePage = () => {
                 </div>
                 
                 <div>
-                  <Label htmlFor="voice">Voice</Label>
+                  <Label htmlFor="voice">{t('voiceSettings.voice')}</Label>
                   <Select value={selectedVoice} onValueChange={setSelectedVoice}>
                     <SelectTrigger id="voice" data-testid="voice-select" className="mt-2">
-                      <SelectValue placeholder="Select a voice" />
+                      <SelectValue placeholder={t('home.selectAVoice')} />
                     </SelectTrigger>
                     <SelectContent className="max-h-64">
                       {getVoicesByLanguage().map((voice) => (
@@ -1064,12 +1064,12 @@ const HomePage = () => {
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-slate-500 mt-1">Neural TTS voices powered by Piper</p>
+                  <p className="text-xs text-slate-500 mt-1">{t('home.neuralTTSPowered')}</p>
                 </div>
                 
                 <div>
                   <Label htmlFor="speed">
-                    Speed: {speed[0] > 0 ? '+' : ''}{speed[0]}% ({(1 + speed[0]/100).toFixed(1)}x)
+                    {t('home.speedLabel')}: {speed[0] > 0 ? '+' : ''}{speed[0]}% ({(1 + speed[0]/100).toFixed(1)}x)
                   </Label>
                   <Slider
                     id="speed"
@@ -1081,7 +1081,7 @@ const HomePage = () => {
                     step={10}
                     className="mt-2"
                   />
-                  <p className="text-xs text-slate-500 mt-1">Adjust speech speed (0.5x to 2.0x)</p>
+                  <p className="text-xs text-slate-500 mt-1">{t('home.adjustSpeed')}</p>
                 </div>
               </CardContent>
             </Card>
@@ -1090,7 +1090,7 @@ const HomePage = () => {
             {audioUrl && (
               <Card className="backdrop-blur-sm bg-white/80 border-slate-200 shadow-xl" data-testid="audio-player-card">
                 <CardHeader>
-                  <CardTitle>Generated Audio</CardTitle>
+                  <CardTitle>{t('audioPlayer.title')}</CardTitle>
                   <div className="space-y-1 mt-2">
                     {audioDuration > 0 && (
                       <p className="text-sm text-slate-600">
@@ -1113,7 +1113,7 @@ const HomePage = () => {
                   <audio controls className="w-full" data-testid="audio-player" key={audioUrl}>
                     <source src={audioUrl} type="audio/wav" />
                     <source src={audioUrl} type="audio/mpeg" />
-                    Your browser does not support the audio element.
+                    {t('home.yourBrowserDoesNotSupport')}
                   </audio>
                   <div className="grid grid-cols-2 gap-2">
                     <a href={audioUrl} download className="w-full">

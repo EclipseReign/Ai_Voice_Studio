@@ -175,7 +175,7 @@ const Dashboard = () => {
 
         {/* Subscription Status */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">💳 Подписка</h3>
+          <h3 className="text-xl font-bold text-gray-900 mb-4">{t('dashboard.subscriptionTitle')}</h3>
           
           {/* Free Tier */}
           {!isPro && subscription && (
@@ -187,7 +187,7 @@ const Dashboard = () => {
                     <span className="text-lg font-semibold text-gray-900">Free Tier</span>
                   </div>
                   <span className="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm font-semibold">
-                    Бесплатно
+                    {t('dashboard.freeSubscription')}
                   </span>
                 </div>
                 
@@ -195,7 +195,7 @@ const Dashboard = () => {
                 <div className="space-y-3">
                   <div>
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-700 font-medium">📝 Генерация текста</span>
+                      <span className="text-gray-700 font-medium">{t('dashboard.textGenerationLabel')}</span>
                       <span className="text-gray-900 font-bold">
                         {subscription.text_usage_today || 0} / {subscription.text_limit || 5}
                       </span>
@@ -212,7 +212,7 @@ const Dashboard = () => {
                   
                   <div>
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-700 font-medium">🎤 Озвучка</span>
+                      <span className="text-gray-700 font-medium">{t('dashboard.voiceOverLabel')}</span>
                       <span className="text-gray-900 font-bold">
                         {subscription.audio_usage_today || 0} / {subscription.audio_limit || 2}
                       </span>
@@ -230,9 +230,9 @@ const Dashboard = () => {
                 
                 <div className="mt-3 pt-3 border-t border-purple-200">
                   <p className="text-xs text-gray-600">
-                    ⏱ Максимум {subscription.max_duration_minutes || 30} минут на генерацию<br/>
-                    🐢 Скорость в 2 раза ниже Pro<br/>
-                    🎵 Только низкое и среднее качество голосов
+                    {t('dashboard.maxDurationLimit', { duration: subscription.max_duration_minutes || 30 })}<br/>
+                    {t('dashboard.speedTwiceSlower')}<br/>
+                    {t('dashboard.lowMediumQualityOnly')}
                   </p>
                 </div>
               </div>
@@ -242,7 +242,7 @@ const Dashboard = () => {
                 className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 px-6 rounded-lg font-semibold hover:from-purple-700 hover:to-indigo-700 transition-all flex items-center justify-center gap-2"
               >
                 <TrendingUp className="w-5 h-5" />
-                Обновить до Pro ($19.99/мес) - Безлимитно ✨
+                {t('dashboard.upgradeToProPrice')}
               </button>
             </div>
           )}
@@ -257,22 +257,22 @@ const Dashboard = () => {
                     <span className="text-lg font-semibold">Pro Tier</span>
                   </div>
                   <span className="bg-yellow-400 text-purple-900 px-3 py-1 rounded-full text-sm font-semibold">
-                    ✨ Активна
+                    {t('dashboard.upgradeToProPrice')}
                   </span>
                 </div>
                 
                 <div className="space-y-2 text-sm">
-                  <p>✅ Безлимитная генерация текста</p>
-                  <p>✅ Безлимитная озвучка</p>
-                  <p>✅ Любая длительность</p>
-                  <p>✅ Максимальная скорость</p>
-                  <p>✅ Все качества голосов (включая high)</p>
+                  <p>✅ {t('dashboard.unlimitedTextGeneration')}</p>
+                  <p>✅ {t('dashboard.unlimitedVoiceOver')}</p>
+                  <p>✅ {t('dashboard.anyDuration')}</p>
+                  <p>✅ {t('dashboard.twiceFaster')}</p>
+                  <p>✅ {t('dashboard.allVoiceQualities')}</p>
                 </div>
                 
                 {subscription.expires_at && (
                   <div className="mt-3 pt-3 border-t border-purple-400">
                     <p className="text-sm text-purple-100">
-                      🔄 Продлевается: {formatDate(subscription.expires_at)}
+                      {t('dashboard.activeUntil')}: {formatDate(subscription.expires_at)}
                     </p>
                   </div>
                 )}
@@ -282,11 +282,11 @@ const Dashboard = () => {
                 onClick={handleCancelSubscription}
                 className="w-full bg-red-100 text-red-700 py-2 px-6 rounded-lg font-semibold hover:bg-red-200 transition-colors"
               >
-                Отменить подписку
+                {t('dashboard.cancelSubscription')}
               </button>
               
               <p className="text-xs text-gray-500 text-center">
-                После отмены Pro доступ сохранится до конца оплаченного периода
+                {t('notifications.subscriptionCancelled')}
               </p>
             </div>
           )}
@@ -294,7 +294,7 @@ const Dashboard = () => {
 
         {/* History */}
         <div className="bg-white rounded-2xl shadow-lg p-6">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">📊 История генераций</h3>
+          <h3 className="text-xl font-bold text-gray-900 mb-4">{t('dashboard.history')}</h3>
           
           {loading ? (
             <div className="text-center py-8">
@@ -302,7 +302,7 @@ const Dashboard = () => {
             </div>
           ) : history.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
-              У вас пока нет генераций
+              {t('dashboard.noGenerationsYet')}
             </div>
           ) : (
             <div className="space-y-4">
@@ -316,12 +316,12 @@ const Dashboard = () => {
                         </span>
                         {item.audio_url && (
                           <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-semibold">
-                            АУДИО
+                            {t('dashboard.audio')}
                           </span>
                         )}
                         {item.video_id && (
                           <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-semibold">
-                            ВИДЕО
+                            {t('dashboard.video')}
                           </span>
                         )}
                         {item.duration && (
@@ -333,7 +333,7 @@ const Dashboard = () => {
                       <p className="text-gray-700 text-sm line-clamp-2 mb-2">{item.text}</p>
                       {item.voice && (
                         <p className="text-xs text-gray-500">
-                          Голос: {item.voice} | Язык: {item.language}
+                          {t('dashboard.voice')}: {item.voice} | {t('dashboard.language')}: {item.language}
                         </p>
                       )}
                     </div>
@@ -345,7 +345,7 @@ const Dashboard = () => {
                           download
                           className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex-shrink-0 text-center text-sm"
                         >
-                          🎵 Аудио
+                          🎵 {t('dashboard.audio')}
                           </a>
                         )}
                         
@@ -354,7 +354,7 @@ const Dashboard = () => {
                           onClick={() => downloadText(item.id)}
                           className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex-shrink-0 text-sm"
                         >
-                          📝 Текст
+                          📝 {t('dashboard.text')}
                         </button>
                         
                         {/* Download Video Button (only if video exists) */}
@@ -363,7 +363,7 @@ const Dashboard = () => {
                             onClick={() => downloadVideo(item.video_id)}
                             className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex-shrink-0 text-sm"
                           >
-                            🎬 Видео
+                            🎬 {t('dashboard.video')}
                           </button>
                         )}
                     </div>

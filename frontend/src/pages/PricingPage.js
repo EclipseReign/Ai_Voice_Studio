@@ -85,26 +85,26 @@ const PricingPage = () => {
           if (response.data.success) {
             // Refresh subscription status
             await fetchSubscription();
-            alert('🎉 Добро пожаловать в Pro! Ваша подписка активирована.');
+            alert(t('pricing.welcomeToPro'));
             navigate('/');
           }
         } catch (error) {
           console.error('Error approving subscription:', error);
-          alert('Ошибка при активации подписки. Пожалуйста, свяжитесь с поддержкой.');
+          aalert(t('pricing.subscriptionActivationError'));
         } finally {
           setSubscribing(false);
         }
       },
       onError: function(err) {
         console.error('PayPal error:', err);
-        alert('Ошибка PayPal. Пожалуйста, попробуйте снова.');
+        alert(t('pricing.paypalError'));
         setSubscribing(false);
       }
     }).render('#paypal-button-container');
   };
 
   const handleCancel = async () => {
-    if (!window.confirm('Вы уверены, что хотите отменить подписку Pro?')) {
+    if (!window.confirm(t('pricing.confirmCancelSubscription'))) {
       return;
     }
 
@@ -121,7 +121,7 @@ const PricingPage = () => {
       }
     } catch (error) {
       console.error('Error cancelling subscription:', error);
-      alert('Ошибка при отмене подписки');
+      alert(t('pricing.subscriptionCancellationError'));
     }
   };
 
@@ -143,10 +143,10 @@ const PricingPage = () => {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Выберите свой тариф
+            {t('pricing.choosePlan')}
           </h1>
           <p className="text-xl text-gray-600">
-            Генерируйте тексты и озвучку с AI Voice Studio
+            {t('pricing.generateTextsWithAI')}
           </p>
         </div>
 
@@ -163,7 +163,7 @@ const PricingPage = () => {
               </div>
               {currentTier === 'free' && (
                 <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-semibold">
-                  Текущий
+                  {t('pricing.current')}
                 </span>
               )}
             </div>
@@ -171,7 +171,7 @@ const PricingPage = () => {
             <div className="mb-6">
               <div className="flex items-baseline">
                 <span className="text-4xl font-bold text-gray-900">$0</span>
-                <span className="text-gray-500 ml-2">/месяц</span>
+                <span className="text-gray-500 ml-2">{t('pricing.month')}</span>
               </div>
             </div>
 
@@ -184,7 +184,7 @@ const PricingPage = () => {
               ))}
               <li className="flex items-start gap-2">
                 <X className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-500 line-through">Голоса высокого качества</span>
+                <span className="text-gray-500 line-through">{t('pricing.highQualityVoices')}</span>
               </li>
             </ul>
 
@@ -194,7 +194,7 @@ const PricingPage = () => {
                   <span className="font-semibold">{t('pricing.textUsage')}:</span> {subscription.text_usage_today}/{subscription.text_limit} {t('pricing.today')}
                 </p>
                 <p className="text-sm text-gray-700">
-                  <span className="font-semibold">Озвучка:</span> {subscription.audio_usage_today}/{subscription.audio_limit} сегодня
+                  <span className="font-semibold">{t('pricing.audioUsage')}:</span> {subscription.audio_usage_today}/{subscription.audio_limit} {t('pricing.today')}
                 </p>
               </div>
             )}
@@ -203,7 +203,7 @@ const PricingPage = () => {
               disabled
               className="w-full py-3 px-4 bg-gray-200 text-gray-500 rounded-lg font-semibold cursor-not-allowed"
             >
-              Текущий тариф
+              {t('pricing.currentPlan')}
             </button>
           </div>
 
@@ -218,7 +218,7 @@ const PricingPage = () => {
               </div>
               {currentTier === 'pro' && (
                 <span className="bg-yellow-400 text-purple-900 px-3 py-1 rounded-full text-sm font-semibold">
-                  Активен
+                  {t('pricing.active')}
                 </span>
               )}
             </div>
@@ -226,7 +226,7 @@ const PricingPage = () => {
             <div className="mb-6">
               <div className="flex items-baseline">
                 <span className="text-4xl font-bold text-white">${proTier.price}</span>
-                <span className="text-purple-200 ml-2">/месяц</span>
+                <span className="text-purple-200 ml-2">{t('pricing.month')}</span>
               </div>
             </div>
 
@@ -242,7 +242,7 @@ const PricingPage = () => {
             {currentTier === 'pro' && subscription && subscription.expires_at && (
               <div className="bg-purple-700 bg-opacity-50 rounded-lg p-4 mb-4">
                 <p className="text-sm text-purple-100">
-                  Продлевается: {new Date(subscription.expires_at).toLocaleDateString('ru-RU')}
+                  {t('pricing.renewsOn')}: {new Date(subscription.expires_at).toLocaleDateString()}
                 </p>
               </div>
             )}
@@ -252,7 +252,7 @@ const PricingPage = () => {
                 onClick={handleCancel}
                 className="w-full py-3 px-4 bg-white text-purple-600 rounded-lg font-semibold hover:bg-purple-50 transition-colors"
               >
-                Отменить подписку
+                {t('pricing.cancelAnytime')}
               </button>
             ) : (
               <>
@@ -261,7 +261,7 @@ const PricingPage = () => {
                     onClick={handleSubscribe}
                     className="w-full py-3 px-4 bg-yellow-400 text-purple-900 rounded-lg font-semibold hover:bg-yellow-300 transition-colors"
                   >
-                    Обновить до Pro
+                    {t('pricing.upgradeToPro')}
                   </button>
                 ) : (
                   <div id="paypal-button-container" className="w-full"></div>
@@ -274,10 +274,10 @@ const PricingPage = () => {
         {/* FAQ or Additional Info */}
         <div className="mt-12 text-center">
           <p className="text-gray-600">
-            💳 Безопасная оплата через PayPal • 🔒 Отмена в любое время • 🌍 Доступно по всему миру
+            {t('pricing.securePayment')}
           </p>
           <p className="text-sm text-gray-500 mt-2">
-            *Обратите внимание: PayPal может быть недоступен в некоторых регионах (например, Россия)
+            {t('pricing.paypalNote')}
           </p>
         </div>
 
@@ -287,7 +287,7 @@ const PricingPage = () => {
             onClick={() => navigate('/')}
             className="text-purple-600 hover:text-purple-700 font-semibold"
           >
-            ← Вернуться на главную
+            ← {t('pricing.backToHome')}
           </button>
         </div>
       </div>
