@@ -151,14 +151,12 @@
     "usageToday": "📊 Usage Today",
     "ofLimit": "of",
     "noDurationLimit": "🚀 No duration limit",
-    "twiceFaster": "⚡ 2x faster than Free",
-    "allVoiceQualities": "🎵 All voice qualities available",
+    "twiceFaster": "⚡ Maximum speed",
+    "allVoiceQualities": "🎵 All voice qualities (including high)",
     "cancelSubscription": "Cancel Subscription",
     "activeUntil": "Active until",
     "history": "📚 History",
-    "characters": "characters",
-    "twiceFaster": "⚡ Maximum speed",
-    "allVoiceQualities": "🎵 All voice qualities (including high)"
+    "characters": "characters"
   },
   "notifications": {
     "textGenerationError": "Text generation error",
