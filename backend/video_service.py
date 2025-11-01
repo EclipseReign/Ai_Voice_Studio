@@ -208,7 +208,7 @@ async def generate_images_for_video(
         List of image file paths
     """
     os.makedirs(output_dir, exist_ok=True)
-    BATCH_SIZE = 5  # Generate 5 images in parallel
+    BATCH_SIZE = 3  # Generate 5 images in parallel
     total_images = len(prompts)
     logger.info(f"🎨 Starting image generation: {total_images} images total, BATCH_SIZE={BATCH_SIZE}, global semaphore limit=3")
     # Dictionary to store results with index as key (preserves order)
