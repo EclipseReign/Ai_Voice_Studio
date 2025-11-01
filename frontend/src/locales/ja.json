@@ -1,0 +1,120 @@
+{
+  "nav": {
+    "generation": "生成",
+    "dashboard": "ダッシュボード",
+    "admin": "管理者",
+    "profile": "プロフィール",
+    "logout": "ログアウト",
+    "login": "ログイン"
+  },
+  "theme": {
+    "light": "ライトテーマ",
+    "dark": "ダークテーマ",
+    "system": "システム"
+  },
+  "home": {
+    "title": "テキスト生成と音声合成",
+    "subtitle": "AIでテキストを作成し、リアルな音声でナレーションを付ける",
+    "aiGeneration": "AI生成",
+    "manualInput": "手動入力",
+    "voiceSettings": "音声設定",
+    "audioPlayer": "オーディオプレーヤー",
+    "history": "生成履歴",
+    "videoHistory": "動画履歴",
+    "filesStoredPermanently": "ファイルは永続的に保存されます"
+  },
+  "aiGeneration": {
+    "prompt": "トピック（プロンプト）",
+    "promptPlaceholder": "テキスト生成のトピックを説明してください...",
+    "duration": "期間（分）",
+    "language": "言語",
+    "generateText": "テキストを生成",
+    "generatingText": "テキストを生成中...",
+    "editText": "必要に応じて生成されたテキストを編集してください：",
+    "synthesizeAudio": "テキストをナレーション",
+    "generatingAudio": "オーディオを生成中..."
+  },
+  "manualInput": {
+    "title": "テキストを入力",
+    "placeholder": "ナレーションを付けたいテキストを入力してください...",
+    "language": "言語",
+    "synthesize": "テキストをナレーション",
+    "synthesizing": "オーディオを生成中..."
+  },
+  "voiceSettings": {
+    "title": "音声設定",
+    "voice": "音声",
+    "selectVoice": "音声を選択",
+    "speed": "速度",
+    "normal": "標準",
+    "slow": "遅い",
+    "fast": "速い"
+  },
+  "audioPlayer": {
+    "title": "生成されたオーディオ",
+    "duration": "期間",
+    "downloadAudio": "オーディオをダウンロード",
+    "downloadText": "テキストをダウンロード"
+  },
+  "videoGeneration": {
+    "title": "動画生成",
+    "type": "動画タイプ",
+    "youtubeImages": "YouTube（画像スライドショー）",
+    "youtubeContinuous": "YouTube（連続動画）",
+    "shorts": "ショート（縦型）",
+    "generateVideo": "動画を生成",
+    "generatingVideo": "動画を生成中...",
+    "downloadVideo": "動画をダウンロード"
+  },
+  "progress": {
+    "loadingModel": "モデルを読み込み中",
+    "generatingSegments": "オーディオを生成中",
+    "combining": "セグメントを結合中",
+    "saving": "ファイルを保存中",
+    "eta": "残り時間",
+    "segmentsPerSec": "seg/s"
+  },
+  "login": {
+    "title": "AI Voice Studio",
+    "subtitle": "AIによるテキスト生成と音声合成",
+    "withGoogle": "Googleで続行",
+    "agreeToTerms": "続行することにより、利用規約とプライバシーポリシーに同意したものとみなされます"
+  },
+  "dashboard": {
+    "welcome": "ようこそ",
+    "subscription": "サブスクリプション",
+    "free": "無料",
+    "pro": "プロ",
+    "usage": "今日の使用量",
+    "textGeneration": "テキスト生成",
+    "audioSynthesis": "オーディオ合成",
+    "unlimited": "無制限",
+    "upgradeToPro": "プロにアップグレード",
+    "unlimitedTextGeneration": "無制限のテキスト生成",
+    "unlimitedVoiceOver": "無制限のナレーション",
+    "anyDuration": "任意の期間",
+    "priorityQueue": "優先キュー",
+    "historyTitle": "生成履歴"
+  },
+  "notifications": {
+    "textGenerationError": "テキスト生成エラー",
+    "audioGenerationError": "オーディオ生成エラー",
+    "downloadTextError": "テキストのダウンロードに失敗しました",
+    "downloadVideoError": "動画のダウンロードに失敗しました",
+    "pendingJobFound": "未完了の生成が見つかりました（{{percent}}%）。続行しますか？",
+    "yes": "はい",
+    "no": "いいえ"
+  },
+  "languages": {
+    "russian": "ロシア語",
+    "english": "英語",
+    "german": "ドイツ語",
+    "chinese": "中国語",
+    "italian": "イタリア語",
+    "spanish": "スペイン語",
+    "french": "フランス語",
+    "portuguese": "ポルトガル語",
+    "japanese": "日本語",
+    "korean": "韓国語"
+  }
+}

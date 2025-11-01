@@ -1,0 +1,120 @@
+{
+  "nav": {
+    "generation": "Geração",
+    "dashboard": "Painel",
+    "admin": "Admin",
+    "profile": "Perfil",
+    "logout": "Sair",
+    "login": "Entrar"
+  },
+  "theme": {
+    "light": "Tema claro",
+    "dark": "Tema escuro",
+    "system": "Sistema"
+  },
+  "home": {
+    "title": "Geração de texto e narração",
+    "subtitle": "Crie textos com IA e narre-os com vozes realistas",
+    "aiGeneration": "Geração IA",
+    "manualInput": "Entrada manual",
+    "voiceSettings": "Configurações de voz",
+    "audioPlayer": "Reprodutor de áudio",
+    "history": "Histórico de gerações",
+    "videoHistory": "Histórico de vídeos",
+    "filesStoredPermanently": "Arquivos armazenados permanentemente"
+  },
+  "aiGeneration": {
+    "prompt": "Tema (prompt)",
+    "promptPlaceholder": "Descreva o tema para geração de texto...",
+    "duration": "Duração (minutos)",
+    "language": "Idioma",
+    "generateText": "Gerar texto",
+    "generatingText": "Gerando texto...",
+    "editText": "Edite o texto gerado se necessário:",
+    "synthesizeAudio": "Narrar texto",
+    "generatingAudio": "Gerando áudio..."
+  },
+  "manualInput": {
+    "title": "Digite seu texto",
+    "placeholder": "Digite o texto que deseja narrar...",
+    "language": "Idioma",
+    "synthesize": "Narrar texto",
+    "synthesizing": "Gerando áudio..."
+  },
+  "voiceSettings": {
+    "title": "Configurações de voz",
+    "voice": "Voz",
+    "selectVoice": "Selecionar voz",
+    "speed": "Velocidade",
+    "normal": "Normal",
+    "slow": "Lento",
+    "fast": "Rápido"
+  },
+  "audioPlayer": {
+    "title": "Áudio gerado",
+    "duration": "Duração",
+    "downloadAudio": "Baixar áudio",
+    "downloadText": "Baixar texto"
+  },
+  "videoGeneration": {
+    "title": "Geração de vídeo",
+    "type": "Tipo de vídeo",
+    "youtubeImages": "YouTube (Apresentação de imagens)",
+    "youtubeContinuous": "YouTube (Vídeo contínuo)",
+    "shorts": "Shorts (Vertical)",
+    "generateVideo": "Gerar vídeo",
+    "generatingVideo": "Gerando vídeo...",
+    "downloadVideo": "Baixar vídeo"
+  },
+  "progress": {
+    "loadingModel": "Carregando modelo",
+    "generatingSegments": "Gerando áudio",
+    "combining": "Combinando segmentos",
+    "saving": "Salvando arquivo",
+    "eta": "Tempo restante",
+    "segmentsPerSec": "seg/s"
+  },
+  "login": {
+    "title": "AI Voice Studio",
+    "subtitle": "Geração de texto e narração com IA",
+    "withGoogle": "Continuar com Google",
+    "agreeToTerms": "Ao continuar, você concorda com nossos Termos de Serviço e Política de Privacidade"
+  },
+  "dashboard": {
+    "welcome": "Bem-vindo",
+    "subscription": "Assinatura",
+    "free": "Grátis",
+    "pro": "Pro",
+    "usage": "Uso hoje",
+    "textGeneration": "Geração de texto",
+    "audioSynthesis": "Síntese de áudio",
+    "unlimited": "Ilimitado",
+    "upgradeToPro": "Atualizar para Pro",
+    "unlimitedTextGeneration": "Geração de texto ilimitada",
+    "unlimitedVoiceOver": "Narração ilimitada",
+    "anyDuration": "Qualquer duração",
+    "priorityQueue": "Fila prioritária",
+    "historyTitle": "Histórico de gerações"
+  },
+  "notifications": {
+    "textGenerationError": "Erro na geração de texto",
+    "audioGenerationError": "Erro na geração de áudio",
+    "downloadTextError": "Falha ao baixar o texto",
+    "downloadVideoError": "Falha ao baixar o vídeo",
+    "pendingJobFound": "Geração incompleta encontrada ({{percent}}%). Continuar?",
+    "yes": "Sim",
+    "no": "Não"
+  },
+  "languages": {
+    "russian": "Russo",
+    "english": "Inglês",
+    "german": "Alemão",
+    "chinese": "Chinês",
+    "italian": "Italiano",
+    "spanish": "Espanhol",
+    "french": "Francês",
+    "portuguese": "Português",
+    "japanese": "Japonês",
+    "korean": "Coreano"
+  }
+}

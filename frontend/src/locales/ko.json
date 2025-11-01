@@ -1,0 +1,120 @@
+{
+  "nav": {
+    "generation": "생성",
+    "dashboard": "대시보드",
+    "admin": "관리자",
+    "profile": "프로필",
+    "logout": "로그아웃",
+    "login": "로그인"
+  },
+  "theme": {
+    "light": "라이트 테마",
+    "dark": "다크 테마",
+    "system": "시스템"
+  },
+  "home": {
+    "title": "텍스트 생성 및 음성 합성",
+    "subtitle": "AI로 텍스트를 만들고 사실적인 음성으로 내레이션하세요",
+    "aiGeneration": "AI 생성",
+    "manualInput": "수동 입력",
+    "voiceSettings": "음성 설정",
+    "audioPlayer": "오디오 플레이어",
+    "history": "생성 기록",
+    "videoHistory": "비디오 기록",
+    "filesStoredPermanently": "파일이 영구적으로 저장됩니다"
+  },
+  "aiGeneration": {
+    "prompt": "주제(프롬프트)",
+    "promptPlaceholder": "텍스트 생성을 위한 주제를 설명하세요...",
+    "duration": "길이(분)",
+    "language": "언어",
+    "generateText": "텍스트 생성",
+    "generatingText": "텍스트 생성 중...",
+    "editText": "필요한 경우 생성된 텍스트를 편집하세요:",
+    "synthesizeAudio": "텍스트 음성 변환",
+    "generatingAudio": "오디오 생성 중..."
+  },
+  "manualInput": {
+    "title": "텍스트 입력",
+    "placeholder": "음성으로 변환할 텍스트를 입력하세요...",
+    "language": "언어",
+    "synthesize": "텍스트 음성 변환",
+    "synthesizing": "오디오 생성 중..."
+  },
+  "voiceSettings": {
+    "title": "음성 설정",
+    "voice": "음성",
+    "selectVoice": "음성 선택",
+    "speed": "속도",
+    "normal": "보통",
+    "slow": "느림",
+    "fast": "빠름"
+  },
+  "audioPlayer": {
+    "title": "생성된 오디오",
+    "duration": "길이",
+    "downloadAudio": "오디오 다운로드",
+    "downloadText": "텍스트 다운로드"
+  },
+  "videoGeneration": {
+    "title": "비디오 생성",
+    "type": "비디오 유형",
+    "youtubeImages": "YouTube(이미지 슬라이드쇼)",
+    "youtubeContinuous": "YouTube(연속 비디오)",
+    "shorts": "Shorts(세로)",
+    "generateVideo": "비디오 생성",
+    "generatingVideo": "비디오 생성 중...",
+    "downloadVideo": "비디오 다운로드"
+  },
+  "progress": {
+    "loadingModel": "모델 로딩 중",
+    "generatingSegments": "오디오 생성 중",
+    "combining": "세그먼트 결합 중",
+    "saving": "파일 저장 중",
+    "eta": "남은 시간",
+    "segmentsPerSec": "seg/s"
+  },
+  "login": {
+    "title": "AI Voice Studio",
+    "subtitle": "AI로 텍스트 생성 및 음성 합성",
+    "withGoogle": "Google로 계속하기",
+    "agreeToTerms": "계속하시면 서비스 약관 및 개인정보 보호정책에 동의하는 것으로 간주됩니다"
+  },
+  "dashboard": {
+    "welcome": "환영합니다",
+    "subscription": "구독",
+    "free": "무료",
+    "pro": "프로",
+    "usage": "오늘의 사용량",
+    "textGeneration": "텍스트 생성",
+    "audioSynthesis": "오디오 합성",
+    "unlimited": "무제한",
+    "upgradeToPro": "프로로 업그레이드",
+    "unlimitedTextGeneration": "무제한 텍스트 생성",
+    "unlimitedVoiceOver": "무제한 음성 변환",
+    "anyDuration": "모든 길이",
+    "priorityQueue": "우선 순위 대기열",
+    "historyTitle": "생성 기록"
+  },
+  "notifications": {
+    "textGenerationError": "텍스트 생성 오류",
+    "audioGenerationError": "오디오 생성 오류",
+    "downloadTextError": "텍스트 다운로드 실패",
+    "downloadVideoError": "비디오 다운로드 실패",
+    "pendingJobFound": "완료되지 않은 생성이 발견되었습니다({{percent}}%). 계속하시겠습니까?",
+    "yes": "예",
+    "no": "아니오"
+  },
+  "languages": {
+    "russian": "러시아어",
+    "english": "영어",
+    "german": "독일어",
+    "chinese": "중국어",
+    "italian": "이탈리아어",
+    "spanish": "스페인어",
+    "french": "프랑스어",
+    "portuguese": "포르투갈어",
+    "japanese": "일본어",
+    "korean": "한국어"
+  }
+}

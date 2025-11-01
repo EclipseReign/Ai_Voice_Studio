@@ -1,0 +1,120 @@
+{
+  "nav": {
+    "generation": "Генерация",
+    "dashboard": "Панель",
+    "admin": "Админ",
+    "profile": "Профиль",
+    "logout": "Выйти",
+    "login": "Войти"
+  },
+  "theme": {
+    "light": "Светлая тема",
+    "dark": "Темная тема",
+    "system": "Системная"
+  },
+  "home": {
+    "title": "Генерация и Озвучка",
+    "subtitle": "Создавайте тексты с помощью ИИ и озвучивайте их реалистичными голосами",
+    "aiGeneration": "ИИ Генерация",
+    "manualInput": "Ручной ввод",
+    "voiceSettings": "Настройки голоса",
+    "audioPlayer": "Аудио плеер",
+    "history": "История генераций",
+    "videoHistory": "История видео",
+    "filesStoredPermanently": "Файлы хранятся постоянно"
+  },
+  "aiGeneration": {
+    "prompt": "Тема (промпт)",
+    "promptPlaceholder": "Опишите тему для генерации текста...",
+    "duration": "Длительность (минуты)",
+    "language": "Язык",
+    "generateText": "Сгенерировать текст",
+    "generatingText": "Генерация текста...",
+    "editText": "Отредактируйте сгенерированный текст при необходимости:",
+    "synthesizeAudio": "Озвучить текст",
+    "generatingAudio": "Генерация аудио..."
+  },
+  "manualInput": {
+    "title": "Введите ваш текст",
+    "placeholder": "Введите текст, который хотите озвучить...",
+    "language": "Язык",
+    "synthesize": "Озвучить текст",
+    "synthesizing": "Генерация аудио..."
+  },
+  "voiceSettings": {
+    "title": "Настройки голоса",
+    "voice": "Голос",
+    "selectVoice": "Выберите голос",
+    "speed": "Скорость",
+    "normal": "Нормальная",
+    "slow": "Медленная",
+    "fast": "Быстрая"
+  },
+  "audioPlayer": {
+    "title": "Сгенерированное аудио",
+    "duration": "Длительность",
+    "downloadAudio": "Скачать аудио",
+    "downloadText": "Скачать текст"
+  },
+  "videoGeneration": {
+    "title": "Генерация видео",
+    "type": "Тип видео",
+    "youtubeImages": "YouTube (Слайдшоу изображений)",
+    "youtubeContinuous": "YouTube (Непрерывное видео)",
+    "shorts": "Shorts (Вертикальное)",
+    "generateVideo": "Сгенерировать видео",
+    "generatingVideo": "Генерация видео...",
+    "downloadVideo": "Скачать видео"
+  },
+  "progress": {
+    "loadingModel": "Загрузка модели",
+    "generatingSegments": "Генерация аудио",
+    "combining": "Объединение сегментов",
+    "saving": "Сохранение файла",
+    "eta": "Осталось",
+    "segmentsPerSec": "сег/с"
+  },
+  "login": {
+    "title": "AI Voice Studio",
+    "subtitle": "Генерация текстов и озвучка с помощью ИИ",
+    "withGoogle": "Войти через Google",
+    "agreeToTerms": "Продолжая, вы соглашаетесь с Условиями использования и Политикой конфиденциальности"
+  },
+  "dashboard": {
+    "welcome": "Добро пожаловать",
+    "subscription": "Подписка",
+    "free": "Бесплатно",
+    "pro": "Pro",
+    "usage": "Использование сегодня",
+    "textGeneration": "Генерация текста",
+    "audioSynthesis": "Синтез аудио",
+    "unlimited": "Безлимитно",
+    "upgradeToPro": "Обновить до Pro",
+    "unlimitedTextGeneration": "Безлимитная генерация текста",
+    "unlimitedVoiceOver": "Безлимитная озвучка",
+    "anyDuration": "Любая длительность",
+    "priorityQueue": "Приоритетная очередь",
+    "historyTitle": "История генераций"
+  },
+  "notifications": {
+    "textGenerationError": "Ошибка генерации текста",
+    "audioGenerationError": "Ошибка генерации аудио",
+    "downloadTextError": "Не удалось скачать текст",
+    "downloadVideoError": "Не удалось скачать видео",
+    "pendingJobFound": "Найдена незавершенная генерация ({{percent}}%). Продолжить?",
+    "yes": "Да",
+    "no": "Нет"
+  },
+  "languages": {
+    "russian": "Русский",
+    "english": "Английский",
+    "german": "Немецкий",
+    "chinese": "Китайский",
+    "italian": "Итальянский",
+    "spanish": "Испанский",
+    "french": "Французский",
+    "portuguese": "Португальский",
+    "japanese": "Японский",
+    "korean": "Корейский"
+  }
+}

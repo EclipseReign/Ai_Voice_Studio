@@ -1,0 +1,120 @@
+{
+  "nav": {
+    "generation": "Generierung",
+    "dashboard": "Dashboard",
+    "admin": "Admin",
+    "profile": "Profil",
+    "logout": "Abmelden",
+    "login": "Anmelden"
+  },
+  "theme": {
+    "light": "Helles Design",
+    "dark": "Dunkles Design",
+    "system": "System"
+  },
+  "home": {
+    "title": "Textgenerierung und Sprachausgabe",
+    "subtitle": "Erstellen Sie Texte mit KI und vertonen Sie sie mit realistischen Stimmen",
+    "aiGeneration": "KI-Generierung",
+    "manualInput": "Manuelle Eingabe",
+    "voiceSettings": "Spracheinstellungen",
+    "audioPlayer": "Audio-Player",
+    "history": "Generierungsverlauf",
+    "videoHistory": "Videoverlauf",
+    "filesStoredPermanently": "Dateien werden dauerhaft gespeichert"
+  },
+  "aiGeneration": {
+    "prompt": "Thema (Prompt)",
+    "promptPlaceholder": "Beschreiben Sie das Thema für die Textgenerierung...",
+    "duration": "Dauer (Minuten)",
+    "language": "Sprache",
+    "generateText": "Text generieren",
+    "generatingText": "Generiere Text...",
+    "editText": "Bearbeiten Sie den generierten Text bei Bedarf:",
+    "synthesizeAudio": "Text vertonen",
+    "generatingAudio": "Generiere Audio..."
+  },
+  "manualInput": {
+    "title": "Geben Sie Ihren Text ein",
+    "placeholder": "Geben Sie den Text ein, den Sie vertonen möchten...",
+    "language": "Sprache",
+    "synthesize": "Text vertonen",
+    "synthesizing": "Generiere Audio..."
+  },
+  "voiceSettings": {
+    "title": "Spracheinstellungen",
+    "voice": "Stimme",
+    "selectVoice": "Stimme auswählen",
+    "speed": "Geschwindigkeit",
+    "normal": "Normal",
+    "slow": "Langsam",
+    "fast": "Schnell"
+  },
+  "audioPlayer": {
+    "title": "Generiertes Audio",
+    "duration": "Dauer",
+    "downloadAudio": "Audio herunterladen",
+    "downloadText": "Text herunterladen"
+  },
+  "videoGeneration": {
+    "title": "Videogenerierung",
+    "type": "Videotyp",
+    "youtubeImages": "YouTube (Bilder-Diashow)",
+    "youtubeContinuous": "YouTube (Kontinuierliches Video)",
+    "shorts": "Shorts (Vertikal)",
+    "generateVideo": "Video generieren",
+    "generatingVideo": "Generiere Video...",
+    "downloadVideo": "Video herunterladen"
+  },
+  "progress": {
+    "loadingModel": "Modell laden",
+    "generatingSegments": "Audio generieren",
+    "combining": "Segmente kombinieren",
+    "saving": "Datei speichern",
+    "eta": "Verbleibend",
+    "segmentsPerSec": "Seg/s"
+  },
+  "login": {
+    "title": "AI Voice Studio",
+    "subtitle": "Textgenerierung und Sprachausgabe mit KI",
+    "withGoogle": "Mit Google fortfahren",
+    "agreeToTerms": "Indem Sie fortfahren, stimmen Sie unseren Nutzungsbedingungen und Datenschutzrichtlinien zu"
+  },
+  "dashboard": {
+    "welcome": "Willkommen",
+    "subscription": "Abonnement",
+    "free": "Kostenlos",
+    "pro": "Pro",
+    "usage": "Nutzung heute",
+    "textGeneration": "Textgenerierung",
+    "audioSynthesis": "Audio-Synthese",
+    "unlimited": "Unbegrenzt",
+    "upgradeToPro": "Auf Pro upgraden",
+    "unlimitedTextGeneration": "Unbegrenzte Textgenerierung",
+    "unlimitedVoiceOver": "Unbegrenzte Sprachausgabe",
+    "anyDuration": "Beliebige Dauer",
+    "priorityQueue": "Prioritätswarteschlange",
+    "historyTitle": "Generierungsverlauf"
+  },
+  "notifications": {
+    "textGenerationError": "Fehler bei der Textgenerierung",
+    "audioGenerationError": "Fehler bei der Audiogenerierung",
+    "downloadTextError": "Text konnte nicht heruntergeladen werden",
+    "downloadVideoError": "Video konnte nicht heruntergeladen werden",
+    "pendingJobFound": "Unvollständige Generierung gefunden ({{percent}}%). Fortfahren?",
+    "yes": "Ja",
+    "no": "Nein"
+  },
+  "languages": {
+    "russian": "Russisch",
+    "english": "Englisch",
+    "german": "Deutsch",
+    "chinese": "Chinesisch",
+    "italian": "Italienisch",
+    "spanish": "Spanisch",
+    "french": "Französisch",
+    "portuguese": "Portugiesisch",
+    "japanese": "Japanisch",
+    "korean": "Koreanisch"
+  }
+}

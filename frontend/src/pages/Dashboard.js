@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import { Crown, Zap, TrendingUp } from 'lucide-react';
+import { LanguageSwitcher } from '../components/LanguageSwitcher';
+import { ThemeSwitcher } from '../components/ThemeSwitcher';
 
 const Dashboard = () => {
+  const { t } = useTranslation();
   const { user, subscription, logout, refreshSubscription, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [history, setHistory] = useState([]);
@@ -113,13 +117,13 @@ const Dashboard = () => {
   const isPro = currentTier === 'pro' && subscription?.status === 'active';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-950 dark:to-slate-900">
       {/* Header */}
-      <div className="bg-white shadow-sm">
+      <div className="bg-white dark:bg-slate-900 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-4">
-              <h1 className="text-2xl font-bold text-gray-900">🎙️ AI Voice Studio</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">🎙️ AI Voice Studio</h1>
               {isAdmin && (
                 <span className="bg-purple-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
                   ADMIN
@@ -127,25 +131,28 @@ const Dashboard = () => {
               )}
             </div>
             <div className="flex items-center space-x-4">
+              {/* Language and Theme Switchers */}
+              <LanguageSwitcher variant="compact" />
+              <ThemeSwitcher variant="icon-only" showLabel={false} />
               <button
                 onClick={() => navigate('/')}
                 className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
               >
-                🎤 Генерация
+                🎤 {t('nav.generation')}
               </button>
               {isAdmin && (
                 <button
                   onClick={() => navigate('/admin')}
                   className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
                 >
-                  ⚙️ Admin
+                  ⚙️ {t('nav.admin')}
                 </button>
               )}
               <button
                 onClick={handleLogout}
                 className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
               >
-                Выйти
+                {t('nav.logout')}
               </button>
             </div>
           </div>

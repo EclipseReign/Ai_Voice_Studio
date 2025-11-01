@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../contexts/AuthContext";
 import { API } from "../App";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,8 +15,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { Loader2, Sparkles, Mic, Download, Clock, Volume2, User, LogOut } from "lucide-react";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 
 const HomePage = () => {
+  const { t } = useTranslation();
   const { user, subscription, logout, isAdmin, refreshSubscription } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("ai-generate");
@@ -611,23 +615,23 @@ const HomePage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-4">
-              <h1 className="text-xl font-bold text-gray-900">🎙️ AI Voice Studio</h1>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">🎙️ AI Voice Studio</h1>
               {subscription && (
                 <div className="flex items-center gap-3">
                   <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                     subscription.tier === 'pro'
-                      ? 'bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border border-purple-200'
-                      : 'bg-gray-100 text-gray-700'
+                      ? 'bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900 dark:to-pink-900 text-purple-800 dark:text-purple-200 border border-purple-200 dark:border-purple-700'
+                      : 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300'
                   }`}>
                     {subscription.tier === 'pro' ? '✨ Pro' : 'Free'}
                   </span>
                   {subscription.tier === 'free' && (
                     <div className="flex items-center gap-2 text-xs">
-                      <span className="text-gray-600">
+                      <span className="text-gray-600 dark:text-gray-400">
                         📝 {subscription.text_usage_today}/{subscription.text_limit}
                       </span>
-                      <span className="text-gray-400">•</span>
-                      <span className="text-gray-600">
+                      <span className="text-gray-400 dark:text-gray-600">•</span>
+                      <span className="text-gray-600 dark:text-gray-400">
                         🎵 {subscription.audio_usage_today}/{subscription.audio_limit}
                       </span>
                     </div>
@@ -636,6 +640,11 @@ const HomePage = () => {
               )}
             </div>
             <div className="flex items-center space-x-3">
+              {/* Language Switcher */}
+              <LanguageSwitcher variant="compact" />
+              
+              {/* Theme Switcher */}
+              <ThemeSwitcher variant="icon-only" showLabel={false} />
               {subscription && subscription.tier === 'free' && (
                 <button
                   onClick={() => navigate('/pricing')}
@@ -646,7 +655,7 @@ const HomePage = () => {
               )}
               <button
                 onClick={() => navigate('/dashboard')}
-                className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                className="flex items-center space-x-2 px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
               >
                 <User className="w-4 h-4" />
                 <span>{user?.name?.split(' ')[0] || 'Profile'}</span>

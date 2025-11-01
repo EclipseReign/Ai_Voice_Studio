@@ -1,0 +1,120 @@
+{
+  "nav": {
+    "generation": "Generation",
+    "dashboard": "Dashboard",
+    "admin": "Admin",
+    "profile": "Profile",
+    "logout": "Logout",
+    "login": "Login"
+  },
+  "theme": {
+    "light": "Light Theme",
+    "dark": "Dark Theme",
+    "system": "System"
+  },
+  "home": {
+    "title": "Text Generation and Voice-over",
+    "subtitle": "Create texts with AI and voice them with realistic voices",
+    "aiGeneration": "AI Generation",
+    "manualInput": "Manual Input",
+    "voiceSettings": "Voice Settings",
+    "audioPlayer": "Audio Player",
+    "history": "Generation History",
+    "videoHistory": "Video History",
+    "filesStoredPermanently": "Files stored permanently"
+  },
+  "aiGeneration": {
+    "prompt": "Topic (prompt)",
+    "promptPlaceholder": "Describe the topic for text generation...",
+    "duration": "Duration (minutes)",
+    "language": "Language",
+    "generateText": "Generate Text",
+    "generatingText": "Generating text...",
+    "editText": "Edit the generated text if needed:",
+    "synthesizeAudio": "Voice Text",
+    "generatingAudio": "Generating audio..."
+  },
+  "manualInput": {
+    "title": "Enter your text",
+    "placeholder": "Enter the text you want to voice...",
+    "language": "Language",
+    "synthesize": "Voice Text",
+    "synthesizing": "Generating audio..."
+  },
+  "voiceSettings": {
+    "title": "Voice Settings",
+    "voice": "Voice",
+    "selectVoice": "Select voice",
+    "speed": "Speed",
+    "normal": "Normal",
+    "slow": "Slow",
+    "fast": "Fast"
+  },
+  "audioPlayer": {
+    "title": "Generated Audio",
+    "duration": "Duration",
+    "downloadAudio": "Download Audio",
+    "downloadText": "Download Text"
+  },
+  "videoGeneration": {
+    "title": "Video Generation",
+    "type": "Video Type",
+    "youtubeImages": "YouTube (Images Slideshow)",
+    "youtubeContinuous": "YouTube (Continuous Video)",
+    "shorts": "Shorts (Vertical)",
+    "generateVideo": "Generate Video",
+    "generatingVideo": "Generating video...",
+    "downloadVideo": "Download Video"
+  },
+  "progress": {
+    "loadingModel": "Loading model",
+    "generatingSegments": "Generating audio",
+    "combining": "Combining segments",
+    "saving": "Saving file",
+    "eta": "ETA",
+    "segmentsPerSec": "seg/s"
+  },
+  "login": {
+    "title": "AI Voice Studio",
+    "subtitle": "Text generation and voice-over with AI",
+    "withGoogle": "Continue with Google",
+    "agreeToTerms": "By continuing, you agree to our Terms of Service and Privacy Policy"
+  },
+  "dashboard": {
+    "welcome": "Welcome",
+    "subscription": "Subscription",
+    "free": "Free",
+    "pro": "Pro",
+    "usage": "Usage Today",
+    "textGeneration": "Text Generation",
+    "audioSynthesis": "Audio Synthesis",
+    "unlimited": "Unlimited",
+    "upgradeToPro": "Upgrade to Pro",
+    "unlimitedTextGeneration": "Unlimited text generation",
+    "unlimitedVoiceOver": "Unlimited voice-over",
+    "anyDuration": "Any duration",
+    "priorityQueue": "Priority queue",
+    "historyTitle": "Generation History"
+  },
+  "notifications": {
+    "textGenerationError": "Text generation error",
+    "audioGenerationError": "Audio generation error",
+    "downloadTextError": "Failed to download text",
+    "downloadVideoError": "Failed to download video",
+    "pendingJobFound": "Found incomplete generation ({{percent}}%). Continue?",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "languages": {
+    "russian": "Russian",
+    "english": "English",
+    "german": "German",
+    "chinese": "Chinese",
+    "italian": "Italian",
+    "spanish": "Spanish",
+    "french": "French",
+    "portuguese": "Portuguese",
+    "japanese": "Japanese",
+    "korean": "Korean"
+  }
+}

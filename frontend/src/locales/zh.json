@@ -1,0 +1,120 @@
+{
+  "nav": {
+    "generation": "生成",
+    "dashboard": "仪表板",
+    "admin": "管理员",
+    "profile": "个人资料",
+    "logout": "登出",
+    "login": "登录"
+  },
+  "theme": {
+    "light": "浅色主题",
+    "dark": "深色主题",
+    "system": "系统"
+  },
+  "home": {
+    "title": "文本生成和配音",
+    "subtitle": "使用AI创建文本并用逼真的声音配音",
+    "aiGeneration": "AI生成",
+    "manualInput": "手动输入",
+    "voiceSettings": "语音设置",
+    "audioPlayer": "音频播放器",
+    "history": "生成历史",
+    "videoHistory": "视频历史",
+    "filesStoredPermanently": "文件永久存储"
+  },
+  "aiGeneration": {
+    "prompt": "主题（提示）",
+    "promptPlaceholder": "描述文本生成的主题...",
+    "duration": "时长（分钟）",
+    "language": "语言",
+    "generateText": "生成文本",
+    "generatingText": "正在生成文本...",
+    "editText": "如需要，请编辑生成的文本：",
+    "synthesizeAudio": "配音文本",
+    "generatingAudio": "正在生成音频..."
+  },
+  "manualInput": {
+    "title": "输入您的文本",
+    "placeholder": "输入您想要配音的文本...",
+    "language": "语言",
+    "synthesize": "配音文本",
+    "synthesizing": "正在生成音频..."
+  },
+  "voiceSettings": {
+    "title": "语音设置",
+    "voice": "声音",
+    "selectVoice": "选择声音",
+    "speed": "速度",
+    "normal": "正常",
+    "slow": "慢速",
+    "fast": "快速"
+  },
+  "audioPlayer": {
+    "title": "生成的音频",
+    "duration": "时长",
+    "downloadAudio": "下载音频",
+    "downloadText": "下载文本"
+  },
+  "videoGeneration": {
+    "title": "视频生成",
+    "type": "视频类型",
+    "youtubeImages": "YouTube（图片幻灯片）",
+    "youtubeContinuous": "YouTube（连续视频）",
+    "shorts": "Shorts（竖版）",
+    "generateVideo": "生成视频",
+    "generatingVideo": "正在生成视频...",
+    "downloadVideo": "下载视频"
+  },
+  "progress": {
+    "loadingModel": "加载模型",
+    "generatingSegments": "生成音频",
+    "combining": "合并片段",
+    "saving": "保存文件",
+    "eta": "剩余时间",
+    "segmentsPerSec": "段/秒"
+  },
+  "login": {
+    "title": "AI Voice Studio",
+    "subtitle": "使用AI进行文本生成和配音",
+    "withGoogle": "使用Google继续",
+    "agreeToTerms": "继续即表示您同意我们的服务条款和隐私政策"
+  },
+  "dashboard": {
+    "welcome": "欢迎",
+    "subscription": "订阅",
+    "free": "免费",
+    "pro": "专业版",
+    "usage": "今日使用量",
+    "textGeneration": "文本生成",
+    "audioSynthesis": "音频合成",
+    "unlimited": "无限制",
+    "upgradeToPro": "升级到专业版",
+    "unlimitedTextGeneration": "无限文本生成",
+    "unlimitedVoiceOver": "无限配音",
+    "anyDuration": "任意时长",
+    "priorityQueue": "优先队列",
+    "historyTitle": "生成历史"
+  },
+  "notifications": {
+    "textGenerationError": "文本生成错误",
+    "audioGenerationError": "音频生成错误",
+    "downloadTextError": "下载文本失败",
+    "downloadVideoError": "下载视频失败",
+    "pendingJobFound": "发现未完成的生成（{{percent}}%）。继续？",
+    "yes": "是",
+    "no": "否"
+  },
+  "languages": {
+    "russian": "俄语",
+    "english": "英语",
+    "german": "德语",
+    "chinese": "中文",
+    "italian": "意大利语",
+    "spanish": "西班牙语",
+    "french": "法语",
+    "portuguese": "葡萄牙语",
+    "japanese": "日语",
+    "korean": "韩语"
+  }
+}

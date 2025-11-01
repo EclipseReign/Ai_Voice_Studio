@@ -1,0 +1,120 @@
+{
+  "nav": {
+    "generation": "Generazione",
+    "dashboard": "Dashboard",
+    "admin": "Admin",
+    "profile": "Profilo",
+    "logout": "Esci",
+    "login": "Accedi"
+  },
+  "theme": {
+    "light": "Tema chiaro",
+    "dark": "Tema scuro",
+    "system": "Sistema"
+  },
+  "home": {
+    "title": "Generazione di testo e doppiaggio",
+    "subtitle": "Crea testi con l'IA e doppialo con voci realistiche",
+    "aiGeneration": "Generazione IA",
+    "manualInput": "Inserimento manuale",
+    "voiceSettings": "Impostazioni vocali",
+    "audioPlayer": "Lettore audio",
+    "history": "Cronologia generazioni",
+    "videoHistory": "Cronologia video",
+    "filesStoredPermanently": "File memorizzati permanentemente"
+  },
+  "aiGeneration": {
+    "prompt": "Argomento (prompt)",
+    "promptPlaceholder": "Descrivi l'argomento per la generazione del testo...",
+    "duration": "Durata (minuti)",
+    "language": "Lingua",
+    "generateText": "Genera testo",
+    "generatingText": "Generazione del testo...",
+    "editText": "Modifica il testo generato se necessario:",
+    "synthesizeAudio": "Doppia il testo",
+    "generatingAudio": "Generazione audio..."
+  },
+  "manualInput": {
+    "title": "Inserisci il tuo testo",
+    "placeholder": "Inserisci il testo che vuoi doppiare...",
+    "language": "Lingua",
+    "synthesize": "Doppia il testo",
+    "synthesizing": "Generazione audio..."
+  },
+  "voiceSettings": {
+    "title": "Impostazioni vocali",
+    "voice": "Voce",
+    "selectVoice": "Seleziona voce",
+    "speed": "Velocità",
+    "normal": "Normale",
+    "slow": "Lento",
+    "fast": "Veloce"
+  },
+  "audioPlayer": {
+    "title": "Audio generato",
+    "duration": "Durata",
+    "downloadAudio": "Scarica audio",
+    "downloadText": "Scarica testo"
+  },
+  "videoGeneration": {
+    "title": "Generazione video",
+    "type": "Tipo di video",
+    "youtubeImages": "YouTube (Presentazione immagini)",
+    "youtubeContinuous": "YouTube (Video continuo)",
+    "shorts": "Shorts (Verticale)",
+    "generateVideo": "Genera video",
+    "generatingVideo": "Generazione video...",
+    "downloadVideo": "Scarica video"
+  },
+  "progress": {
+    "loadingModel": "Caricamento modello",
+    "generatingSegments": "Generazione audio",
+    "combining": "Combinazione segmenti",
+    "saving": "Salvataggio file",
+    "eta": "Tempo rimanente",
+    "segmentsPerSec": "seg/s"
+  },
+  "login": {
+    "title": "AI Voice Studio",
+    "subtitle": "Generazione di testo e doppiaggio con IA",
+    "withGoogle": "Continua con Google",
+    "agreeToTerms": "Continuando, accetti i nostri Termini di servizio e l'Informativa sulla privacy"
+  },
+  "dashboard": {
+    "welcome": "Benvenuto",
+    "subscription": "Abbonamento",
+    "free": "Gratuito",
+    "pro": "Pro",
+    "usage": "Utilizzo oggi",
+    "textGeneration": "Generazione testo",
+    "audioSynthesis": "Sintesi audio",
+    "unlimited": "Illimitato",
+    "upgradeToPro": "Aggiorna a Pro",
+    "unlimitedTextGeneration": "Generazione testo illimitata",
+    "unlimitedVoiceOver": "Doppiaggio illimitato",
+    "anyDuration": "Qualsiasi durata",
+    "priorityQueue": "Coda prioritaria",
+    "historyTitle": "Cronologia generazioni"
+  },
+  "notifications": {
+    "textGenerationError": "Errore generazione testo",
+    "audioGenerationError": "Errore generazione audio",
+    "downloadTextError": "Impossibile scaricare il testo",
+    "downloadVideoError": "Impossibile scaricare il video",
+    "pendingJobFound": "Trovata generazione incompleta ({{percent}}%). Continuare?",
+    "yes": "Sì",
+    "no": "No"
+  },
+  "languages": {
+    "russian": "Russo",
+    "english": "Inglese",
+    "german": "Tedesco",
+    "chinese": "Cinese",
+    "italian": "Italiano",
+    "spanish": "Spagnolo",
+    "french": "Francese",
+    "portuguese": "Portoghese",
+    "japanese": "Giapponese",
+    "korean": "Coreano"
+  }
+}
