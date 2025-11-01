@@ -609,9 +609,9 @@ const HomePage = () => {
   };
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-slate-800 transition-colors duration-300">
       {/* Top Navigation Bar */}
-      <div className="bg-white shadow-sm border-b">
+      <div className="bg-white dark:bg-slate-900 shadow-sm border-b border-gray-200 dark:border-slate-700 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-4">
@@ -676,10 +676,9 @@ const HomePage = () => {
       <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
         <div className="text-center mb-8 pt-4">
-          <h2 className="text-4xl lg:text-5xl font-bold mb-3 bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent" data-testid="main-heading">
-            Генерация и Озвучка
+          <h2 className="text-4xl lg:text-5xl font-bold mb-3 bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-blue-400 dark:to-cyan-400 bg-clip-text text-transparent" data-testid="main-heading">
           </h2>
-          <p className="text-lg text-slate-600">Создавайте тексты с помощью ИИ и озвучивайте их реалистичными голосами</p>
+          <p className="text-lg text-slate-600 dark:text-slate-300">Создавайте тексты с помощью ИИ и озвучивайте их реалистичными голосами</p>
         </div>
         
         <div className="grid lg:grid-cols-3 gap-6">
