@@ -59,15 +59,24 @@
   "videoGeneration": {
     "title": "Video Generation",
     "type": "Video Type",
-    "youtubeImages": "YouTube (Images Slideshow)",
-    "youtubeContinuous": "YouTube (Continuous Video)",
-    "shorts": "Shorts (Vertical)",
+    "description": "Create video from text and audio. This will take 5 to 60 minutes depending on duration.",
+    "youtubeImages": "📺 YouTube (image slideshow)",
+    "youtubeContinuous": "🎞️ YouTube (continuous video like Sora)",
+    "shorts": "📱 Shorts/Reels/TikTok format",
+    "youtubeImagesDesc": "Video from generated images with smooth transitions (16:9)",
+    "youtubeContinuousDesc": "Continuous AI video",
+    "shortsDesc": "Vertical video for social media (9:16)",
+    "youtubeImagesShort": "📺 YouTube (images)",
+    "youtubeContinuousShort": "🎞️ YouTube (continuous)",
+    "shortsShort": "📱 Shorts/Reels",
     "generateVideo": "Generate Video",
     "generatingVideo": "Generating video...",
     "downloadVideo": "Download Video",
     "createVideo": "Create Video",
     "generatedVideo": "Generated Video",
-    "duration": "Duration"
+    "duration": "Duration",
+    "stage": "Stage",
+    "videosCount": "videos"
   },
   "progress": {
     "loadingModel": "Loading model",
@@ -81,7 +90,11 @@
     "preparingContinuation": "Continuing generation...",
     "preparing": "Preparing...",
     "startingVideoGeneration": "Starting video generation...",
-    "videoReady": "Video ready!"
+    "videoReady": "Video ready!",
+    "generationTime": "Generation time",
+    "speed": "Speed",
+    "realTime": "real time",
+    "loading": "Loading..."
   },
   "login": {
     "title": "AI Voice Studio",
@@ -132,7 +145,11 @@
     "videoCreated": "Video created successfully!",
     "failedToGenerateVideo": "Failed to generate video",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "deleteFile": "Delete file",
+    "confirmCancelSubscription": "Are you sure you want to cancel Pro subscription?",
+    "subscriptionCancelled": "Subscription cancelled. Pro access will remain until the end of paid period.",
+    "subscriptionCancellationError": "Subscription cancellation error"
   },
   "languages": {
     "russian": "Russian",
@@ -145,5 +162,27 @@
     "portuguese": "Portuguese",
     "japanese": "Japanese",
     "korean": "Korean"
+  },
+  "timeframe": {
+    "hour": "Per Hour",
+    "day": "Per Day",
+    "week": "Per Week",
+    "month": "Per Month",
+    "perHour": "per hour",
+    "perDay": "per day",
+    "perWeek": "per week",
+    "perMonth": "per month"
+  },
+  "admin": {
+    "textGeneration": "Text",
+    "audioGeneration": "Audio",
+    "videoGeneration": "Video",
+    "totalGenerations": "Total",
+    "subscription": "Subscription",
+    "durationMonths": "Duration (months)"
+  },
+  "pricing": {
+    "textUsage": "Text",
+    "today": "today"
   }
 }

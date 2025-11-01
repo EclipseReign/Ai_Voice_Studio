@@ -39,16 +39,16 @@ const Dashboard = () => {
   };
 
   const handleCancelSubscription = async () => {
-    if (!window.confirm('Вы уверены, что хотите отменить Pro подписку?')) return;
+    if (!window.confirm(t('notifications.confirmCancelSubscription'))) return;
     
     try {
       await axios.post(`${API}/subscription/cancel`, {}, {
         withCredentials: true
       });
-      alert('Подписка отменена. Pro доступ сохранится до конца оплаченного периода.');
+      alert(t('notifications.subscriptionCancelled'));
       await refreshSubscription();
     } catch (error) {
-      alert('Ошибка отмены подписки');
+      alert(t('notifications.subscriptionCancellationError'));
     }
   };
 
@@ -83,7 +83,7 @@ const Dashboard = () => {
       document.body.removeChild(a);
     } catch (error) {
       console.error("Error downloading text:", error);
-      alert('Ошибка при скачивании текста');
+      alert(t('notifications.failedToDownloadText'));
     }
   };
 

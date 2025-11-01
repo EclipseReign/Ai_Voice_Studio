@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { API } from '../App';
 import axios from 'axios';
 import { Check, X, Zap, Crown, Loader2 } from 'lucide-react';
 
 const PricingPage = () => {
+  const { t } = useTranslation();
   const { user, subscription, fetchSubscription } = useAuth();
   const navigate = useNavigate();
   const [config, setConfig] = useState(null);
@@ -189,7 +191,7 @@ const PricingPage = () => {
             {currentTier === 'free' && subscription && (
               <div className="bg-purple-50 rounded-lg p-4 mb-4">
                 <p className="text-sm text-gray-700">
-                  <span className="font-semibold">Текст:</span> {subscription.text_usage_today}/{subscription.text_limit} сегодня
+                  <span className="font-semibold">{t('pricing.textUsage')}:</span> {subscription.text_usage_today}/{subscription.text_limit} {t('pricing.today')}
                 </p>
                 <p className="text-sm text-gray-700">
                   <span className="font-semibold">Озвучка:</span> {subscription.audio_usage_today}/{subscription.audio_limit} сегодня

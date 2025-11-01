@@ -1094,15 +1094,15 @@ const HomePage = () => {
                   <div className="space-y-1 mt-2">
                     {audioDuration > 0 && (
                       <p className="text-sm text-slate-600">
-                        Длительность: {Math.floor(audioDuration / 60)}:{String(Math.floor(audioDuration % 60)).padStart(2, '0')}
+                        {t('audioPlayer.duration')}: {Math.floor(audioDuration / 60)}:{String(Math.floor(audioDuration % 60)).padStart(2, '0')}
                       </p>
                     )}
                     {generationTime > 0 && (
                       <div className="flex gap-4 text-xs text-slate-500">
-                        <span>⏱️ Время генерации: {generationTime.toFixed(1)}с</span>
+                        <span>⏱️ {t('progress.generationTime')}: {generationTime.toFixed(1)}с</span>
                         {audioSpeed > 0 && (
                           <span className="text-green-600 font-semibold">
-                            ⚡ Скорость: {audioSpeed.toFixed(1)}x реального времени
+                            ⚡ {t('progress.speed')}: {audioSpeed.toFixed(1)}x {t('progress.realTime')}
                           </span>
                         )}
                       </div>
@@ -1119,7 +1119,7 @@ const HomePage = () => {
                     <a href={audioUrl} download className="w-full">
                       <Button className="w-full" variant="outline" data-testid="download-button">
                         <Download className="w-4 h-4 mr-2" />
-                        Скачать аудио
+                        {t('audioPlayer.downloadAudio')}
                       </Button>
                     </a>
                     <Button 
@@ -1128,7 +1128,7 @@ const HomePage = () => {
                       onClick={() => currentAudioId && downloadText(currentAudioId)}
                       disabled={!currentAudioId}
                     >
-                      📄 Скачать текст
+                      📄 {t('audioPlayer.downloadText')}
                     </Button>
                   </div>
                 </CardContent>
@@ -1139,34 +1139,34 @@ const HomePage = () => {
             {audioUrl && (
               <Card className="backdrop-blur-sm bg-white/80 border-slate-200 shadow-xl">
                 <CardHeader>
-                  <CardTitle>🎬 Создать видео</CardTitle>
+                  <CardTitle>🎬 {t('videoGeneration.createVideo')}</CardTitle>
                   <CardDescription>
-                    Создайте видео из текста и аудио. Это займет от 5 до 60 минут в зависимости от длительности.
+                    {t('videoGeneration.description')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="video-type">Тип видео</Label>
+                    <Label htmlFor="video-type">{t('videoGeneration.type')}</Label>
                     <Select value={videoType} onValueChange={setVideoType} disabled={isGeneratingVideo}>
                       <SelectTrigger id="video-type" className="mt-2">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="youtube_images">
-                          📺 YouTube (картинки со сменой)
+                          {t('videoGeneration.youtubeImages')}
                         </SelectItem>
                         <SelectItem value="youtube_continuous">
-                          🎞️ YouTube (непрерывное видео как Sora)
+                          {t('videoGeneration.youtubeContinuous')}
                         </SelectItem>
                         <SelectItem value="shorts">
-                          📱 Shorts/Reels/TikTok формат
+                          {t('videoGeneration.shorts')}
                         </SelectItem>
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-slate-500 mt-2">
-                      {videoType === "youtube_images" && "Видео из сгенерированных картинок с плавными переходами (16:9)"}
-                      {videoType === "youtube_continuous" && "Непрерывное AI-видео (очень медленно без GPU, ~1-2 часа)"}
-                      {videoType === "shorts" && "Вертикальное видео для соцсетей (9:16)"}
+                      {videoType === "youtube_images" && t('videoGeneration.youtubeImagesDesc')}
+                      {videoType === "youtube_continuous" && t('videoGeneration.youtubeContinuousDesc')}
+                      {videoType === "shorts" && t('videoGeneration.shortsDesc')}
                     </p>
                   </div>
                   
@@ -1179,7 +1179,7 @@ const HomePage = () => {
                       <Progress value={videoProgress} className="h-2" />
                       {videoStage && (
                         <p className="text-xs text-slate-600">
-                          Этап: {videoStage}
+                          {t('videoGeneration.stage')}: {videoStage}
                         </p>
                       )}
                     </div>
@@ -1238,8 +1238,8 @@ const HomePage = () => {
               <Card className="backdrop-blur-sm bg-white/80 border-slate-200 shadow-xl" data-testid="history-card">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
-                    <span>История генераций</span>
-                    <span className="text-xs text-slate-500">Файлы хранятся постоянно</span>
+                    <span>{t('home.history')}</span>
+                    <span className="text-xs text-slate-500">{t('home.filesStoredPermanently')}</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -1254,12 +1254,12 @@ const HomePage = () => {
                               size="sm" 
                               variant="ghost"
                               onClick={() => downloadText(item.id)}
-                              title="Скачать текст"
+                              title={t('audioPlayer.downloadText')}
                             >
                               📄
                             </Button>
                             <a href={API + item.audio_url} download>
-                              <Button size="sm" variant="ghost" data-testid={'history-download-' + item.id} title="Скачать аудио">
+                              <Button size="sm" variant="ghost" data-testid={'history-download-' + item.id} title={t('audioPlayer.downloadAudio')}>
                                 <Download className="w-3 h-3" />
                               </Button>
                             </a>
@@ -1267,7 +1267,7 @@ const HomePage = () => {
                               size="sm" 
                               variant="ghost"
                               onClick={() => deleteAudioFile(item.id)}
-                              title="Удалить файл"
+                              title={t('notifications.deleteFile')}
                               className="text-red-500 hover:text-red-700"
                             >
                               🗑️
@@ -1285,8 +1285,8 @@ const HomePage = () => {
               <Card className="backdrop-blur-sm bg-white/80 border-slate-200 shadow-xl">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
-                    <span>🎬 История видео</span>
-                    <span className="text-xs text-slate-500">{videoHistory.length} видео</span>
+                    <span>🎬 {t('home.videoHistory')}</span>
+                    <span className="text-xs text-slate-500">{videoHistory.length} {t('videoGeneration.videosCount')}</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -1295,9 +1295,9 @@ const HomePage = () => {
                       <div key={video.id} className="p-3 bg-slate-50 rounded-lg border border-slate-200">
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-sm font-medium text-slate-700">
-                            {video.video_type === 'youtube_images' && '📺 YouTube (картинки)'}
-                            {video.video_type === 'youtube_continuous' && '🎞️ YouTube (непрерывное)'}
-                            {video.video_type === 'shorts' && '📱 Shorts/Reels'}
+                            {video.video_type === 'youtube_images' && t('videoGeneration.youtubeImagesShort')}
+                            {video.video_type === 'youtube_continuous' && t('videoGeneration.youtubeContinuousShort')}
+                            {video.video_type === 'shorts' && t('videoGeneration.shortsShort')}
                           </span>
                           {video.duration && (
                             <span className="text-xs text-slate-500">
@@ -1312,7 +1312,7 @@ const HomePage = () => {
                               size="sm" 
                               variant="ghost"
                               onClick={() => downloadVideo(video.id)}
-                              title="Скачать видео"
+                              title={t('videoGeneration.downloadVideo')}
                             >
                               🎬
                             </Button>

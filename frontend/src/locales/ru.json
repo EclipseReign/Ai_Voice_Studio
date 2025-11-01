@@ -59,9 +59,16 @@
   "videoGeneration": {
     "title": "Генерация видео",
     "type": "Тип видео",
-    "youtubeImages": "YouTube (Слайдшоу изображений)",
-    "youtubeContinuous": "YouTube (Непрерывное видео)",
-    "shorts": "Shorts (Вертикальное)",
+    "description": "Создайте видео из текста и аудио. Это займет от 5 до 60 минут в зависимости от длительности.",
+    "youtubeImages": "📺 YouTube (картинки со сменой)",
+    "youtubeContinuous": "🎞️ YouTube (непрерывное видео как Sora)",
+    "shorts": "📱 Shorts/Reels/TikTok формат",
+    "youtubeImagesDesc": "Видео из сгенерированных картинок с плавными переходами (16:9)",
+    "youtubeContinuousDesc": "Непрерывное AI-видео",
+    "shortsDesc": "Вертикальное видео для соцсетей (9:16)",
+    "youtubeImagesShort": "📺 YouTube (картинки)",
+    "youtubeContinuousShort": "🎞️ YouTube (непрерывное)",
+    "shortsShort": "📱 Shorts/Reels",
     "generateVideo": "Сгенерировать видео",
     "generatingVideo": "Генерация видео...",
     "downloadVideo": "Скачать видео",
@@ -81,7 +88,11 @@
     "preparingContinuation": "Продолжение генерации...",
     "preparing": "Подготовка...",
     "startingVideoGeneration": "Начало генерации видео...",
-    "videoReady": "Видео готово!"
+    "videoReady": "Видео готово!",
+    "generationTime": "Время генерации",
+    "speed": "Скорость",
+    "realTime": "реального времени",
+    "loading": "Загрузка..."
   },
   "login": {
     "title": "AI Voice Studio",
@@ -95,7 +106,7 @@
     "free": "Бесплатно",
     "pro": "Pro",
     "usage": "Использование сегодня",
-    "textGeneration": "flex itemsГенерация текста",
+    "textGeneration": "Генерация текста",
     "audioSynthesis": "Синтез аудио",
     "unlimited": "Безлимитно",
     "upgradeToPro": "Обновить до Pro",
@@ -132,7 +143,11 @@
     "videoCreated": "Видео успешно создано!",
     "failedToGenerateVideo": "Не удалось сгенерировать видео",
     "yes": "Да",
-    "no": "Нет"
+    "no": "Нет",
+    "deleteFile": "Удалить файл",
+    "confirmCancelSubscription": "Вы уверены, что хотите отменить Pro подписку?",
+    "subscriptionCancelled": "Подписка отменена. Pro доступ сохранится до конца оплаченного периода.",
+    "subscriptionCancellationError": "Ошибка отмены подписки"
   },
   "languages": {
     "russian": "Русский",
@@ -145,5 +160,27 @@
     "portuguese": "Португальский",
     "japanese": "Японский",
     "korean": "Корейский"
+  },
+  "timeframe": {
+    "hour": "За час",
+    "day": "За день",
+    "week": "За неделю",
+    "month": "За месяц",
+    "perHour": "за час",
+    "perDay": "за день",
+    "perWeek": "за неделю",
+    "perMonth": "за месяц"
+  },
+  "admin": {
+    "textGeneration": "Текст",
+    "audioGeneration": "Аудио",
+    "videoGeneration": "Видео",
+    "totalGenerations": "Всего",
+    "subscription": "Подписка",
+    "durationMonths": "Продолжительность (месяцы)"
+  },
+  "pricing": {
+    "textUsage": "Текст",
+    "today": "сегодня"
   }
 }

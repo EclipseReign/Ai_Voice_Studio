@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 
 const AdminDashboard = () => {
+  const { t } = useTranslation();
   const { user, isAdmin, logout, refreshSubscription } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
@@ -183,10 +185,10 @@ const AdminDashboard = () => {
                   onChange={(e) => setTimeframe(e.target.value)}
                   className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 >
-                  <option value="hour">За час</option>
-                  <option value="day">За день</option>
-                  <option value="week">За неделю</option>
-                  <option value="month">За месяц</option>
+                  <option value="hour">{t('timeframe.hour')}</option>
+                  <option value="day">{t('timeframe.day')}</option>
+                  <option value="week">{t('timeframe.week')}</option>
+                  <option value="month">{t('timeframe.month')}</option>
                 </select>
               </div>
               
@@ -196,7 +198,7 @@ const AdminDashboard = () => {
                     {detailedStats.period_stats.text}
                   </div>
                   <div className="text-sm text-blue-600 mb-2">
-                    📝 Текст ({timeframe === 'hour' ? 'за час' : timeframe === 'day' ? 'за день' : timeframe === 'week' ? 'за неделю' : 'за месяц'})
+                    📝 {t('admin.textGeneration')} ({t(`timeframe.per${timeframe.charAt(0).toUpperCase() + timeframe.slice(1)}`)})
                   </div>
                   <div className="text-xs text-blue-500">
                     Всего: {detailedStats.all_time_stats.text}
@@ -208,7 +210,7 @@ const AdminDashboard = () => {
                     {detailedStats.period_stats.audio}
                   </div>
                   <div className="text-sm text-green-600 mb-2">
-                    🎙️ Аудио ({timeframe === 'hour' ? 'за час' : timeframe === 'day' ? 'за день' : timeframe === 'week' ? 'за неделю' : 'за месяц'})
+                    🎙️ {t('admin.audioGeneration')} ({t(`timeframe.per${timeframe.charAt(0).toUpperCase() + timeframe.slice(1)}`)})
                   </div>
                   <div className="text-xs text-green-500">
                     Всего: {detailedStats.all_time_stats.audio}
@@ -220,7 +222,7 @@ const AdminDashboard = () => {
                     {detailedStats.period_stats.video}
                   </div>
                   <div className="text-sm text-purple-600 mb-2">
-                    🎬 Видео ({timeframe === 'hour' ? 'за час' : timeframe === 'day' ? 'за день' : timeframe === 'week' ? 'за неделю' : 'за месяц'})
+                    🎬 {t('admin.videoGeneration')} ({t(`timeframe.per${timeframe.charAt(0).toUpperCase() + timeframe.slice(1)}`)})
                   </div>
                   <div className="text-xs text-purple-500">
                     Всего: {detailedStats.all_time_stats.video}
@@ -232,7 +234,7 @@ const AdminDashboard = () => {
                     {detailedStats.period_stats.total}
                   </div>
                   <div className="text-sm text-indigo-600 mb-2">
-                    📊 Всего ({timeframe === 'hour' ? 'за час' : timeframe === 'day' ? 'за день' : timeframe === 'week' ? 'за неделю' : 'за месяц'})
+                    📊 {t('admin.totalGenerations')} ({t(`timeframe.per${timeframe.charAt(0).toUpperCase() + timeframe.slice(1)}`)})
                   </div>
                   <div className="text-xs text-indigo-500">
                     Всего: {detailedStats.all_time_stats.total}
@@ -264,7 +266,7 @@ const AdminDashboard = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Продолжительность (месяцы)
+                  {t('admin.durationMonths')}
                 </label>
                 <input
                   type="number"
