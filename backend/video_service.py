@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 #POLLINATIONS_API_URL = "https://image.pollinations.ai/prompt"
 
 #POLLINATIONS_SEMAPHORE = asyncio.Semaphore(3)
-GEMINI_API_KEY = os.environ.get('EMERGENT_LLM_KEY')
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 if not GEMINI_API_KEY:
     logger.warning("⚠️ EMERGENT_LLM_KEY not found in environment! Image generation will fail.")
 
