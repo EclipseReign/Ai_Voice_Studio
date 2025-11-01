@@ -7,6 +7,8 @@ const AdminDashboard = () => {
   const { user, isAdmin, logout, refreshSubscription } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
+  const [detailedStats, setDetailedStats] = useState(null);
+  const [timeframe, setTimeframe] = useState('day');
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [grantEmail, setGrantEmail] = useState('');
@@ -21,16 +23,18 @@ const AdminDashboard = () => {
       return;
     }
     fetchData();
-  }, [isAdmin, navigate]);
+  }, [isAdmin, navigate, timeframe]);
 
   const fetchData = async () => {
     try {
-      const [statsRes, usersRes] = await Promise.all([
+      const [statsRes, usersRes, detailedRes] = await Promise.all([
         axios.get(`${API}/admin/stats`, { withCredentials: true }),
-        axios.get(`${API}/admin/users`, { withCredentials: true })
+        axios.get(`${API}/admin/users`, { withCredentials: true }),
+        axios.get(`${API}/admin/stats/detailed?timeframe=${timeframe}`, { withCredentials: true })
       ]);
       setStats(statsRes.data);
       setUsers(usersRes.data.users);
+      setDetailedStats(detailedRes.data);
     } catch (error) {
       console.error('Error fetching admin data:', error);
       alert('Ошибка загрузки данных');
@@ -166,6 +170,77 @@ const AdminDashboard = () => {
               <div className="text-gray-600">Всего генераций</div>
             </div>
           </div>
+        )}
+
+        {/* Detailed Generation Statistics */}
+        {detailedStats && (
+          <>
+            <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-gray-900">📊 Статистика генераций</h3>
+                <select 
+                  value={timeframe}
+                  onChange={(e) => setTimeframe(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                >
+                  <option value="hour">За час</option>
+                  <option value="day">За день</option>
+                  <option value="week">За неделю</option>
+                  <option value="month">За месяц</option>
+                </select>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
+                  <div className="text-2xl font-bold text-blue-700 mb-1">
+                    {detailedStats.period_stats.text}
+                  </div>
+                  <div className="text-sm text-blue-600 mb-2">
+                    📝 Текст ({timeframe === 'hour' ? 'за час' : timeframe === 'day' ? 'за день' : timeframe === 'week' ? 'за неделю' : 'за месяц'})
+                  </div>
+                  <div className="text-xs text-blue-500">
+                    Всего: {detailedStats.all_time_stats.text}
+                  </div>
+                </div>
+                
+                <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
+                  <div className="text-2xl font-bold text-green-700 mb-1">
+                    {detailedStats.period_stats.audio}
+                  </div>
+                  <div className="text-sm text-green-600 mb-2">
+                    🎙️ Аудио ({timeframe === 'hour' ? 'за час' : timeframe === 'day' ? 'за день' : timeframe === 'week' ? 'за неделю' : 'за месяц'})
+                  </div>
+                  <div className="text-xs text-green-500">
+                    Всего: {detailedStats.all_time_stats.audio}
+                  </div>
+                </div>
+                
+                <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
+                  <div className="text-2xl font-bold text-purple-700 mb-1">
+                    {detailedStats.period_stats.video}
+                  </div>
+                  <div className="text-sm text-purple-600 mb-2">
+                    🎬 Видео ({timeframe === 'hour' ? 'за час' : timeframe === 'day' ? 'за день' : timeframe === 'week' ? 'за неделю' : 'за месяц'})
+                  </div>
+                  <div className="text-xs text-purple-500">
+                    Всего: {detailedStats.all_time_stats.video}
+                  </div>
+                </div>
+                
+                <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg p-4 border border-indigo-200">
+                  <div className="text-2xl font-bold text-indigo-700 mb-1">
+                    {detailedStats.period_stats.total}
+                  </div>
+                  <div className="text-sm text-indigo-600 mb-2">
+                    📊 Всего ({timeframe === 'hour' ? 'за час' : timeframe === 'day' ? 'за день' : timeframe === 'week' ? 'за неделю' : 'за месяц'})
+                  </div>
+                  <div className="text-xs text-indigo-500">
+                    Всего: {detailedStats.all_time_stats.total}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
         )}
 
         {/* Grant/Revoke Pro */}
