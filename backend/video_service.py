@@ -4,6 +4,15 @@ Handles all video generation logic including:
 1. YouTube format with image slideshow
 2. YouTube format with continuous video (Sora-like)
 3. Shorts format for TikTok/Reels
+
+Uses BATCH_SIZE=5 to create tasks, but POLLINATIONS_SEMAPHORE (limit=3) 
+    ensures only 3 images are actually generated in parallel globally.
+    This allows multiple clients to share the Pollinations.ai quota fairly.
+    
+    Example: 
+    - 1 client: uses all 3 slots (fast)
+    - 2 clients: ~1-2 slots each (fair)
+    - 3+ clients: ~1 slot each (shared)
 """
 
 import os
@@ -21,6 +30,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 POLLINATIONS_API_URL = "https://image.pollinations.ai/prompt"
+
+POLLINATIONS_SEMAPHORE = asyncio.Semaphore(3)
 
 # Video settings by type
 VIDEO_SETTINGS = {
@@ -112,15 +123,17 @@ async def generate_image_with_pollinations(prompt: str, width: int, height: int,
                 logger.info(f"Waiting {delay}s before retry {attempt+1}/{max_retries}...")
                 await asyncio.sleep(delay)
             logger.info(f"Pollinations.ai attempt {attempt+1}/{max_retries} for: {prompt[:50]}...")
-            async with session.get(api_url, timeout=120) as response:
-                if response.status == 200:
-                    image_data = await response.read()
-                    logger.info(f"✅ Pollinations.ai generated image successfully ({len(image_data)} bytes)")
-                    return image_data
-                else:
-                    err_text = await response.text()
-                    logger.warning(f"Pollinations.ai attempt {attempt+1}/{max_retries} failed: {response.status} - {err_text[:100]}")
-                    continue
+            async with POLLINATIONS_SEMAPHORE:
+                logger.debug(f"Acquired Pollinations semaphore slot (attempt {attempt+1})")
+                async with session.get(api_url, timeout=120) as response:
+                    if response.status == 200:
+                        image_data = await response.read()
+                        logger.info(f"✅ Pollinations.ai generated image successfully ({len(image_data)} bytes)")
+                        return image_data
+                    else:
+                        err_text = await response.text()
+                        logger.warning(f"Pollinations.ai attempt {attempt+1}/{max_retries} failed: {response.status} - {err_text[:100]}")
+                        continue
         except asyncio.TimeoutError:
             logger.warning(f"Timeout on Pollinations.ai attempt {attempt+1}/{max_retries}")
             continue
@@ -197,7 +210,7 @@ async def generate_images_for_video(
     os.makedirs(output_dir, exist_ok=True)
     BATCH_SIZE = 5  # Generate 5 images in parallel
     total_images = len(prompts)
-    
+    logger.info(f"🎨 Starting image generation: {total_images} images total, BATCH_SIZE={BATCH_SIZE}, global semaphore limit=3")
     # Dictionary to store results with index as key (preserves order)
     results_dict = {}
     

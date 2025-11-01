@@ -1990,7 +1990,7 @@ async def synthesize_audio_with_progress(
                             try:
                                 batch_files = await asyncio.wait_for(
                                     asyncio.gather(*tasks, return_exceptions=True), 
-                                    timeout=300
+                                    timeout=1800
                                 )
                                 # Filter out exceptions from results
                                 batch_files = [f for f in batch_files if isinstance(f, Path)]
