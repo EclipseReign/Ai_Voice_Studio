@@ -496,6 +496,9 @@ class GenerationHistory(BaseModel):
     voice: Optional[str] = None
     language: str
     created_at: str
+    text_id: Optional[str] = None
+    video_id: Optional[str] = None
+    duration: Optional[float] = None
 
 # NEW: Model for generation job state (for recovery after crashes)
 class GenerationJob(BaseModel):
@@ -2586,6 +2589,11 @@ async def get_history(current_user: User = Depends(get_current_user)):
         
         history = []
         for gen in audio_gens:
+            # Check if video exists for this audio
+            video = await db.video_generations.find_one(
+                {"audio_id": gen["id"], "user_id": current_user.id, "status": "completed"},
+                {"_id": 0, "id": 1}
+            )
             history.append(GenerationHistory(
                 id=gen["id"],
                 text=gen["text"][:100] + "..." if len(gen["text"]) > 100 else gen["text"],
