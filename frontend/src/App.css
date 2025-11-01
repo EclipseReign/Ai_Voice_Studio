@@ -4,6 +4,7 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 body {
@@ -11,6 +12,12 @@ body {
   background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #dbeafe 100%);
   min-height: 100vh;
   color: #1e293b;
+}
+
+/* Dark theme background */
+body.dark {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+  color: #f1f5f9;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -37,5 +44,18 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 ::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
   background: #64748b;
 }

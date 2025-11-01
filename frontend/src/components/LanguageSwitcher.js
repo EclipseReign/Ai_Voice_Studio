@@ -34,13 +34,18 @@ export const LanguageSwitcher = ({ variant = 'default' }) => {
   if (variant === 'compact') {
     return (
       <button
-        onClick={() => {
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
           const currentIndex = languages.findIndex((lang) => lang.code === i18n.language);
           const nextIndex = (currentIndex + 1) % languages.length;
-          changeLanguage(languages[nextIndex].code);
+          const nextLang = languages[nextIndex].code;
+          console.log('Switching language from', i18n.language, 'to', nextLang);
+          changeLanguage(nextLang);
         }}
-        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
         title="Change language"
+        type="button"
       >
         <Globe className="w-4 h-4" />
         <span className="text-sm font-medium">{currentLanguage.flag} {currentLanguage.name}</span>
