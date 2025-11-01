@@ -64,7 +64,10 @@
     "shorts": "Shorts (Vertical)",
     "generateVideo": "Generate Video",
     "generatingVideo": "Generating video...",
-    "downloadVideo": "Download Video"
+    "downloadVideo": "Download Video",
+    "createVideo": "Create Video",
+    "generatedVideo": "Generated Video",
+    "duration": "Duration"
   },
   "progress": {
     "loadingModel": "Loading model",
@@ -72,7 +75,13 @@
     "combining": "Combining segments",
     "saving": "Saving file",
     "eta": "ETA",
-    "segmentsPerSec": "seg/s"
+    "segmentsPerSec": "seg/s",
+    "startingGeneration": "Starting generation...",
+    "done": "Done!",
+    "preparingContinuation": "Continuing generation...",
+    "preparing": "Preparing...",
+    "startingVideoGeneration": "Starting video generation...",
+    "videoReady": "Video ready!"
   },
   "login": {
     "title": "AI Voice Studio",
@@ -102,6 +111,26 @@
     "downloadTextError": "Failed to download text",
     "downloadVideoError": "Failed to download video",
     "pendingJobFound": "Found incomplete generation ({{percent}}%). Continue?",
+    "continue": "Continue",
+    "continueGeneration": "Continuing generation...",
+    "failedToContinue": "Failed to continue generation",
+    "fileDeleted": "File deleted ({{mb}} MB freed)",
+    "failedToDelete": "Failed to delete file",
+    "textDownloaded": "Text downloaded!",
+    "failedToDownloadText": "Failed to download text",
+    "videoDownloaded": "Video downloaded!",
+    "failedToDownloadVideo": "Failed to download video",
+    "enterPrompt": "Please enter a prompt",
+    "enterText": "Please enter text for voice-over",
+    "selectVoice": "Please select a voice",
+    "createTextAndAudioFirst": "Create text and audio first",
+    "failedToLoadVoices": "Failed to load voices",
+    "textGenerated": "Generated {{count}} words!",
+    "failedToGenerateText": "Failed to generate text",
+    "audioGenerated": "Audio generated successfully!",
+    "failedToGenerateAudio": "Failed to generate audio",
+    "videoCreated": "Video created successfully!",
+    "failedToGenerateVideo": "Failed to generate video",
     "yes": "Yes",
     "no": "No"
   },

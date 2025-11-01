@@ -109,7 +109,7 @@ const HomePage = () => {
       }
     } catch (error) {
       console.error("Error fetching voices:", error);
-      toast.error("Не удалось загрузить голоса");
+      toast.error(t('notifications.failedToLoadVoices'));
     }
   };
   
@@ -151,11 +151,11 @@ const HomePage = () => {
         
         // Show toast notification about recovery option
         toast.info(
-          `Найдена незавершенная генерация (${pendingJob.progress_percent}%). Продолжить?`,
+          t('notifications.pendingJobFound', { percent: pendingJob.progress_percent }),
           {
             duration: 10000,
             action: {
-              label: 'Продолжить',
+              label: t('notifications.continue'),
               onClick: () => resumeJob(pendingJob.job_id)
             }
           }
@@ -176,11 +176,11 @@ const HomePage = () => {
         { withCredentials: true }
       );
       
-      toast.success("Продолжаем генерацию...");
+      toast.success(t('notifications.continueGeneration'));
       // The backend will continue generating and send SSE updates
     } catch (error) {
       console.error("Error resuming job:", error);
-      toast.error("Не удалось продолжить генерацию");
+      toast.error(t('notifications.failedToContinue'));
     }
   };
   
@@ -193,11 +193,11 @@ const HomePage = () => {
         { withCredentials: true }
       );
       
-      toast.success(`Файл удален (${response.data.freed_mb} MB освобождено)`);
+      toast.success(t('notifications.fileDeleted', { mb: response.data.freed_mb }));
       fetchHistory(); // Refresh history
     } catch (error) {
       console.error("Error deleting audio:", error);
-      toast.error("Не удалось удалить файл");
+      toast.error(t('notifications.failedToDelete'));
     }
   };
   
@@ -223,10 +223,10 @@ const HomePage = () => {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       
-      toast.success("Текст скачан!");
+      toast.success(t('notifications.textDownloaded'));
     } catch (error) {
       console.error("Error downloading text:", error);
-      toast.error("Не удалось скачать текст");
+      toast.error(t('notifications.failedToDownloadText'));
     }
   };
 
@@ -252,22 +252,22 @@ const HomePage = () => {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       
-      toast.success("Видео скачано!");
+      toast.success(t('notifications.videoDownloaded'));
     } catch (error) {
       console.error("Error downloading video:", error);
-      toast.error("Не удалось скачать видео");
+      toast.error(t('notifications.failedToDownloadVideo'));
     }
   };
   
   const handleGenerateText = async () => {
     if (!prompt.trim()) {
-      toast.error("Пожалуйста, введите промпт");
+      toast.error(t('notifications.enterPrompt'));
       return;
     }
     
     setIsGeneratingText(true);
     setTextProgress(0);
-    setTextProgressMessage("Начало генерации...");
+    setTextProgressMessage(t('progress.startingGeneration'));
     setGeneratedText("");
     
     try {
@@ -320,15 +320,15 @@ const HomePage = () => {
                 }
               } else if (data.type === 'complete') {
                 setTextProgress(100);
-                setTextProgressMessage("Готово!");
+                setTextProgressMessage(t('progress.done'));
                 setGeneratedText(data.text);
                 setCurrentTextId(data.text_id); // Save text ID for video generation
-                toast.success(`Сгенерировано ${data.word_count} слов!`);
+                toast.success(t('notifications.textGenerated', { count: data.word_count }));
                 setIsGeneratingText(false);
                 // Refresh subscription to update usage count
                 await refreshSubscription();
               } else if (data.type === 'error') {
-                toast.error(data.message || "Ошибка генерации текста");
+                toast.error(data.message || t('notifications.textGenerationError'))
                 setIsGeneratingText(false);
                 await refreshSubscription();
               }
@@ -341,7 +341,7 @@ const HomePage = () => {
       
     } catch (error) {
       console.error("Error generating text:", error);
-      toast.error("Не удалось сгенерировать текст");
+      toast.error(t('notifications.failedToGenerateText'));
       setIsGeneratingText(false);
     }
   };
@@ -351,18 +351,18 @@ const HomePage = () => {
     const text = textOverride || (activeTab === "ai-generate" ? generatedText : manualText);
     
     if (!text.trim()) {
-      toast.error("Пожалуйста, введите текст для озвучки");
+      toast.error(t('notifications.enterText'));
       return;
     }
     
     if (!selectedVoice) {
-      toast.error("Пожалуйста, выберите голос");
+      toast.error(t('notifications.selectVoice'));
       return;
     }
     
     setIsSynthesizing(true);
     setAudioProgress(0);
-    setAudioProgressMessage(jobId ? "Продолжение генерации..." : "Подготовка...");
+    setAudioProgressMessage(jobId ? t('progress.preparingContinuation') : t('progress.preparing'));
     setAudioUrl(null);
     setAudioEta("");
     setAudioSpeed(0);
@@ -463,7 +463,7 @@ const HomePage = () => {
                 }
               } else if (data.type === 'complete') {
                 setAudioProgress(100);
-                setAudioProgressMessage(data.message || "Готово!");
+                setAudioProgressMessage(data.message || t('progress.done'));
                 setAudioUrl(API + data.audio_url);
                 setAudioDuration(data.duration || 0);
                 setCurrentAudioId(data.audio_id);
@@ -474,7 +474,7 @@ const HomePage = () => {
                 if (data.speed) {
                   setAudioSpeed(data.speed);
                 }
-                toast.success(data.message || "Аудио успешно сгенерировано!");
+                toast.success(data.message || t('notifications.audioGenerated'));
                 fetchHistory();
                 setIsSynthesizing(false);
                 
@@ -496,20 +496,20 @@ const HomePage = () => {
       
     } catch (error) {
       console.error("Error synthesizing audio:", error);
-      toast.error("Не удалось сгенерировать аудио");
+      toast.error(t('notifications.failedToGenerateAudio'));
       setIsSynthesizing(false);
     }
   };
   
   const handleGenerateVideo = async () => {
     if (!currentTextId || !currentAudioId) {
-      toast.error("Сначала создайте текст и аудио");
+      toast.error(t('notifications.createTextAndAudioFirst'));
       return;
     }
     
     setIsGeneratingVideo(true);
     setVideoProgress(0);
-    setVideoProgressMessage("Начало генерации видео...");
+    setVideoProgressMessage(t('progress.startingVideoGeneration'));
     setVideoUrl(null);
     setVideoStage("");
     
@@ -568,10 +568,10 @@ const HomePage = () => {
                 setVideoStage(data.stage);
               } else if (data.type === 'complete') {
                 setVideoProgress(100);
-                setVideoProgressMessage("Видео готово!");
+                setVideoProgressMessage(t('progress.videoReady'));
                 setVideoUrl(API + data.video_url);
                 setVideoDuration(data.duration || 0);
-                toast.success("Видео успешно создано!");
+                toast.success(t('notifications.videoCreated'));
                 fetchVideoHistory();
                 setIsGeneratingVideo(false);
               } else if (data.type === 'error') {
@@ -587,7 +587,7 @@ const HomePage = () => {
       
     } catch (error) {
       console.error("Error generating video:", error);
-      toast.error("Не удалось сгенерировать видео");
+      toast.error(t('notifications.failedToGenerateVideo'));
       setIsGeneratingVideo(false);
     }
   };
@@ -641,7 +641,7 @@ const HomePage = () => {
             </div>
             <div className="flex items-center space-x-3">
               {/* Language Switcher */}
-              <LanguageSwitcher variant="compact" />
+              <LanguageSwitcher />
               
               {/* Theme Switcher */}
               <ThemeSwitcher variant="icon-only" showLabel={false} />
@@ -678,7 +678,7 @@ const HomePage = () => {
         <div className="text-center mb-8 pt-4">
           <h2 className="text-4xl lg:text-5xl font-bold mb-3 bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-blue-400 dark:to-cyan-400 bg-clip-text text-transparent" data-testid="main-heading">
           </h2>
-          <p className="text-lg text-slate-600 dark:text-slate-300">Создавайте тексты с помощью ИИ и озвучивайте их реалистичными голосами</p>
+          <p className="text-lg text-slate-600 dark:text-slate-300">{t('home.subtitle')}</p>
         </div>
         
         <div className="grid lg:grid-cols-3 gap-6">
@@ -771,12 +771,12 @@ const HomePage = () => {
                         {isGeneratingText ? (
                           <>
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Генерация текста...
+                            {t('aiGeneration.generatingText')}
                           </>
                         ) : (
                           <>
                             <Sparkles className="w-4 h-4 mr-2" />
-                            Сгенерировать текст
+                            {t('aiGeneration.generateText')}
                           </>
                         )}
                       </Button>
@@ -815,12 +815,12 @@ const HomePage = () => {
                             {isSynthesizing ? (
                               <>
                                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                Генерация аудио...
+                                {t('aiGeneration.generatingAudio')}
                               </>
                             ) : (
                               <>
                                 <Volume2 className="w-4 h-4 mr-2" />
-                                Озвучить текст
+                                {t('aiGeneration.synthesizeAudio')}
                               </>
                             )}
                           </Button>
@@ -878,10 +878,10 @@ const HomePage = () => {
                               {/* Stage Indicator */}
                               {audioStage && (
                                 <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
-                                  {audioStage === 'loading_model' && '📥 Загрузка модели'}
-                                  {audioStage === 'generating_segments' && '🎙️ Генерация аудио'}
-                                  {audioStage === 'combining' && '🔗 Объединение сегментов'}
-                                  {audioStage === 'saving' && '💾 Сохранение файла'}
+                                  {audioStage === 'loading_model' && `📥 ${t('progress.loadingModel')}`}
+                                  {audioStage === 'generating_segments' && `🎙️ ${t('progress.generatingSegments')}`}
+                                  {audioStage === 'combining' && `🔗 ${t('progress.combining')}`}
+                                  {audioStage === 'saving' && `💾 ${t('progress.saving')}`}
                                 </div>
                               )}
                             </div>
@@ -941,12 +941,12 @@ const HomePage = () => {
                         {isSynthesizing ? (
                           <>
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Генерация аудио...
+                            {t('manualInput.synthesizing')}
                           </>
                         ) : (
                           <>
                             <Volume2 className="w-4 h-4 mr-2" />
-                            Озвучить текст
+                            {t('manualInput.synthesize')}
                           </>
                         )}
                       </Button>
@@ -1004,10 +1004,10 @@ const HomePage = () => {
                           {/* Stage Indicator */}
                           {audioStage && (
                             <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
-                              {audioStage === 'loading_model' && '📥 Загрузка модели'}
-                              {audioStage === 'generating_segments' && '🎙️ Генерация аудио'}
-                              {audioStage === 'combining' && '🔗 Объединение сегментов'}
-                              {audioStage === 'saving' && '💾 Сохранение файла'}
+                              {audioStage === 'loading_model' && `📥 ${t('progress.loadingModel')}`}
+                              {audioStage === 'generating_segments' && `🎙️ ${t('progress.generatingSegments')}`}
+                              {audioStage === 'combining' && `🔗 ${t('progress.combining')}`}
+                              {audioStage === 'saving' && `💾 ${t('progress.saving')}`}
                             </div>
                           )}
                         </div>
@@ -1194,12 +1194,12 @@ const HomePage = () => {
                     {isGeneratingVideo ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Генерация видео...
+                        {t('videoGeneration.generatingVideo')}
                       </>
                     ) : (
                       <>
                         <Sparkles className="w-4 h-4 mr-2" />
-                        Создать видео
+                        {t('videoGeneration.createVideo')}
                       </>
                     )}
                   </Button>
@@ -1211,10 +1211,10 @@ const HomePage = () => {
             {videoUrl && (
               <Card className="backdrop-blur-sm bg-white/80 border-slate-200 shadow-xl">
                 <CardHeader>
-                  <CardTitle>🎬 Сгенерированное видео</CardTitle>
+                  <CardTitle>🎬 {t('videoGeneration.generatedVideo')}</CardTitle>
                   {videoDuration > 0 && (
                     <p className="text-sm text-slate-600">
-                      Длительность: {Math.floor(videoDuration / 60)}:{String(Math.floor(videoDuration % 60)).padStart(2, '0')}
+                      {t('videoGeneration.duration')}: {Math.floor(videoDuration / 60)}:{String(Math.floor(videoDuration % 60)).padStart(2, '0')}
                     </p>
                   )}
                 </CardHeader>
@@ -1226,7 +1226,7 @@ const HomePage = () => {
                   <a href={videoUrl} download className="w-full">
                     <Button className="w-full" variant="outline">
                       <Download className="w-4 h-4 mr-2" />
-                      Скачать видео
+                      {t('videoGeneration.downloadVideo')}
                     </Button>
                   </a>
                 </CardContent>

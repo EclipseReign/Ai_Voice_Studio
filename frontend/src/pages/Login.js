@@ -35,7 +35,7 @@ const Login = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-950 dark:to-slate-900 flex items-center justify-center p-4">
       {/* Language and Theme Switchers - Top Right */}
       <div className="absolute top-4 right-4 flex items-center gap-3">
-        <LanguageSwitcher variant="compact" />
+        <LanguageSwitcher />
         <ThemeSwitcher variant="icon-only" showLabel={false} />
       </div>
 

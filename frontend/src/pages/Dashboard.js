@@ -132,7 +132,7 @@ const Dashboard = () => {
             </div>
             <div className="flex items-center space-x-4">
               {/* Language and Theme Switchers */}
-              <LanguageSwitcher variant="compact" />
+              <LanguageSwitcher />
               <ThemeSwitcher variant="icon-only" showLabel={false} />
               <button
                 onClick={() => navigate('/')}
