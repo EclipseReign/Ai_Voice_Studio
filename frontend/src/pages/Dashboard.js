@@ -58,6 +58,56 @@ const Dashboard = () => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const downloadText = async (audioId) => {
+    try {
+      const response = await fetch(`${API}/text/download/${audioId}`, {
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Download failed');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `text_${audioId}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Error downloading text:", error);
+      alert('Ошибка при скачивании текста');
+    }
+  };
+
+  const downloadVideo = async (videoId) => {
+    try {
+      const response = await fetch(`${API}/video/download/${videoId}`, {
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Download failed');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `video_${videoId}.mp4`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Error downloading video:", error);
+      alert('Ошибка при скачивании видео');
+    }
+  };
+
   // Get current tier (tier is the new field name, fallback to plan for backwards compatibility)
   const currentTier = subscription?.tier || subscription?.plan || 'free';
   const isPro = currentTier === 'pro' && subscription?.status === 'active';
@@ -262,6 +312,11 @@ const Dashboard = () => {
                             АУДИО
                           </span>
                         )}
+                        {item.video_id && (
+                          <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-semibold">
+                            ВИДЕО
+                          </span>
+                        )}
                         {item.duration && (
                           <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-semibold">
                             {formatDuration(item.duration)}
@@ -275,15 +330,36 @@ const Dashboard = () => {
                         </p>
                       )}
                     </div>
-                    {item.audio_url && (
-                      <a
-                        href={`${API}${item.audio_url}`}
-                        download
-                        className="ml-4 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex-shrink-0"
-                      >
-                        ⬇️ Скачать
-                      </a>
-                    )}
+                    <div className="ml-4 flex flex-col gap-2">
+                      {/* Download Audio Button */}
+                      {item.audio_url && (
+                        <a
+                          href={`${API}${item.audio_url}`}
+                          download
+                          className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex-shrink-0 text-center text-sm"
+                        >
+                          🎵 Аудио
+                          </a>
+                        )}
+                        
+                        {/* Download Text Button */}
+                        <button
+                          onClick={() => downloadText(item.id)}
+                          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex-shrink-0 text-sm"
+                        >
+                          📝 Текст
+                        </button>
+                        
+                        {/* Download Video Button (only if video exists) */}
+                        {item.video_id && (
+                          <button
+                            onClick={() => downloadVideo(item.video_id)}
+                            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex-shrink-0 text-sm"
+                          >
+                            🎬 Видео
+                          </button>
+                        )}
+                    </div>
                   </div>
                 </div>
               ))}
