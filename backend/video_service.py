@@ -28,11 +28,14 @@ from pathlib import Path
 import logging
 
 logger = logging.getLogger(__name__)
-
+'''
 POLLINATIONS_API_URL = "https://image.pollinations.ai/prompt"
-
 POLLINATIONS_SEMAPHORE = asyncio.Semaphore(3)
+'''
+DEEPAI_API_URL = "https://api.deepai.org/api/text2img"
+DEEPAI_API_KEY = os.environ.get("DEEPAI_API_KEY", "")
 
+DEEPAI_SEMAPHORE = asyncio.Semaphore(5)  # 5 concurrent requests
 # Video settings by type
 VIDEO_SETTINGS = {
     "youtube_images": {
@@ -107,14 +110,24 @@ async def generate_image_prompts_from_text(text: str, num_prompts: int, video_ty
 
 
 
-async def generate_image_with_pollinations(prompt: str, width: int, height: int, session: aiohttp.ClientSession) -> bytes:
-    """Generate image using Hugging Face Inference API with model fallback and retries."""
+async def generate_image_with_deepai(prompt: str, width: int, height: int, session: aiohttp.ClientSession) -> bytes:
+    """
+    Generate image using DeepAI Text2Image API with retry logic.
     
-    max_retries = 5  # Increased retries for unstable API
-    base_retry_delay = 5  # Base delay for exponential backoff
-    import urllib.parse
-    encoded_prompt = urllib.parse.quote(prompt)
-    api_url = f"{POLLINATIONS_API_URL}/{encoded_prompt}?width={width}&height={height}&nologo=true&enhance=true"
+    Args:
+        prompt: Text description for image generation
+        width: Image width (DeepAI supports various sizes)
+        height: Image height
+        session: aiohttp session for API calls
+        
+    Returns:
+        Image data as bytes
+    """
+    if not DEEPAI_API_KEY:
+        raise Exception("DEEPAI_API_KEY not found in environment variables")
+    
+    max_retries = 3
+    base_retry_delay = 2
     for attempt in range(max_retries):
         try:
             # Exponential backoff: 5s, 10s, 20s, 40s, 80s
@@ -122,25 +135,56 @@ async def generate_image_with_pollinations(prompt: str, width: int, height: int,
                 delay = base_retry_delay * (2 ** (attempt - 1))
                 logger.info(f"Waiting {delay}s before retry {attempt+1}/{max_retries}...")
                 await asyncio.sleep(delay)
-            logger.info(f"Pollinations.ai attempt {attempt+1}/{max_retries} for: {prompt[:50]}...")
-            async with POLLINATIONS_SEMAPHORE:
-                logger.debug(f"Acquired Pollinations semaphore slot (attempt {attempt+1})")
-                async with session.get(api_url, timeout=120) as response:
+            logger.info(f"DeepAI attempt {attempt+1}/{max_retries} for: {prompt[:50]}...")
+            
+            async with DEEPAI_SEMAPHORE:
+                logger.debug(f"Acquired DeepAI semaphore slot (attempt {attempt+1})")
+                
+                # DeepAI expects form data with 'text' field
+                form_data = aiohttp.FormData()
+                form_data.add_field('text', prompt)
+                # Note: DeepAI doesn't support custom width/height in free tier
+                # It generates standard sized images
+                
+                headers = {'api-key': DEEPAI_API_KEY}
+                
+                async with session.post(
+                    DEEPAI_API_URL,
+                    data=form_data,
+                    headers=headers,
+                    timeout=60
+                ) as response:
                     if response.status == 200:
-                        image_data = await response.read()
-                        logger.info(f"✅ Pollinations.ai generated image successfully ({len(image_data)} bytes)")
-                        return image_data
+                        result = await response.json()
+                        
+                        # DeepAI returns JSON with 'output_url' field
+                        if 'output_url' in result:
+                            image_url = result['output_url']
+                            logger.debug(f"Got image URL from DeepAI: {image_url}")
+                            
+                            # Download the image
+                            async with session.get(image_url, timeout=30) as img_response:
+                                if img_response.status == 200:
+                                    image_data = await img_response.read()
+                                    logger.info(f"✅ DeepAI generated image successfully ({len(image_data)} bytes)")
+                                    return image_data
+                                else:
+                                    logger.warning(f"Failed to download image from {image_url}: {img_response.status}")
+                                    continue
+                        else:
+                            logger.warning(f"DeepAI response missing 'output_url': {result}")
+                            continue
                     else:
                         err_text = await response.text()
-                        logger.warning(f"Pollinations.ai attempt {attempt+1}/{max_retries} failed: {response.status} - {err_text[:100]}")
+                        logger.warning(f"DeepAI attempt {attempt+1}/{max_retries} failed: {response.status} - {err_text[:200]}")
                         continue
         except asyncio.TimeoutError:
-            logger.warning(f"Timeout on Pollinations.ai attempt {attempt+1}/{max_retries}")
+            logger.warning(f"Timeout on DeepAI attempt {attempt+1}/{max_retries}")
             continue
         except Exception as e:
-            logger.error(f"Error on Pollinations.ai attempt {attempt+1}/{max_retries}: {e}")
+            logger.error(f"Error on DeepAI attempt {attempt+1}/{max_retries}: {e}")
             continue
-    raise Exception(f"Pollinations.ai image generation failed after {max_retries} attempts")
+    raise Exception(f"DeepAI image generation failed after {max_retries} attempts")
 
 async def generate_single_image(
     index: int,
@@ -170,7 +214,7 @@ async def generate_single_image(
         logger.info(f"Generating image {index + 1}: {prompt[:50]}...")
         
         # Generate image (already has 3 retry attempts built-in)
-        image_data = await generate_image_with_pollinations(prompt, width, height, session)
+        image_data = await generate_image_with_deepai(prompt, width, height, session)
         
         # Save image
         with open(image_path, "wb") as f:
@@ -208,9 +252,9 @@ async def generate_images_for_video(
         List of image file paths
     """
     os.makedirs(output_dir, exist_ok=True)
-    BATCH_SIZE = 3  # Generate 5 images in parallel
+    BATCH_SIZE = 5  # Generate 5 images in parallel
     total_images = len(prompts)
-    logger.info(f"🎨 Starting image generation: {total_images} images total, BATCH_SIZE={BATCH_SIZE}, global semaphore limit=3")
+    logger.info(f"🎨 Starting image generation with DeepAI: {total_images} images total, BATCH_SIZE={BATCH_SIZE}, global semaphore limit=5")
     # Dictionary to store results with index as key (preserves order)
     results_dict = {}
     
@@ -260,7 +304,7 @@ async def generate_images_for_video(
                 
                 # Small delay between batches to avoid overwhelming the API
             if batch_end < total_images:
-                await asyncio.sleep(3)
+                await asyncio.sleep(2)
     
     # Sort results by index to maintain correct order
     sorted_indices = sorted(results_dict.keys())
