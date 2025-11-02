@@ -75,6 +75,11 @@ const HomePage = () => {
   const [currentTextId, setCurrentTextId] = useState(null); // Track text ID for video generation
   const [videoHistory, setVideoHistory] = useState([]);
   
+  const getVoicesByLanguage = useMemo(() => {
+    const langCode = language.split('-')[0].toLowerCase();
+    return voices.filter(v => v.locale.toLowerCase().startsWith(langCode));
+  }, [language, voices]);
+
   // Fetch voices on mount
   useEffect(() => {
     fetchVoices();
@@ -607,11 +612,6 @@ const HomePage = () => {
       console.error("Error fetching video history:", error);
     }
   };
-  
-  const getVoicesByLanguage = useMemo(() => {
-    const langCode = language.split('-')[0].toLowerCase();
-    return voices.filter(v => v.locale.toLowerCase().startsWith(langCode));
-  }, [language, voices]);
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-slate-800 transition-colors duration-300">
