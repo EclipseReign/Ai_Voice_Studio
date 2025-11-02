@@ -275,5 +275,90 @@
     "perMonth": "1 か月あたり",
     "perWeek": "1 週間あたり",
     "week": "1 週間あたり"
+  },
+  "footer": {
+    "allRightsReserved": "無断転載を禁じます",
+    "terms": "利用規約",
+    "privacy": "プライバシー",
+    "cookies": "クッキー",
+    "license": "ライセンス",
+    "contacts": "連絡先",
+    "contact": "お問い合わせ"
+  },
+  "cookies": {
+    "bannerTitle": "クッキー同意",
+    "bannerText": "当サイトではクッキーを使用します。必須のクッキーはサイトの機能のためのもの、分析/マーケティング用はお客様の同意がある場合のみ使用します。",
+    "learnMore": "詳しく見る",
+    "acceptAll": "すべて許可",
+    "necessaryOnly": "必須のみ"
+  },
+  "legal": {
+    "backToHome": "ホームに戻る",
+    "updatedDate": "更新日",
+    "terms": {
+      "title": "利用規約",
+      "seller": "販売者",
+      "sellerContent": "<strong>販売者:</strong> 個人 <strong>Denis Olegovich Rev…</strong>。連絡先: <a href='mailto:denisrvnk@gmai.com'>denisrvnk@gmai.com</a>",
+      "section1Title": "契約の対象",
+      "section1Content": "当サイトおよび関連アプリで「Ai Voice Studio」を含むデジタル製品とサービスへのアクセスを提供し、購入者は本規約に従って対価を支払います。",
+      "section2Title": "対象地域と重要な注意事項",
+      "section2Content": "本サイトは<strong>共和国…の国外</strong>のユーザーを対象としています。条件はいつでも改定される場合があり、新版は当サイトに掲載します。",
+      "section3Title": "承諾",
+      "section3Content": "(a)支払い・注文、または(b)登録/注文時の明示的な同意により、本契約は成立します。",
+      "section4Title": "価格と支払い",
+      "section4Content": "価格はサイト/アプリに掲載されます。税金、為替手数料、決済手数料は、チェックアウトで別段の表示がない限り支払者の負担です。",
+      "section5Title": "アクセスと更新",
+      "section5Content": "デジタルコンテンツへのアクセスは支払い後に提供されます。重要でない更新は通知なしに行われる場合があります。重要な更新は必ず通知します。",
+      "section6Title": "返金",
+      "section6Content": "デジタルコンテンツに重大な欠陥がある場合は返金が可能です。承認後、同じ決済方法で返金されます。",
+      "section7Title": "使用制限",
+      "section7Content": "禁止事項：第三者の権利侵害、制限の回避、違法目的でのサービス利用、スパム等。",
+      "section8Title": "知的財産",
+      "section8Content": "コンテンツおよびコードの専有権は<strong>Eclipse…</strong>に帰属します。プラン/EULAに定める期間と範囲で譲渡不可のライセンスを付与します。",
+      "section9Title": "責任",
+      "section9Content": "本サービスは「現状有姿」で提供されます。営業上の損失については責任を負いません。責任は直近3か月のユーザーの支払い額を上限とします。",
+      "section10Title": "準拠法および紛争",
+      "section10Content": "本規約は<strong>…共和国</strong>の法令に準拠します。紛争はまず10日間のクレーム手続きを経て、次に販売者の住所地の管轄裁判所で解決します。"
+    },
+    "privacy": {
+      "title": "プライバシーポリシー",
+      "section1Title": "収集するデータ",
+      "section1Content": "<strong>アカウント：</strong> 名前/ニックネーム、メール、パスワード（ハッシュ）…<br/><strong>サポート：</strong> 問い合わせ、添付、ログ。",
+      "section2Title": "利用目的",
+      "section2Content": "サービス提供と課金；…；法令遵守、必要に応じた当局への対応。",
+      "section3Title": "法的根拠",
+      "section3Content": "同意；契約の締結・履行；正当な利益（本人の権利を侵害しない範囲）；法令上の義務。",
+      "section4Title": "越境移転",
+      "section4Content": "ホスティング/パートナーの利用に伴い発生する場合があります。すべての移転は適切な保護措置の下で行います。サイトの継続利用により、この移転に同意したものとします。",
+      "section5Title": "保存",
+      "section5Content": "保存期間：アカウントの存続中および<strong>5年</strong>まで（クレーム処理/会計のため）。",
+      "section6Title": "ユーザーの権利",
+      "section6Content": "開示/コピー、訂正、同意の撤回、削除（例外あり）、制限/異議申立て。連絡先：<a href='mailto:denisrvnk@gmai.com'>denisrvnk@gmai.com</a>；<strong>10営業日</strong>以内に返信します。",
+      "section7Title": "セキュリティ",
+      "section7Content": "TLS 1.2 以上、アクセス最小化、…；重大なインシデント時には、必要に応じてユーザーおよび関係当局に通知します。"
+    },
+    "eula": {
+      "title": "エンドユーザー使用許諾契約（EULA）",
+      "subtitle": "Ai Voice Studio",
+      "section1Title": "契約の対象",
+      "section1Content": "ソフトウェア「Ai Voice Studio」（Web/デスクトップ）に対する非独占的かつ譲渡不可のライセンス。サブスクリプションまたは買い切り条件。",
+      "section2Title": "制限事項",
+      "section2Content": "逆コンパイル、キー配布、制限回避、違法な利用を禁止します。",
+      "section3Title": "アクティベーション",
+      "section3Content": "アカウント／キーによる。有効化後でも、違反や未払いの場合は無効化されることがあります。",
+      "section4Title": "アップデート",
+      "section4Content": "機能が変更される場合があります。",
+      "section5Title": "責任",
+      "section5Content": "「現状有姿」；上限は本ソフトの直近の支払額。",
+      "section6Title": "終了",
+      "section6Content": "ライセンシーの申し出、または違反時。データ—要請に応じて提供。"
+    },
+    "contacts": {
+      "title": "連絡先",
+      "organization": "組織",
+      "organizationDesc": "プロジェクトオーナー",
+      "email": "メール",
+      "emailDesc": "お問い合わせ・サポート用"
+    }
   }
 }

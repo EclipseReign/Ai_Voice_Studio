@@ -275,5 +275,103 @@
     "securePayment": "💳 Secure payment via PayPal • 🔒 Cancel anytime • 🌍 Available worldwide",
     "paypalNote": "*Note: PayPal may not be available in some regions (e.g., Russia)",
     "backToHome": "Back to home"
+  },
+  "footer": {
+    "allRightsReserved": "All rights reserved",
+    "terms": "Terms",
+    "privacy": "Privacy",
+    "cookies": "Cookies",
+    "license": "License",
+    "contacts": "Contacts",
+    "contact": "Contact"
+  },
+  "cookies": {
+    "bannerTitle": "Cookie Consent",
+    "bannerText": "We use cookies. Essential ones are for site functionality; analytics/marketing only with your consent.",
+    "learnMore": "Learn more",
+    "acceptAll": "Accept All",
+    "necessaryOnly": "Necessary Only"
+  },
+  "legal": {
+    "backToHome": "Back to Home",
+    "updatedDate": "Updated",
+    "terms": {
+      "title": "Terms of Service",
+      "seller": "Seller",
+      "sellerContent": "<strong>Seller:</strong> individual <strong>Denis Olegovich Revenko</strong>, owner of the project «EclipseReign» (hereinafter — «EclipseReign»). Contact: <a href='mailto:denisrvnk@gmai.com'>denisrvnk@gmai.com</a>",
+      "section1Title": "Subject",
+      "section1Content": "We provide access to digital products and services on the website and in related applications, including <strong>Ai Voice Studio</strong> (hereinafter — «Services»), and the Buyer pays for them under the terms of these Terms.",
+      "section2Title": "Geography and Important Note",
+      "section2Content": "This website is aimed at users <strong>outside the Republic of Kazakhstan</strong>. Sales to users located in Kazakhstan are <strong>temporarily not carried out</strong>. We may update the geography of sales at any time; the new edition will be published on the website.",
+      "section3Title": "Acceptance",
+      "section3Content": "The agreement is considered concluded from the moment of (a) payment or (b) explicit consent during registration/order placement.",
+      "section4Title": "Price and Payment",
+      "section4Content": "Prices are published on the website and may change without retroactive effect for already paid periods. We accept non-cash payment (bank cards, PayPal, other payment services). Processing fees are borne by the payer unless otherwise indicated at checkout.",
+      "section5Title": "Access and Updates",
+      "section5Content": "Access to digital content is provided after payment confirmation (automatically or by e-mail). Updates/improvements may be released without separate notification; critical ones — necessarily.",
+      "section6Title": "Refunds",
+      "section6Content": "For digital content, refund is possible in case of significant service deficiencies confirmed by support. Request should be sent to <a href='mailto:denisrvnk@gmai.com'>denisrvnk@gmai.com</a> within <strong>14 days</strong> from the purchase date with a description of the problem and logs. If the refund is approved, funds are returned in the same payment method.",
+      "section7Title": "Usage Restrictions",
+      "section7Content": "Prohibited: violating the rights of third parties, attempting to bypass restrictions, transferring access to third parties, using Services for illegal activities, spam, etc.",
+      "section8Title": "Intellectual Property",
+      "section8Content": "Exclusive rights to content and code belong to <strong>EclipseReign</strong> and/or right holders. The User is granted a non-exclusive, non-transferable license for the term and scope specified in the plan/EULA.",
+      "section9Title": "Liability",
+      "section9Content": "Services are provided «as is». We are not responsible for communication interruptions, third-party service failures, and lost profits. Total liability is limited to the amount of the User's last payment for 3 months.",
+      "section10Title": "Applicable Law and Disputes",
+      "section10Content": "These Terms are governed by the law of the <strong>Republic of Kazakhstan</strong>, unless otherwise required by mandatory norms of the user's jurisdiction. Disputes — claim procedure (10 days), then competent court at the Seller's place of residence."
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "section1Title": "What Data We Collect",
+      "section1Content": "<strong>Account:</strong> name/nickname, e-mail, password (hash), country/language.<br/><strong>Payment:</strong> payment system tokens, masked credentials/transaction IDs (we do not store card data).<br/><strong>Technical:</strong> IP, user-agent, error logs, cookie/SDK identifiers, usage events.<br/><strong>Support:</strong> inquiries, attachments, logs.",
+      "section2Title": "Purposes",
+      "section2Content": "Providing service and billing; analytics/improvement; security and fraud prevention; compliance with law, responses to authorized bodies (when legally required).",
+      "section3Title": "Legal Grounds",
+      "section3Content": "Consent; conclusion and execution of a contract; legitimate interests (without infringing on the subject's rights); compliance with law.",
+      "section4Title": "Cross-border Transfer",
+      "section4Content": "May occur when using hosting/payment and analytical services; contractual protection measures and encryption are applied. By continuing to use the site, you consent to such transfer.",
+      "section5Title": "Storage",
+      "section5Content": "Storage period: for the duration of the account and up to <strong>5 years</strong> after for claim resolution/accounting.",
+      "section6Title": "User Rights",
+      "section6Content": "Access/copy, correction, withdrawal of consent, deletion (except mandatory storage cases), restriction of processing. Requests — to <a href='mailto:denisrvnk@gmai.com'>denisrvnk@gmai.com</a>; response within <strong>10 business days</strong>.",
+      "section7Title": "Security",
+      "section7Content": "TLS 1.2+, access minimization, 2FA for admin panels, change audit, incident logging. We notify users and, if necessary, competent authorities about serious incidents."
+    },
+    "cookies": {
+      "title": "Cookie Policy",
+      "intro": "We use cookies to ensure website functionality, improve user experience, and analytics.",
+      "categoriesTitle": "Cookie Categories",
+      "essential": "Essential",
+      "essentialContent": "Necessary for the site to function: authentication, sessions, cart. Work without consent.",
+      "analytics": "Analytics",
+      "analyticsContent": "Help understand how the site is used: page views, errors. Used only with your consent.",
+      "marketing": "Marketing",
+      "marketingContent": "For personalized advertising and retargeting. Used only with your consent.",
+      "managementTitle": "Cookie Management",
+      "managementContent": "You can manage cookie settings through the banner on the site or browser settings."
+    },
+    "eula": {
+      "title": "End User License Agreement (EULA)",
+      "subtitle": "Ai Voice Studio",
+      "section1Title": "Subject",
+      "section1Content": "Non-exclusive, non-transferable license for the software «Ai Voice Studio» (web/desktop) on subscription/one-time license terms.",
+      "section2Title": "Restrictions",
+      "section2Content": "Prohibition of decompilation, key distribution, bypassing restrictions, unlawful use.",
+      "section3Title": "Activation",
+      "section3Content": "By account/key; deactivation possible in case of violation of terms or non-payment.",
+      "section4Title": "Updates",
+      "section4Content": "Functionality changes are possible.",
+      "section5Title": "Liability",
+      "section5Content": "«As is»; limit — amount of last payment for the software.",
+      "section6Title": "Termination",
+      "section6Content": "At the initiative of the Licensee or in case of violation of terms. Data — upon request."
+    },
+    "contacts": {
+      "title": "Contacts",
+      "organization": "Organization",
+      "organizationDesc": "Project owner",
+      "email": "Email",
+      "emailDesc": "For contact and support"
+    }
   }
 }

@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { API } from '../App';
 import axios from 'axios';
 import { Check, X, Zap, Crown, Loader2 } from 'lucide-react';
+import Footer from '../components/Footer';
 
 const PricingPage = () => {
   const { t } = useTranslation();
@@ -291,6 +292,8 @@ const PricingPage = () => {
           </button>
         </div>
       </div>
+      {/* Footer */}
+      <Footer />
     </div>
   );
 };

@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { Loader2, Sparkles, Mic, Download, Clock, Volume2, User, LogOut } from "lucide-react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
+import Footer from "@/components/Footer";
 
 const HomePage = () => {
   const { t } = useTranslation();
@@ -1327,6 +1328,8 @@ const HomePage = () => {
           </div>
         </div>
       </div>
+      {/* Footer */}
+      <Footer />
     </div>
   );
 };

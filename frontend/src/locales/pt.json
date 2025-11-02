@@ -275,5 +275,90 @@
     "perMonth": "por mês",
     "perWeek": "por semana",
     "week": "Por semana"
+  },
+  "footer": {
+    "allRightsReserved": "Todos os direitos reservados",
+    "terms": "Termos",
+    "privacy": "Privacidade",
+    "cookies": "Cookies",
+    "license": "Licença",
+    "contacts": "Contatos",
+    "contact": "Contato"
+  },
+  "cookies": {
+    "bannerTitle": "Consentimento de cookies",
+    "bannerText": "Usamos cookies. Os essenciais são para a funcionalidade do site; análise/marketing somente com o seu consentimento.",
+    "learnMore": "Saiba mais",
+    "acceptAll": "Aceitar tudo",
+    "necessaryOnly": "Apenas necessárias"
+  },
+  "legal": {
+    "backToHome": "Voltar para a página inicial",
+    "updatedDate": "Atualizado",
+    "terms": {
+      "title": "Termos de serviço",
+      "seller": "Vendedor",
+      "sellerContent": "<strong>Vendedor:</strong> pessoa física <strong>Denis Olegovich Rev…</strong>. Contato: <a href='mailto:denisrvnk@gmai.com'>denisrvnk@gmai.com</a>",
+      "section1Title": "Objeto",
+      "section1Content": "Fornecemos acesso a produtos e serviços digitais no site e em aplicativos relacionados, incluindo «Ai Voice Studio»; o Comprador paga por eles conforme estes Termos.",
+      "section2Title": "Abrangência geográfica e nota importante",
+      "section2Content": "Este site é voltado a usuários <strong>fora da República de …</strong>. Podemos alterar os Termos a qualquer momento; a nova versão será publicada no site.",
+      "section3Title": "Aceitação",
+      "section3Content": "O acordo considera‑se celebrado com (a) pagamento/pedido ou (b) consentimento expresso durante o cadastro/pedido.",
+      "section4Title": "Preço e pagamento",
+      "section4Content": "Os preços são publicados no site/aplicativos. Impostos, conversão cambial e tarifas de pagamento ficam a cargo do pagador, salvo indicação em contrário no checkout.",
+      "section5Title": "Acesso e atualizações",
+      "section5Content": "O acesso ao conteúdo digital é fornecido após o pagamento. Atualizações não críticas podem ocorrer sem aviso; as críticas — necessariamente.",
+      "section6Title": "Reembolsos",
+      "section6Content": "Para conteúdo digital, é possível reembolso em caso de defeitos significativos; aprovado o reembolso, os valores são devolvidos pelo mesmo método de pagamento.",
+      "section7Title": "Restrições de uso",
+      "section7Content": "Proibido: violar direitos de terceiros, burlar restrições, usar os Serviços para atividades ilícitas, spam etc.",
+      "section8Title": "Propriedade intelectual",
+      "section8Content": "Os direitos exclusivos sobre conteúdo e código pertencem à <strong>Eclipse…</strong>; é concedida licença intransferível pelo prazo e escopo previstos no plano/EULA.",
+      "section9Title": "Responsabilidade",
+      "section9Content": "Os Serviços são fornecidos “no estado em que se encontram”. Não nos responsabilizamos por perdas comerciais; a responsabilidade limita‑se ao último pagamento do Usuário por 3 meses.",
+      "section10Title": "Lei aplicável e disputas",
+      "section10Content": "Estes Termos são regidos pela lei da <strong>República de …</strong>. Disputas: primeiro reclamação (prazo de 10 dias), depois o tribunal competente no domicílio do Vendedor."
+    },
+    "privacy": {
+      "title": "Política de Privacidade",
+      "section1Title": "Quais dados coletamos",
+      "section1Content": "<strong>Conta:</strong> nome/apelido, e‑mail, senha (hash)…<br/><strong>Suporte:</strong> solicitações, anexos, logs.",
+      "section2Title": "Finalidades",
+      "section2Content": "Prestação do serviço e cobrança; … ; conformidade legal, respostas a autoridades (quando exigido).",
+      "section3Title": "Bases legais",
+      "section3Content": "Consentimento; celebração e execução de contrato; interesses legítimos (sem violar os direitos do titular); obrigações legais.",
+      "section4Title": "Transferência internacional",
+      "section4Content": "Pode ocorrer ao usar hospedagem/parceiros; todas as transferências são feitas com salvaguardas. Ao continuar a usar o site, você consente com tal transferência.",
+      "section5Title": "Armazenamento",
+      "section5Content": "Período de retenção: durante a vigência da conta e por até <strong>5 anos</strong> para resolução de reclamações/contabilidade.",
+      "section6Title": "Direitos do usuário",
+      "section6Content": "Acesso/cópia, retificação, retirada do consentimento, eliminação (com exceções), limitação/oposição. Contato: <a href='mailto:denisrvnk@gmai.com'>denisrvnk@gmai.com</a>; resposta em até <strong>10 dias úteis</strong>.",
+      "section7Title": "Segurança",
+      "section7Content": "TLS 1.2+, minimização de acessos, … ; em incidentes graves, notificamos os usuários e, se necessário, as autoridades competentes."
+    },
+    "eula": {
+      "title": "Contrato de licença de usuário final (EULA)",
+      "subtitle": "Ai Voice Studio",
+      "section1Title": "Objeto",
+      "section1Content": "Licença não exclusiva e intransferível para o software «Ai Voice Studio» (web/desktop) em regime de assinatura ou licença única.",
+      "section2Title": "Restrições",
+      "section2Content": "Proibição de descompilar, distribuir chaves, contornar restrições ou usar de forma ilícita.",
+      "section3Title": "Ativação",
+      "section3Content": "Por conta/chave; a desativação pode ocorrer em caso de violação dos termos ou inadimplência.",
+      "section4Title": "Atualizações",
+      "section4Content": "Alterações de funcionalidade são possíveis.",
+      "section5Title": "Responsabilidade",
+      "section5Content": "“No estado em que se encontra”; limite — valor do último pagamento pelo software.",
+      "section6Title": "Rescisão",
+      "section6Content": "Por iniciativa do Licenciado ou em caso de violação dos termos. Dados — mediante solicitação."
+    },
+    "contacts": {
+      "title": "Contatos",
+      "organization": "Organização",
+      "organizationDesc": "Proprietário do projeto",
+      "email": "E‑mail",
+      "emailDesc": "Para contato e suporte"
+    }
   }
 }

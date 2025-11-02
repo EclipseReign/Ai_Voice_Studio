@@ -275,5 +275,90 @@
     "perMonth": "pro Monat",
     "perWeek": "pro Woche",
     "week": "Pro Woche"
+  },
+  "footer": {
+    "allRightsReserved": "Alle Rechte vorbehalten",
+    "terms": "Nutzungsbedingungen",
+    "privacy": "Datenschutz",
+    "cookies": "Cookies",
+    "license": "Lizenz",
+    "contacts": "Kontakte",
+    "contact": "Kontakt"
+  },
+  "cookies": {
+    "bannerTitle": "Cookie‑Einwilligung",
+    "bannerText": "Wir verwenden Cookies. Essenzielle sind für die Funktionalität der Website erforderlich; Analyse/Marketing nur mit deiner Einwilligung.",
+    "learnMore": "Mehr erfahren",
+    "acceptAll": "Alle akzeptieren",
+    "necessaryOnly": "Nur erforderliche"
+  },
+  "legal": {
+    "backToHome": "Zur Startseite",
+    "updatedDate": "Aktualisiert",
+    "terms": {
+      "title": "Nutzungsbedingungen",
+      "seller": "Verkäufer",
+      "sellerContent": "<strong>Verkäufer:</strong> natürliche Person <strong>Denis Olegovich Rev…</strong>. Kontakt: <a href='mailto:denisrvnk@gmai.com'>denisrvnk@gmai.com</a>",
+      "section1Title": "Gegenstand",
+      "section1Content": "Wir gewähren Zugang zu digitalen Produkten und Diensten auf der Website und in verbundenen Anwendungen, einschließlich «Ai Voice Studio»; der Käufer zahlt dafür gemäß diesen Bedingungen.",
+      "section2Title": "Geografie und wichtiger Hinweis",
+      "section2Content": "Diese Website richtet sich an Nutzer <strong>außerhalb der Republik …</strong>. Wir können die Bedingungen jederzeit ändern; die neue Fassung wird auf der Website veröffentlicht.",
+      "section3Title": "Annahme",
+      "section3Content": "Die Vereinbarung gilt als geschlossen bei (a) Zahlung/Bestellung oder (b) ausdrücklicher Zustimmung während der Registrierung/Bestellung.",
+      "section4Title": "Preis und Zahlung",
+      "section4Content": "Preise werden auf der Website/den Apps veröffentlicht. Steuern, Währungsumrechnung und Zahlungsgebühren trägt der Zahler, sofern beim Checkout nicht anders angegeben.",
+      "section5Title": "Zugang und Updates",
+      "section5Content": "Zugang zu digitalen Inhalten wird nach Zahlung bereitgestellt. Nichtkritische Updates können ohne gesonderte Mitteilung erfolgen; kritische — zwingend.",
+      "section6Title": "Erstattungen",
+      "section6Content": "Für digitale Inhalte ist eine Erstattung bei wesentlichen Mängeln möglich; nach Genehmigung der Erstattung erfolgt die Rückzahlung auf demselben Zahlungsweg.",
+      "section7Title": "Nutzungsbeschränkungen",
+      "section7Content": "Verboten: Verletzung von Rechten Dritter, Umgehung von Beschränkungen, rechtswidrige Nutzung der Dienste, Spam usw.",
+      "section8Title": "Geistiges Eigentum",
+      "section8Content": "Exklusive Rechte an Inhalten und Code liegen bei <strong>Eclipse…</strong>; es wird eine nicht übertragbare Lizenz für die im Plan/EULA genannte Dauer und den Umfang gewährt.",
+      "section9Title": "Haftung",
+      "section9Content": "Die Dienste werden „wie besehen“ bereitgestellt. Wir haften nicht für kommerzielle Verluste; die Haftung ist auf die letzte Zahlung des Nutzers für 3 Monate begrenzt.",
+      "section10Title": "Anwendbares Recht und Streitigkeiten",
+      "section10Content": "Diese Bedingungen unterliegen dem Recht der <strong>Republik …</strong>. Streitigkeiten: zunächst Anspruch (Frist 10 Tage), dann zuständiges Gericht am Wohnsitz des Verkäufers."
+    },
+    "privacy": {
+      "title": "Datenschutzerklärung",
+      "section1Title": "Welche Daten wir erheben",
+      "section1Content": "<strong>Konto:</strong> 名前/ニックネーム、E‑Mail、パスワード（ハッシュ）…<br/><strong>Unterstützung:</strong> Anfragen, Anhänge, Protokolle.",
+      "section2Title": "Zwecke",
+      "section2Content": "Dienstbereitstellung und Abrechnung; … ; gesetzliche Pflichten, Antworten an Behörden（gesetzlich erforderlich）。",
+      "section3Title": "Rechtsgrundlagen",
+      "section3Content": "Einwilligung; Abschluss und Erfüllung eines Vertrags; berechtigte Interessen（ohne die Rechte der Betroffenen zu verletzen）; gesetzliche Pflichten.",
+      "section4Title": "Grenzüberschreitende Übermittlung",
+      "section4Content": "Kann bei Nutzung von Hosting/Partnern auftreten; alle Übermittlungen erfolgen mit Schutzmaßnahmen. Durch die weitere Nutzung der Website stimmst du einer solchen Übermittlung zu.",
+      "section5Title": "Speicherung",
+      "section5Content": "Speicherdauer：アカウント期間中および<strong>5 Jahre</strong>まで（Ansprüche/Buchhaltungのため）。",
+      "section6Title": "Betroffenenrechte",
+      "section6Content": "Auskunft/Kopie, Berichtigung, Einwilligungswiderruf, Löschung（Ausnahmen möglich）, Einschränkung/Widerspruch. Kontakt: <a href='mailto:denisrvnk@gmai.com'>denisrvnk@gmai.com</a>; Antwort binnen <strong>10 Werktagen</strong>.",
+      "section7Title": "Sicherheit",
+      "section7Content": "TLS 1.2+, Zugriffsminimierung, … ; bei schwerwiegenden Vorfällen informieren wir Nutzer und ggf. die zuständigen Behörden."
+    },
+    "eula": {
+      "title": "Endbenutzer-Lizenzvertrag (EULA)",
+      "subtitle": "Ai Voice Studio",
+      "section1Title": "Gegenstand",
+      "section1Content": "Nicht ausschließliche, nicht übertragbare Lizenz für die Software «Ai Voice Studio» (Web/Desktop) auf Abonnement‑ oder Einmallizenz‑Basis.",
+      "section2Title": "Beschränkungen",
+      "section2Content": "Verbot der Dekompilierung, Schlüsselweitergabe, Umgehung von Beschränkungen, rechtswidrige Nutzung.",
+      "section3Title": "Aktivierung",
+      "section3Content": "Per Konto/Schlüssel; Deaktivierung möglich bei Verstoß gegen Bedingungen oder Zahlungsverzug.",
+      "section4Title": "Updates",
+      "section4Content": "Funktionsänderungen sind möglich.",
+      "section5Title": "Haftung",
+      "section5Content": "「現状有姿」提供；上限はソフトウェアに対する直近の支払額。",
+      "section6Title": "Beendigung",
+      "section6Content": "Durch den Lizenznehmer oder bei Verstoß gegen Bedingungen; Daten — auf Anfrage."
+    },
+    "contacts": {
+      "title": "Kontakte",
+      "organization": "Organisation",
+      "organizationDesc": "Projektinhaber",
+      "email": "E‑mail",
+      "emailDesc": "Für Kontakt und Support"
+    }
   }
 }

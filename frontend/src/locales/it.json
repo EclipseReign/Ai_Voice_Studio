@@ -275,5 +275,90 @@
     "perMonth": "al mese",
     "perWeek": "a settimana",
     "week": "A settimana"
+  },
+  "footer": {
+    "allRightsReserved": "Tutti i diritti riservati",
+    "terms": "Termini",
+    "privacy": "Privacy",
+    "cookies": "Cookie",
+    "license": "Licenza",
+    "contacts": "Contatti",
+    "contact": "Contatto"
+  },
+  "cookies": {
+    "bannerTitle": "Consenso ai cookie",
+    "bannerText": "Utilizziamo i cookie. Quelli essenziali servono al funzionamento del sito; analisi/marketing solo con il tuo consenso.",
+    "learnMore": "Scopri di più",
+    "acceptAll": "Accetta tutto",
+    "necessaryOnly": "Solo necessarie"
+  },
+  "legal": {
+    "backToHome": "Torna alla home",
+    "updatedDate": "Aggiornato",
+    "terms": {
+      "title": "Termini di servizio",
+      "seller": "Venditore",
+      "sellerContent": "<strong>Venditore:</strong> persona fisica <strong>Denis Olegovich Rev…</strong>. Contatto: <a href='mailto:denisrvnk@gmai.com'>denisrvnk@gmai.com</a>",
+      "section1Title": "Oggetto",
+      "section1Content": "Forniamo accesso a prodotti e servizi digitali sul sito e nelle applicazioni correlate, incluso «Ai Voice Studio»; l’Acquirente li paga secondo i presenti Termini.",
+      "section2Title": "Ambito geografico e nota importante",
+      "section2Content": "Questo sito è rivolto agli utenti <strong>al di fuori della Repubblica di …</strong>. Possiamo modificare i Termini in qualsiasi momento; la nuova versione sarà pubblicata sul sito.",
+      "section3Title": "Accettazione",
+      "section3Content": "L’accordo si considera concluso con (a) pagamento/ordine oppure (b) consenso esplicito durante la registrazione/l’ordine.",
+      "section4Title": "Prezzo e pagamento",
+      "section4Content": "I prezzi sono pubblicati sul sito/sulle app. Tasse, conversione valutaria e commissioni di pagamento sono a carico del pagatore, salvo diversa indicazione al checkout.",
+      "section5Title": "Accesso e aggiornamenti",
+      "section5Content": "L’accesso ai contenuti digitali è fornito dopo il pagamento. Gli aggiornamenti non critici possono essere rilasciati senza preavviso; quelli critici — necessariamente.",
+      "section6Title": "Rimborsi",
+      "section6Content": "Per i contenuti digitali è possibile il rimborso in caso di difetti significativi; una volta approvato, i fondi vengono restituiti con lo stesso metodo di pagamento.",
+      "section7Title": "Limitazioni d’uso",
+      "section7Content": "Vietato: violare diritti di terzi, eludere restrizioni, usare i Servizi per attività illecite, spam, ecc.",
+      "section8Title": "Proprietà intellettuale",
+      "section8Content": "I diritti esclusivi su contenuti e codice spettano a <strong>Eclipse…</strong>; è concessa una licenza non trasferibile per la durata e l’ambito previsti dal piano/EULA.",
+      "section9Title": "Responsabilità",
+      "section9Content": "I Servizi sono forniti «così come sono». Non siamo responsabili per perdite commerciali; la responsabilità è limitata all’ultimo pagamento dell’Utente per 3 mesi.",
+      "section10Title": "Legge applicabile e controversie",
+      "section10Content": "I presenti Termini sono disciplinati dalla legge della <strong>Repubblica di …</strong>. Controversie: prima reclamo (10 giorni), poi tribunale competente presso il domicilio del Venditore."
+    },
+    "privacy": {
+      "title": "Informativa sulla privacy",
+      "section1Title": "Quali dati raccogliamo",
+      "section1Content": "<strong>Account:</strong> nome/soprannome, e‑mail, password (hash)…<br/><strong>Supporto:</strong> richieste, allegati, log.",
+      "section2Title": "Finalità",
+      "section2Content": "Fornitura del servizio e fatturazione; … ; conformità legale, risposte alle autorità (quando richiesto).",
+      "section3Title": "Basi giuridiche",
+      "section3Content": "Consenso; conclusione ed esecuzione di un contratto; interessi legittimi (senza ledere i diritti dell’interessato); obblighi legali.",
+      "section4Title": "Trasferimento transfrontaliero",
+      "section4Content": "Può verificarsi usando hosting/partner; tutti i trasferimenti avvengono con garanzie. Continuando a usare il sito, acconsenti a tale trasferimento.",
+      "section5Title": "Conservazione",
+      "section5Content": "Periodo di conservazione: per la durata dell’account e fino a <strong>5 anni</strong> per reclami/contabilità.",
+      "section6Title": "Diritti dell’utente",
+      "section6Content": "Accesso/copia, rettifica, revoca del consenso, cancellazione (con eccezioni), limitazione/opposizione. Contatto: <a href='mailto:denisrvnk@gmai.com'>denisrvnk@gmai.com</a>; risposta entro <strong>10 giorni lavorativi</strong>.",
+      "section7Title": "Sicurezza",
+      "section7Content": "TLS 1.2+, minimizzazione degli accessi, … ; in caso di incidenti gravi informiamo gli utenti e, se necessario, le autorità competenti."
+    },
+    "eula": {
+      "title": "Contratto di licenza con l’utente finale (EULA)",
+      "subtitle": "Ai Voice Studio",
+      "section1Title": "Oggetto",
+      "section1Content": "Licenza non esclusiva e non trasferibile per il software «Ai Voice Studio» (web/desktop) con abbonamento o licenza una tantum.",
+      "section2Title": "Limitazioni",
+      "section2Content": "Divieto di decompilare, distribuire chiavi, eludere restrizioni o utilizzare illecitamente.",
+      "section3Title": "Attivazione",
+      "section3Content": "Tramite account/chiave; disattivazione possibile in caso di violazione dei termini o mancato pagamento.",
+      "section4Title": "Aggiornamenti",
+      "section4Content": "Sono possibili modifiche di funzionalità.",
+      "section5Title": "Responsabilità",
+      "section5Content": "«Così com’è»; limite — importo dell’ultimo pagamento per il software.",
+      "section6Title": "Risoluzione",
+      "section6Content": "Su iniziativa del Licenziatario o in caso di violazione dei termini. Dati — su richiesta."
+    },
+    "contacts": {
+      "title": "Contatti",
+      "organization": "Organizzazione",
+      "organizationDesc": "Titolare del progetto",
+      "email": "Email",
+      "emailDesc": "Per contatti e supporto"
+    }
   }
 }

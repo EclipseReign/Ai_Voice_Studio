@@ -275,5 +275,90 @@
     "perMonth": "par mois",
     "perWeek": "par semaine",
     "week": "Par semaine"
+  },
+  "footer": {
+    "allRightsReserved": "Tous droits réservés",
+    "terms": "Conditions",
+    "privacy": "Confidentialité",
+    "cookies": "Cookies",
+    "license": "Licence",
+    "contacts": "Contacts",
+    "contact": "Contact"
+  },
+  "cookies": {
+    "bannerTitle": "Consentement aux cookies",
+    "bannerText": "Nous utilisons des cookies. Les essentiels servent au fonctionnement du site ; l’analyse/le marketing uniquement avec votre consentement.",
+    "learnMore": "En savoir plus",
+    "acceptAll": "Tout accepter",
+    "necessaryOnly": "Essentielles uniquement"
+  },
+  "legal": {
+    "backToHome": "Retour à l’accueil",
+    "updatedDate": "Mis à jour",
+    "terms": {
+      "title": "Conditions d’utilisation",
+      "seller": "Vendeur",
+      "sellerContent": "<strong>Vendeur :</strong> personne physique <strong>Denis Olegovich Rev…</strong>. Contact : <a href='mailto:denisrvnk@gmai.com'>denisrvnk@gmai.com</a>",
+      "section1Title": "Objet",
+      "section1Content": "Nous fournissons l’accès à des produits et services numériques sur le site et dans les applications associées, y compris « Ai Voice Studio » ; l’Acheteur les paie conformément aux présentes Conditions.",
+      "section2Title": "Géographie et note importante",
+      "section2Content": "Ce site s’adresse aux utilisateurs <strong>en dehors de la République de …</strong>. Nous pouvons modifier les Conditions à tout moment ; la nouvelle version sera publiée sur le site.",
+      "section3Title": "Acceptation",
+      "section3Content": "L’accord est réputé conclu en cas de (a) paiement/commande ou (b) consentement explicite lors de l’inscription/de la commande.",
+      "section4Title": "Prix et paiement",
+      "section4Content": "Les prix sont publiés sur le site/les applications. Taxes, conversion et frais de paiement sont à la charge du payeur, sauf indication contraire au paiement.",
+      "section5Title": "Accès et mises à jour",
+      "section5Content": "L’accès au contenu numérique est fourni après paiement. Les mises à jour non critiques peuvent être déployées sans notification ; les critiques — obligatoirement.",
+      "section6Title": "Remboursements",
+      "section6Content": "Pour le contenu numérique, un remboursement est possible en cas de défauts significatifs ; une fois approuvé, les fonds sont restitués par le même moyen de paiement.",
+      "section7Title": "Restrictions d’utilisation",
+      "section7Content": "Interdit : porter atteinte aux droits de tiers, contourner des restrictions, utiliser les Services à des fins illégales, spam, etc.",
+      "section8Title": "Propriété intellectuelle",
+      "section8Content": "Les droits exclusifs sur le contenu et le code appartiennent à <strong>Eclipse…</strong> ; une licence non cessible est accordée pour la durée et l’étendue prévues au plan/EULA.",
+      "section9Title": "Responsabilité",
+      "section9Content": "Les Services sont fournis « en l’état ». Nous déclinons toute responsabilité pour les pertes commerciales ; la responsabilité est limitée au dernier paiement de l’Utilisateur sur 3 mois.",
+      "section10Title": "Droit applicable et litiges",
+      "section10Content": "Les présentes Conditions sont régies par la loi de la <strong>République de …</strong>. Litiges : d’abord réclamation (délai de 10 jours), puis tribunal compétent au domicile du Vendeur."
+    },
+    "privacy": {
+      "title": "Politique de confidentialité",
+      "section1Title": "Quelles données nous recueillons",
+      "section1Content": "<strong>Compte :</strong> nom/pseudo, e‑mail, mot de passe (haché)…<br/><strong>Support :</strong> demandes, pièces jointes, journaux.",
+      "section2Title": "Finalités",
+      "section2Content": "Fourniture du service et facturation ; … ; respect de la loi, réponses aux autorités (lorsque requis par la loi).",
+      "section3Title": "Fondements juridiques",
+      "section3Content": "Consentement ; conclusion et exécution d’un contrat ; intérêts légitimes (sans porter atteinte aux droits de la personne) ; obligations légales.",
+      "section4Title": "Transfert transfrontalier",
+      "section4Content": "Peut se produire lors de l’utilisation d’hébergement/partenaires ; tous les transferts se font avec des garanties. En continuant à utiliser le site, vous consentez à ce transfert.",
+      "section5Title": "Conservation",
+      "section5Content": "Durée de conservation : pendant la durée du compte et jusqu’à <strong>5 ans</strong> pour les réclamations/la comptabilité.",
+      "section6Title": "Droits de l’utilisateur",
+      "section6Content": "Accès/copied, rectification, retrait du consentement, suppression (exceptions possibles), limitation/opposition. Contact : <a href='mailto:denisrvnk@gmai.com'>denisrvnk@gmai.com</a> ; réponse sous <strong>10 jours ouvrables</strong>.",
+      "section7Title": "Sécurité",
+      "section7Content": "TLS 1.2+, minimisation des accès, … ; en cas d’incident grave, nous informons les utilisateurs et, si nécessaire, les autorités compétentes."
+    },
+    "eula": {
+      "title": "Contrat de licence utilisateur final (EULA)",
+      "subtitle": "Ai Voice Studio",
+      "section1Title": "Objet",
+      "section1Content": "Licence non exclusive et non cessible pour le logiciel « Ai Voice Studio » (web/bureau) selon un abonnement ou une licence unique.",
+      "section2Title": "Restrictions",
+      "section2Content": "Interdiction de décompiler, de distribuer des clés, de contourner des restrictions et d’un usage illicite.",
+      "section3Title": "Activation",
+      "section3Content": "Par compte/clé ; désactivation possible en cas de violation des conditions ou de non‑paiement.",
+      "section4Title": "Mises à jour",
+      "section4Content": "Des changements de fonctionnalité sont possibles.",
+      "section5Title": "Responsabilité",
+      "section5Content": "« En l’état » ; limite — montant du dernier paiement pour le logiciel.",
+      "section6Title": "Résiliation",
+      "section6Content": "À l’initiative du Licencié ou en cas de violation des conditions. Données — sur demande."
+    },
+    "contacts": {
+      "title": "Contacts",
+      "organization": "Organisation",
+      "organizationDesc": "Propriétaire du projet",
+      "email": "E‑mail",
+      "emailDesc": "Pour le contact et l’assistance"
+    }
   }
 }

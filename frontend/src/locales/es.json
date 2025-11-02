@@ -275,5 +275,90 @@
     "perMonth": "por mes",
     "perWeek": "por semana",
     "week": "Por semana"
+  },
+  "footer": {
+    "allRightsReserved": "Todos los derechos reservados",
+    "terms": "Términos",
+    "privacy": "Privacidad",
+    "cookies": "Cookies",
+    "license": "Licencia",
+    "contacts": "Contactos",
+    "contact": "Contacto"
+  },
+  "cookies": {
+    "bannerTitle": "Consentimiento de cookies",
+    "bannerText": "Usamos cookies. Las esenciales son para la funcionalidad del sitio; analítica/marketing solo con tu consentimiento.",
+    "learnMore": "Más información",
+    "acceptAll": "Aceptar todas",
+    "necessaryOnly": "Solo necesarias"
+  },
+  "legal": {
+    "backToHome": "Volver al inicio",
+    "updatedDate": "Actualizado",
+    "terms": {
+      "title": "Términos de servicio",
+      "seller": "Vendedor",
+      "sellerContent": "<strong>Vendedor:</strong> persona física <strong>Denis Olegovich Rev…</strong>. Contacto: <a href='mailto:denisrvnk@gmai.com'>denisrvnk@gmai.com</a>",
+      "section1Title": "Objeto",
+      "section1Content": "Proporcionamos acceso a productos y servicios digitales en el sitio web y en las aplicaciones relacionadas, incluido «Ai Voice Studio»; el Comprador paga por ellos conforme a estos Términos.",
+      "section2Title": "Ámbito geográfico y nota importante",
+      "section2Content": "Este sitio está dirigido a usuarios <strong>fuera de la República …</strong>. Podemos modificar los Términos en cualquier momento; la nueva versión se publicará en el sitio.",
+      "section3Title": "Aceptación",
+      "section3Content": "El acuerdo se considera celebrado mediante (a) pago/pedido o (b) consentimiento expreso durante el registro/realización del pedido.",
+      "section4Title": "Precio y pago",
+      "section4Content": "Los precios se publican en el sitio/aplicaciones. Impuestos, conversión de moneda y comisiones de pago corren a cargo del pagador, salvo que se indique lo contrario en el pago.",
+      "section5Title": "Acceso y actualizaciones",
+      "section5Content": "El acceso al contenido digital se proporciona tras el pago. Las actualizaciones no críticas pueden publicarse sin aviso; las críticas — necesariamente.",
+      "section6Title": "Reembolsos",
+      "section6Content": "Para contenido digital, el reembolso es posible en caso de defectos significativos; una vez aprobado, los fondos se devuelven por el mismo método de pago.",
+      "section7Title": "Restricciones de uso",
+      "section7Content": "Prohibido: vulnerar derechos de terceros, eludir restricciones, usar los Servicios con fines ilícitos, spam, etc.",
+      "section8Title": "Propiedad intelectual",
+      "section8Content": "Los derechos exclusivos sobre contenidos y código pertenecen a <strong>Eclipse…</strong>; se concede una licencia no transferible por el plazo y alcance previstos en el plan/EULA.",
+      "section9Title": "Responsabilidad",
+      "section9Content": "Los Servicios se prestan «tal cual». No somos responsables por pérdidas comerciales; la responsabilidad se limita al último pago del Usuario durante 3 meses.",
+      "section10Title": "Ley aplicable y disputas",
+      "section10Content": "Estos Términos se rigen por la ley de la <strong>República de …</strong>. Disputas: primero reclamación (plazo de 10 días), luego el tribunal competente en el domicilio del Vendedor."
+    },
+    "privacy": {
+      "title": "Política de privacidad",
+      "section1Title": "Qué datos recopilamos",
+      "section1Content": "<strong>Cuenta:</strong> nombre/apodo, correo, contraseña (hash)…<br/><strong>Soporte:</strong> consultas, adjuntos, registros.",
+      "section2Title": "Finalidades",
+      "section2Content": "Prestación del servicio y facturación; … ; cumplimiento legal, respuestas a autoridades (cuando sea obligatorio).",
+      "section3Title": "Bases legales",
+      "section3Content": "Consentimiento; celebración y ejecución de un contrato; intereses legítimos (sin vulnerar los derechos del titular); obligaciones legales.",
+      "section4Title": "Transferencia transfronteriza",
+      "section4Content": "Puede ocurrir al usar hosting/partners; todas las transferencias se realizan con salvaguardas. Al seguir utilizando el sitio, aceptas dicha transferencia.",
+      "section5Title": "Conservación",
+      "section5Content": "Plazo de conservación: durante la vigencia de la cuenta y hasta <strong>5 años</strong> para reclamaciones/contabilidad.",
+      "section6Title": "Derechos del usuario",
+      "section6Content": "Acceso/copia, rectificación, retirada del consentimiento, eliminación (con excepciones), limitación/oposición. Contacto: <a href='mailto:denisrvnk@gmai.com'>denisrvnk@gmai.com</a>; respuesta en <strong>10 días hábiles</strong>.",
+      "section7Title": "Seguridad",
+      "section7Content": "TLS 1.2+, minimización de accesos, … ; en incidentes graves, notificamos a los usuarios y, si es necesario, a las autoridades competentes."
+    },
+    "eula": {
+      "title": "Acuerdo de licencia de usuario final (EULA)",
+      "subtitle": "Ai Voice Studio",
+      "section1Title": "Objeto",
+      "section1Content": "Licencia no exclusiva e intransferible para el software «Ai Voice Studio» (web/escritorio) en modalidad de suscripción o licencia única.",
+      "section2Title": "Restricciones",
+      "section2Content": "Prohibición de descompilar, distribuir claves, eludir restricciones y uso ilícito.",
+      "section3Title": "Activación",
+      "section3Content": "Por cuenta/clave; la desactivación es posible en caso de incumplimiento o falta de pago.",
+      "section4Title": "Actualizaciones",
+      "section4Content": "Podem ocorrer alterações de funcionalidade.",
+      "section5Title": "Responsabilidad",
+      "section5Content": "«Tal cual»; límite — importe del último pago por el software.",
+      "section6Title": "Terminación",
+      "section6Content": "A iniciativa del Licenciatario o en caso de incumplimiento; Datos — a solicitud."
+    },
+    "contacts": {
+      "title": "Contactos",
+      "organization": "Organización",
+      "organizationDesc": "Propietario del proyecto",
+      "email": "Correo electrónico",
+      "emailDesc": "Para contacto y soporte"
+    }
   }
 }

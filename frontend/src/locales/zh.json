@@ -275,5 +275,90 @@
     "perMonth": "每月",
     "perWeek": "每周",
     "week": "每周"
+  },
+  "footer": {
+    "allRightsReserved": "保留所有权利",
+    "terms": "条款",
+    "privacy": "隐私",
+    "cookies": "Cookie",
+    "license": "许可证",
+    "contacts": "联系方式",
+    "contact": "联系"
+  },
+  "cookies": {
+    "bannerTitle": "Cookie 同意",
+    "bannerText": "我们使用 Cookie。必要的 Cookie 用于网站功能；分析/营销类仅在您同意的情况下使用。",
+    "learnMore": "了解更多",
+    "acceptAll": "全部接受",
+    "necessaryOnly": "仅必要项"
+  },
+  "legal": {
+    "backToHome": "返回首页",
+    "updatedDate": "更新",
+    "terms": {
+      "title": "服务条款",
+      "seller": "卖方",
+      "sellerContent": "<strong>卖方：</strong> 自然人 <strong>Denis Olegovich Rev…</strong>。联系方式：<a href='mailto:denisrvnk@gmai.com'>denisrvnk@gmai.com</a>",
+      "section1Title": "合同标的",
+      "section1Content": "我们在网站及相关应用中提供包括「Ai Voice Studio」在内的数字产品与服务的访问，购买方按本条款支付费用。",
+      "section2Title": "适用范围与重要说明",
+      "section2Content": "本网站面向<strong>…共和国境外</strong>用户。我们可随时修订条款，新版本将发布于网站。",
+      "section3Title": "接受",
+      "section3Content": "在 (a) 付款/下单或 (b) 注册/下单时明确同意的情况下，本协议即告成立。",
+      "section4Title": "价格与支付",
+      "section4Content": "价格发布于网站/应用。税费、货币兑换及支付手续费由付款人承担，除非结账时另有说明。",
+      "section5Title": "访问与更新",
+      "section5Content": "数字内容的访问在付款后提供。非关键更新可能不另行通知；关键更新将必须通知。",
+      "section6Title": "退款",
+      "section6Content": "数字内容如存在重大缺陷，可予以退款；退款获批后，款项将按原支付方式退回。",
+      "section7Title": "使用限制",
+      "section7Content": "禁止：侵犯第三方权利、绕过限制、将服务用于非法活动、垃圾信息等。",
+      "section8Title": "知识产权",
+      "section8Content": "内容与代码的专有权归<strong>Eclipse…</strong>所有；按计划/EULA 规定的期限与范围授予不可转让的许可。",
+      "section9Title": "责任",
+      "section9Content": "服务按“原样”提供。我们不对商业损失负责；责任限于用户最近 3 个月的最后一次付款金额。",
+      "section10Title": "适用法律与争议",
+      "section10Content": "本条款受<strong>…共和国</strong>法律管辖。争议：先行提出索赔（10 天期限），随后由卖方居住地的有管辖权法院裁决。"
+    },
+    "privacy": {
+      "title": "隐私政策",
+      "section1Title": "我们收集的数据",
+      "section1Content": "<strong>账户：</strong> 姓名/昵称、邮箱、密码（哈希）…<br/><strong>支持：</strong> 咨询、附件、日志。",
+      "section2Title": "处理目的",
+      "section2Content": "提供服务与计费；…；依法合规，依法向主管机关回应（在法律要求时）。",
+      "section3Title": "处理依据",
+      "section3Content": "同意；合同的订立与履行；合法权益（不侵害主体权利）；法律义务。",
+      "section4Title": "跨境传输",
+      "section4Content": "在使用托管/合作方时可能发生；所有传输均采取保护措施。继续使用本网站即表示你同意该等传输。",
+      "section5Title": "存储",
+      "section5Content": "保存期限：账户存续期间及最多 <strong>5 年</strong>（用于索赔处理/会计）。",
+      "section6Title": "用户权利",
+      "section6Content": "访问/复制、更正、撤回同意、删除（在例外情况下除外）、限制/反对。联系方式：<a href='mailto:denisrvnk@gmai.com'>denisrvnk@gmai.com</a>；<strong>10 个工作日</strong>内回复。",
+      "section7Title": "安全",
+      "section7Content": "TLS 1.2+、最小化访问等……；发生严重事件时，将通知用户并在必要时通知主管机关。"
+    },
+    "eula": {
+      "title": "最终用户许可协议（EULA）",
+      "subtitle": "Ai Voice Studio",
+      "section1Title": "合同标的",
+      "section1Content": "针对「Ai Voice Studio」（网页/桌面）的非独占、不可转让许可；按订阅或一次性许可条款提供。",
+      "section2Title": "限制",
+      "section2Content": "禁止反编译、分发密钥、绕过限制或违法使用。",
+      "section3Title": "激活",
+      "section3Content": "按账号/密钥激活；如违反条款或未付款，可被停用。",
+      "section4Title": "更新",
+      "section4Content": "功能可能会发生变更。",
+      "section5Title": "责任",
+      "section5Content": "“按原样”；上限为最近一次针对该软件的支付金额。",
+      "section6Title": "终止",
+      "section6Content": "由被许可方主动提出或发生违约时。数据—可按请求提供。"
+    },
+    "contacts": {
+      "title": "联系方式",
+      "organization": "组织",
+      "organizationDesc": "项目所有者",
+      "email": "电子邮箱",
+      "emailDesc": "用于联系与支持"
+    }
   }
 }

@@ -275,5 +275,90 @@
     "perMonth": "월당",
     "perWeek": "주당",
     "week": "주당"
+  },
+  "footer": {
+    "allRightsReserved": "판권 소유",
+    "terms": "이용약관",
+    "privacy": "개인정보처리방침",
+    "cookies": "쿠키",
+    "license": "라이선스",
+    "contacts": "연락처",
+    "contact": "문의"
+  },
+  "cookies": {
+    "bannerTitle": "쿠키 동의",
+    "bannerText": "본 사이트는 쿠키를 사용합니다. 필수 쿠키는 사이트 기능을 위해 필요하며, 분석/마케팅 쿠키는 동의하신 경우에만 사용됩니다.",
+    "learnMore": "자세히 알아보기",
+    "acceptAll": "모두 허용",
+    "necessaryOnly": "필수만 허용"
+  },
+  "legal": {
+    "backToHome": "홈으로 돌아가기",
+    "updatedDate": "업데이트",
+    "terms": {
+      "title": "서비스 약관",
+      "seller": "판매자",
+      "sellerContent": "<strong>판매자:</strong> 개인 <strong>Denis Olegovich Rev…</strong>. 연락처: <a href='mailto:denisrvnk@gmai.com'>denisrvnk@gmai.com</a>",
+      "section1Title": "계약의 대상",
+      "section1Content": "웹사이트 및 관련 애플리케이션에서 «Ai Voice Studio»를 포함한 디지털 제품과 서비스에 대한 접근을 제공합니다. 구매자는 본 약관에 따라 대금을 지불합니다.",
+      "section2Title": "적용 지역 및 중요 공지",
+      "section2Content": "본 웹사이트는 <strong>… 공화국 외부</strong>의 이용자를 대상으로 합니다. 약관은 언제든 개정될 수 있으며, 개정본은 웹사이트에 게시됩니다.",
+      "section3Title": "동의 성립",
+      "section3Content": "(a) 결제/주문 또는 (b) 회원가입/주문 과정에서의 명시적 동의 시 계약이 성립합니다.",
+      "section4Title": "가격 및 결제",
+      "section4Content": "가격은 웹사이트/앱에 게시됩니다. 세금, 환전 및 결제 수수료는 결제 단계에서 별도 표기가 없는 한 결제자가 부담합니다.",
+      "section5Title": "접근 및 업데이트",
+      "section5Content": "디지털 콘텐츠 접근은 결제 후 제공됩니다. 비중요 업데이트는 별도 통지 없이 적용될 수 있으며, 중요한 업데이트는 반드시 고지합니다.",
+      "section6Title": "환불",
+      "section6Content": "디지털 콘텐츠에 중대한 하자가 있는 경우 환불이 가능합니다. 환불 승인 후에는 동일한 결제 수단으로 환급됩니다.",
+      "section7Title": "사용 제한",
+      "section7Content": "금지 사항: 제3자의 권리 침해, 제한 우회, 서비스의 불법적 사용, 스팸 등.",
+      "section8Title": "지식 재산권",
+      "section8Content": "콘텐츠와 코드에 대한 배타적 권리는 <strong>Eclipse…</strong>에 귀속됩니다. 플랜/EULA에 명시된 기간과 범위 내에서 양도 불가한 라이선스를 부여합니다.",
+      "section9Title": "책임",
+      "section9Content": "서비스는 ‘있는 그대로’ 제공됩니다. 영업상 손실에 대해 책임지지 않으며, 책임 한도는 최근 3개월 동안의 사용자의 마지막 결제 금액으로 제한됩니다.",
+      "section10Title": "준거법 및 분쟁",
+      "section10Content": "본 약관은 <strong>… 공화국</strong> 법률의 적용을 받습니다. 분쟁: 먼저 10일 내 청구 절차, 이후 판매자 거주지 관할 법원에서 해결합니다."
+    },
+    "privacy": {
+      "title": "개인정보 처리방침",
+      "section1Title": "수집하는 데이터",
+      "section1Content": "<strong>계정:</strong> 이름/닉네임, 이메일, 비밀번호(해시)…<br/><strong>지원:</strong> 문의, 첨부파일, 로그.",
+      "section2Title": "수집 목적",
+      "section2Content": "서비스 제공 및 청구; … ; 법 준수, 필요 시 권한 있는 기관에 대한 대응.",
+      "section3Title": "법적 근거",
+      "section3Content": "동의; 계약의 체결 및 이행; 정당한 이익(정보주체의 권리를 침해하지 않는 범위); 법적 의무.",
+      "section4Title": "국외 이전",
+      "section4Content": "호스팅/파트너 사용 시 발생할 수 있으며, 모든 이전은 보호 조치를 통해 수행됩니다. 사이트를 계속 이용하면 이러한 이전에 동의한 것으로 간주됩니다.",
+      "section5Title": "보관",
+      "section5Content": "보관 기간: 계정 유지 기간 동안 및 <strong>5년</strong>까지(클레임 처리/회계를 위해).",
+      "section6Title": "이용자 권리",
+      "section6Content": "열람/사본, 정정, 동의 철회, 삭제(예외 가능), 제한/반대. 연락처: <a href='mailto:denisrvnk@gmai.com'>denisrvnk@gmai.com</a>; <strong>영업일 기준 10일</strong> 이내 회신.",
+      "section7Title": "보안",
+      "section7Content": "TLS 1.2+, 접근 최소화 등 … ; 중대한 사고 발생 시 사용자와 필요 시 관계기관에 통지합니다."
+    },
+    "eula": {
+      "title": "최종 사용자 사용권 계약(EULA)",
+      "subtitle": "Ai Voice Studio",
+      "section1Title": "계약의 대상",
+      "section1Content": "소프트웨어 «Ai Voice Studio»(웹/데스크톱)에 대한 비독점적·양도 불가 라이선스. 구독 또는 일회성 라이선스 조건.",
+      "section2Title": "제한",
+      "section2Content": "디컴파일, 키 배포, 제한 우회, 불법 사용을 금지합니다.",
+      "section3Title": "활성화",
+      "section3Content": "계정/키 기반. 약관 위반이나 미납 발생 시 비활성화될 수 있습니다.",
+      "section4Title": "업데이트",
+      "section4Content": "기능 변경이 있을 수 있습니다.",
+      "section5Title": "책임",
+      "section5Content": "‘있는 그대로’; 한도 — 소프트웨어에 대한 최근 결제 금액.",
+      "section6Title": "해지",
+      "section6Content": "라이선시의 요청 또는 약관 위반 시. 데이터 — 요청 시 제공."
+    },
+    "contacts": {
+      "title": "연락처",
+      "organization": "조직",
+      "organizationDesc": "프로젝트 소유자",
+      "email": "이메일",
+      "emailDesc": "문의 및 지원용"
+    }
   }
 }
