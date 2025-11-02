@@ -159,8 +159,8 @@ class InputSanitizer:
         r'deletes+from',
         r'inserts+into',
         r'updates+.*set',
-        r'execs*(',
-        r'executes*(',
+        r'execs*\(',
+        r'executes*\(',
         r'scripts*>',
     ]
     
