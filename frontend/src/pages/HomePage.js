@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -18,6 +18,7 @@ import { Loader2, Sparkles, Mic, Download, Clock, Volume2, User, LogOut } from "
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import Footer from "@/components/Footer";
+import { VoiceSettingsSkeleton, HistorySkeleton } from "@/components/LoadingStates";
 
 const HomePage = () => {
   const { t } = useTranslation();
@@ -58,6 +59,10 @@ const HomePage = () => {
   const [currentAudioId, setCurrentAudioId] = useState(null); // Track current audio ID for cleanup
   const [history, setHistory] = useState([]);
   
+// Loading states for better UX
+  const [isLoadingVoices, setIsLoadingVoices] = useState(true);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+
   // Video generation state
   const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
   const [videoType, setVideoType] = useState("youtube_images");
@@ -80,20 +85,17 @@ const HomePage = () => {
   
   // Update selected voice when language changes
   useEffect(() => {
-    if (voices.length > 0) {
-      const voicesForLang = getVoicesByLanguage();
-      if (voicesForLang.length > 0) {
-        // Only update if current voice is not in the new language
-        const currentVoiceInList = voicesForLang.find(v => v.short_name === selectedVoice);
-        if (!currentVoiceInList) {
-          setSelectedVoice(voicesForLang[0].short_name);
-        }
+    if (voices.length > 0 && getVoicesByLanguage.length > 0) {
+      const currentVoiceInList = getVoicesByLanguage.find(v => v.short_name === selectedVoice);
+      if (!currentVoiceInList) {
+        setSelectedVoice(getVoicesByLanguage[0].short_name);
       }
     }
-  }, [language, voices]);
+  }, [language, voices, getVoicesByLanguage, selectedVoice]);
   
   const fetchVoices = async () => {
     try {
+      setIsLoadingVoices(true);
       const response = await axios.get(API + '/voices', {
         withCredentials: true
       });
@@ -111,6 +113,8 @@ const HomePage = () => {
     } catch (error) {
       console.error("Error fetching voices:", error);
       toast.error(t('notifications.failedToLoadVoices'));
+      } finally {
+      setIsLoadingVoices(false);
     }
   };
   
@@ -604,22 +608,22 @@ const HomePage = () => {
     }
   };
   
-  const getVoicesByLanguage = () => {
+  const getVoicesByLanguage = useMemo(() => {
     const langCode = language.split('-')[0].toLowerCase();
     return voices.filter(v => v.locale.toLowerCase().startsWith(langCode));
-  };
+  }, [language, voices]);
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-slate-800 transition-colors duration-300">
       {/* Top Navigation Bar */}
-      <div className="bg-white dark:bg-slate-900 shadow-sm border-b border-gray-200 dark:border-slate-700 transition-colors duration-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-4">
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">🎙️ AI Voice Studio</h1>
+      <div className="bg-white dark:bg-slate-900 shadow-sm border-b border-gray-200 dark:border-slate-700 transition-colors duration-300 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-2 sm:py-3">
+          <div className="flex justify-between items-center gap-2">
+            <div className="flex items-center space-x-2 sm:space-x-4 min-w-0">
+              <h1 className="text-base sm:text-xl font-bold text-gray-900 dark:text-white whitespace-nowrap">🎙️ AI Voice Studio</h1>
               {subscription && (
-                <div className="flex items-center gap-3">
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                <div className="hidden md:flex items-center gap-3">
+                  <span className={`px-2 sm:px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${
                     subscription.tier === 'pro'
                       ? 'bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900 dark:to-pink-900 text-purple-800 dark:text-purple-200 border border-purple-200 dark:border-purple-700'
                       : 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300'
@@ -674,32 +678,34 @@ const HomePage = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-3 sm:p-4 lg:p-6">
         {/* Header */}
-        <div className="text-center mb-8 pt-4">
-          <h2 className="text-4xl lg:text-5xl font-bold mb-3 bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-blue-400 dark:to-cyan-400 bg-clip-text text-transparent" data-testid="main-heading">
+        <div className="text-center mb-6 sm:mb-8 pt-2 sm:pt-4">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-2 sm:mb-3 bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-blue-400 dark:to-cyan-400 bg-clip-text text-transparent" data-testid="main-heading">
           </h2>
-          <p className="text-lg text-slate-600 dark:text-slate-300">{t('home.subtitle')}</p>
+          <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300">{t('home.subtitle')}</p>
         </div>
         
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Main Content */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6 min-h-[600px]">
             <Card className="backdrop-blur-sm bg-white/80 border-slate-200 shadow-xl" data-testid="main-card">
               <CardHeader>
-                <CardTitle className="text-2xl">{t('home.createVoiceNarration')}</CardTitle>
-                <CardDescription>{t('home.chooseGenerationMethod')}</CardDescription>
+                <CardTitle className="text-xl sm:text-2xl">{t('home.createVoiceNarration')}</CardTitle>
+                <CardDescription className="text-sm">{t('home.chooseGenerationMethod')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
-                  <TabsList className="grid w-full grid-cols-2 mb-6" data-testid="mode-tabs">
-                    <TabsTrigger value="ai-generate" data-testid="ai-generate-tab">
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      {t('home.aiGeneration')}
+                  <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-6 h-auto" data-testid="mode-tabs">
+                    <TabsTrigger value="ai-generate" data-testid="ai-generate-tab" className="text-sm sm:text-base py-2">
+                      <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                      <span className="hidden sm:inline">{t('home.aiGeneration')}</span>
+                      <span className="sm:hidden">AI</span>
                     </TabsTrigger>
-                    <TabsTrigger value="manual-input" data-testid="manual-input-tab">
-                      <Mic className="w-4 h-4 mr-2" />
-                      {t('home.manualInput')}
+                    <TabsTrigger value="manual-input" data-testid="manual-input-tab" className="text-sm sm:text-base py-2">
+                      <Mic className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                      <span className="hidden sm:inline">{t('home.manualInput')}</span>
+                      <span className="sm:hidden">Manual</span>
                     </TabsTrigger>
                   </TabsList>
                   
@@ -719,22 +725,24 @@ const HomePage = () => {
                         />
                       </div>
                       
-                      <div className="grid md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <Label htmlFor="duration">
-                            <Clock className="w-4 h-4 inline mr-2" />
-                            {t('home.targetDuration')}: {duration} {duration !== 1 ? t('home.minutes') : t('home.minute')}
+                          <Label htmlFor="duration" className="text-sm">
+                            <Clock className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1 sm:mr-2" />
+                            {t('home.targetDuration')}: <span className="font-semibold">{duration}</span> {duration !== 1 ? t('home.minutes') : t('home.minute')}
                           </Label>
-                          <Slider
-                            id="duration"
-                            data-testid="duration-slider"
-                            value={[duration]}
-                            onValueChange={(val) => setDuration(val[0])}
-                            min={1}
-                            max={60}
-                            step={1}
-                            className="mt-2"
-                          />
+                          <div className="mt-2 px-1">
+                            <Slider
+                              id="duration"
+                              data-testid="duration-slider"
+                              value={[duration]}
+                              onValueChange={(val) => setDuration(val[0])}
+                              min={1}
+                              max={60}
+                              step={1}
+                              className="touch-action-none"
+                            />
+                          </div>
                         </div>
                         
                         <div>
@@ -848,29 +856,29 @@ const HomePage = () => {
                               
                               {/* Detailed Stats */}
                               {audioStage === 'generating_segments' && totalSegments > 0 && (
-                                <div className="grid grid-cols-2 gap-3 text-sm">
-                                  <div className="bg-gray-50 rounded-lg p-2">
-                                    <p className="text-xs text-gray-500">{t('home.progress')}</p>
-                                    <p className="font-semibold text-gray-900">
+                                <div className="grid grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
+                                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-2">
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">{t('home.progress')}</p>
+                                    <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm sm:text-base">
                                       {completedSegments}/{totalSegments} {t('home.segments')}
                                     </p>
                                   </div>
                                   {audioEta && (
-                                    <div className="bg-blue-50 rounded-lg p-2">
-                                      <p className="text-xs text-blue-600">{t('home.remaining')}</p>
-                                      <p className="font-semibold text-blue-900">{audioEta}</p>
+                                    <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-2">
+                                      <p className="text-xs text-blue-600 dark:text-blue-400">{t('home.remaining')}</p>
+                                      <p className="font-semibold text-blue-900 dark:text-blue-100 text-sm sm:text-base">{audioEta}</p>
                                     </div>
                                   )}
                                   {audioSpeed > 0 && (
-                                    <div className="bg-green-50 rounded-lg p-2">
-                                      <p className="text-xs text-green-600">{t('home.speed')}</p>
-                                      <p className="font-semibold text-green-900">{audioSpeed.toFixed(1)}x</p>
+                                    <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-2">
+                                      <p className="text-xs text-green-600 dark:text-green-400">{t('home.speed')}</p>
+                                      <p className="font-semibold text-green-900 dark:text-green-100 text-sm sm:text-base">{audioSpeed.toFixed(1)}x</p>
                                     </div>
                                   )}
                                   {subscription?.tier === 'pro' && (
-                                    <div className="bg-purple-50 rounded-lg p-2">
-                                      <p className="text-xs text-purple-600">{t('home.status')}</p>
-                                      <p className="font-semibold text-purple-900">{t('home.proPriority')}</p>
+                                    <div className="bg-purple-50 dark:bg-purple-900/30 rounded-lg p-2">
+                                      <p className="text-xs text-purple-600 dark:text-purple-400">{t('home.status')}</p>
+                                      <p className="font-semibold text-purple-900 dark:text-purple-100 text-sm sm:text-base">{t('home.proPriority')}</p>
                                     </div>
                                   )}
                                 </div>
@@ -1021,88 +1029,93 @@ const HomePage = () => {
           </div>
           
           {/* Settings Panel */}
-          <div className="space-y-6">
-            <Card className="backdrop-blur-sm bg-white/80 border-slate-200 shadow-xl" data-testid="settings-card">
-              <CardHeader>
-                <CardTitle>{t('home.voiceSettings')}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="language-setting">{t('home.language')}</Label>
-                  <Select value={language} onValueChange={setLanguage}>
-                    <SelectTrigger id="language-setting" data-testid="language-setting-select" className="mt-2">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="en-US">English (US)</SelectItem>
-                      <SelectItem value="en-GB">English (UK)</SelectItem>
-                      <SelectItem value="es-ES">Spanish</SelectItem>
-                      <SelectItem value="fr-FR">French</SelectItem>
-                      <SelectItem value="de-DE">German</SelectItem>
-                      <SelectItem value="it-IT">Italian</SelectItem>
-                      <SelectItem value="pt-BR">Portuguese (BR)</SelectItem>
-                      <SelectItem value="ru-RU">Russian</SelectItem>
-                      <SelectItem value="zh-CN">Chinese (Simplified)</SelectItem>
-                      <SelectItem value="ja-JP">Japanese</SelectItem>
-                      <SelectItem value="ar-SA">Arabic</SelectItem>
-                      <SelectItem value="hi-IN">Hindi</SelectItem>
-                      <SelectItem value="ko-KR">Korean</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div>
-                  <Label htmlFor="voice">{t('voiceSettings.voice')}</Label>
-                  <Select value={selectedVoice} onValueChange={setSelectedVoice}>
-                    <SelectTrigger id="voice" data-testid="voice-select" className="mt-2">
-                      <SelectValue placeholder={t('home.selectAVoice')} />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-64">
-                      {getVoicesByLanguage().map((voice) => (
-                        <SelectItem key={voice.short_name} value={voice.short_name}>
-                          {voice.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-slate-500 mt-1">{t('home.neuralTTSPowered')}</p>
-                </div>
-                
-                <div>
-                  <Label htmlFor="speed">
-                    {t('home.speedLabel')}: {speed[0] > 0 ? '+' : ''}{speed[0]}% ({(1 + speed[0]/100).toFixed(1)}x)
-                  </Label>
-                  <Slider
-                    id="speed"
-                    data-testid="speed-slider"
-                    value={speed}
-                    onValueChange={setSpeed}
-                    min={-50}
-                    max={100}
-                    step={10}
-                    className="mt-2"
-                  />
-                  <p className="text-xs text-slate-500 mt-1">{t('home.adjustSpeed')}</p>
-                </div>
-              </CardContent>
-            </Card>
-            
+          <div className="space-y-4 sm:space-y-6">
+            {isLoadingVoices ? (
+              <VoiceSettingsSkeleton />
+            ) : (
+              <Card className="backdrop-blur-sm bg-white/80 border-slate-200 shadow-xl" data-testid="settings-card">
+                <CardHeader>
+                  <CardTitle className="text-lg sm:text-xl">{t('home.voiceSettings')}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="language-setting" className="text-sm">{t('home.language')}</Label>
+                    <Select value={language} onValueChange={setLanguage}>
+                      <SelectTrigger id="language-setting" data-testid="language-setting-select" className="mt-2">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="en-US">English (US)</SelectItem>
+                        <SelectItem value="en-GB">English (UK)</SelectItem>
+                        <SelectItem value="es-ES">Spanish</SelectItem>
+                        <SelectItem value="fr-FR">French</SelectItem>
+                        <SelectItem value="de-DE">German</SelectItem>
+                        <SelectItem value="it-IT">Italian</SelectItem>
+                        <SelectItem value="pt-BR">Portuguese (BR)</SelectItem>
+                        <SelectItem value="ru-RU">Russian</SelectItem>
+                        <SelectItem value="zh-CN">Chinese (Simplified)</SelectItem>
+                        <SelectItem value="ja-JP">Japanese</SelectItem>
+                        <SelectItem value="ar-SA">Arabic</SelectItem>
+                        <SelectItem value="hi-IN">Hindi</SelectItem>
+                        <SelectItem value="ko-KR">Korean</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="voice" className="text-sm">{t('voiceSettings.voice')}</Label>
+                    <Select value={selectedVoice} onValueChange={setSelectedVoice}>
+                      <SelectTrigger id="voice" data-testid="voice-select" className="mt-2">
+                        <SelectValue placeholder={t('home.selectAVoice')} />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-64">
+                        {getVoicesByLanguage.map((voice) => (
+                          <SelectItem key={voice.short_name} value={voice.short_name}>
+                            {voice.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-slate-500 mt-1">{t('home.neuralTTSPowered')}</p>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="speed" className="text-sm">
+                      {t('home.speedLabel')}: {speed[0] > 0 ? '+' : ''}{speed[0]}% ({(1 + speed[0]/100).toFixed(1)}x)
+                    </Label>
+                    <div className="mt-2 px-1">
+                      <Slider
+                        id="speed"
+                        data-testid="speed-slider"
+                        value={speed}
+                        onValueChange={setSpeed}
+                        min={-50}
+                        max={100}
+                        step={10}
+                        className="touch-action-none"
+                      />
+                    </div>
+                    <p className="text-xs text-slate-500 mt-1">{t('home.adjustSpeed')}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
             {/* Audio Player */}
             {audioUrl && (
-              <Card className="backdrop-blur-sm bg-white/80 border-slate-200 shadow-xl" data-testid="audio-player-card">
+              <Card className="backdrop-blur-sm bg-white/80 border-slate-200 shadow-xl min-h-[180px]" data-testid="audio-player-card">
                 <CardHeader>
-                  <CardTitle>{t('audioPlayer.title')}</CardTitle>
+                  <CardTitle className="text-lg sm:text-xl">{t('audioPlayer.title')}</CardTitle>
                   <div className="space-y-1 mt-2">
                     {audioDuration > 0 && (
-                      <p className="text-sm text-slate-600">
+                      <p className="text-sm text-slate-600 dark:text-slate-400">
                         {t('audioPlayer.duration')}: {Math.floor(audioDuration / 60)}:{String(Math.floor(audioDuration % 60)).padStart(2, '0')}
                       </p>
                     )}
                     {generationTime > 0 && (
-                      <div className="flex gap-4 text-xs text-slate-500">
+                      <div className="flex flex-wrap gap-2 sm:gap-4 text-xs text-slate-500 dark:text-slate-400">
                         <span>⏱️ {t('progress.generationTime')}: {generationTime.toFixed(1)}с</span>
                         {audioSpeed > 0 && (
-                          <span className="text-green-600 font-semibold">
+                          <span className="text-green-600 dark:text-green-400 font-semibold">
                             ⚡ {t('progress.speed')}: {audioSpeed.toFixed(1)}x {t('progress.realTime')}
                           </span>
                         )}
@@ -1116,15 +1129,15 @@ const HomePage = () => {
                     <source src={audioUrl} type="audio/mpeg" />
                     {t('home.yourBrowserDoesNotSupport')}
                   </audio>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <a href={audioUrl} download className="w-full">
-                      <Button className="w-full" variant="outline" data-testid="download-button">
-                        <Download className="w-4 h-4 mr-2" />
+                      <Button className="w-full text-sm" variant="outline" data-testid="download-button">
+                        <Download className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                         {t('audioPlayer.downloadAudio')}
                       </Button>
                     </a>
                     <Button 
-                      className="w-full" 
+                      className="w-full text-sm" 
                       variant="outline"
                       onClick={() => currentAudioId && downloadText(currentAudioId)}
                       disabled={!currentAudioId}
@@ -1235,32 +1248,35 @@ const HomePage = () => {
             )}
             
             {/* History */}
-            {history.length > 0 && (
-              <Card className="backdrop-blur-sm bg-white/80 border-slate-200 shadow-xl" data-testid="history-card">
+            {isLoadingHistory ? (
+              <HistorySkeleton />
+            ) : history.length > 0 && (
+              <Card className="backdrop-blur-sm bg-white/80 border-slate-200 shadow-xl min-h-[200px]" data-testid="history-card">
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span>{t('home.history')}</span>
+                  <CardTitle className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                    <span className="text-lg sm:text-xl">{t('home.history')}</span>
                     <span className="text-xs text-slate-500">{t('home.filesStoredPermanently')}</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2 max-h-64 overflow-y-auto">
                     {history.slice(0, 10).map((item) => (
-                      <div key={item.id} className="p-3 bg-slate-50 rounded-lg border border-slate-200" data-testid={'history-item-' + item.id}>
-                        <p className="text-sm text-slate-700 mb-2">{item.text}</p>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-slate-500">{new Date(item.created_at).toLocaleString()}</span>
-                          <div className="flex gap-2">
+                      <div key={item.id} className="p-2 sm:p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700" data-testid={'history-item-' + item.id}>
+                        <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 mb-2 line-clamp-2">{item.text}</p>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs text-slate-500 dark:text-slate-400">{new Date(item.created_at).toLocaleString()}</span>
+                          <div className="flex gap-1 sm:gap-2">
                             <Button 
                               size="sm" 
                               variant="ghost"
                               onClick={() => downloadText(item.id)}
                               title={t('audioPlayer.downloadText')}
+                              className="h-8 w-8 p-0"
                             >
                               📄
                             </Button>
                             <a href={API + item.audio_url} download>
-                              <Button size="sm" variant="ghost" data-testid={'history-download-' + item.id} title={t('audioPlayer.downloadAudio')}>
+                              <Button size="sm" variant="ghost" data-testid={'history-download-' + item.id} title={t('audioPlayer.downloadAudio')} className="h-8 w-8 p-0">
                                 <Download className="w-3 h-3" />
                               </Button>
                             </a>
@@ -1269,7 +1285,7 @@ const HomePage = () => {
                               variant="ghost"
                               onClick={() => deleteAudioFile(item.id)}
                               title={t('notifications.deleteFile')}
-                              className="text-red-500 hover:text-red-700"
+                              className="text-red-500 hover:text-red-700 h-8 w-8 p-0"
                             >
                               🗑️
                             </Button>

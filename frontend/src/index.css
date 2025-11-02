@@ -113,3 +113,64 @@ code {
         border-bottom-color: inherit;
     }
 }
+
+@layer utilities {
+    /* Prevent layout shift with content visibility */
+    .prevent-layout-shift {
+        content-visibility: auto;
+        contain-intrinsic-size: auto 500px;
+    }
+    
+    /* Smooth transitions for dynamic content */
+    .smooth-appear {
+        animation: smooth-fade-in 0.3s ease-in-out;
+    }
+    
+    @keyframes smooth-fade-in {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Better touch experience for sliders on mobile */
+    .touch-action-none {
+        touch-action: none;
+        -webkit-user-select: none;
+        user-select: none;
+    }
+    
+    /* Prevent horizontal scroll on mobile */
+    body {
+        overflow-x: hidden;
+    }
+    
+    /* Improve text readability */
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    /* Hardware acceleration for smooth animations */
+    .hw-accelerate {
+        transform: translateZ(0);
+        will-change: transform;
+    }
+    
+    /* Fixed height containers to prevent CLS */
+    .min-h-content {
+        min-height: 400px;
+    }
+    
+    /* Optimize images */
+    img, video {
+        max-width: 100%;
+        height: auto;
+    }
+}
