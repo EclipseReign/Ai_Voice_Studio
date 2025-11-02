@@ -1368,6 +1368,17 @@ async def generate_text_with_progress(
     
     async def generate_progress():
         try:
+            try:
+                prompt_sanitized = InputSanitizer.sanitize_string(prompt, max_length=5000)
+                language_sanitized = InputSanitizer.sanitize_string(language, max_length=20)
+            except HTTPException as e:
+                yield f"data: {json.dumps({'type': 'error', 'message': 'Invalid input detected'})}\n\n"
+                return
+            
+            # Validate duration (prevent abuse)
+            if duration_minutes < 1 or duration_minutes > 120:
+                yield f"data: {json.dumps({'type': 'error', 'message': 'Duration must be between 1 and 120 minutes'})}\n\n"
+                return
             # Check if user can generate TEXT with duration limit
             can_generate_info = await check_can_generate(
                 current_user.id, 
@@ -1807,6 +1818,18 @@ async def synthesize_audio_with_progress(
     Uses POST method to support large texts (up to 1 hour audio) that exceed URL length limits"""
     
     async def generate_progress():
+        try:
+            text_sanitized = InputSanitizer.sanitize_string(request.text, max_length=200000)  # ~1 hour audio
+            voice_sanitized = InputSanitizer.sanitize_string(request.voice, max_length=100)
+            language_sanitized = InputSanitizer.sanitize_string(request.language, max_length=20)
+            
+            # Update request with sanitized values
+            request.text = text_sanitized
+            request.voice = voice_sanitized
+            request.language = language_sanitized
+        except HTTPException as e:
+            yield f"data: {json.dumps({'type': 'error', 'message': 'Invalid input detected'})}\n\n"
+            return
         # If request carries a job_id to resume, attempt to load and continue
         resume_from_job = None
         if request.job_id:
@@ -2976,12 +2999,31 @@ async def video_health():
 # Include router - MUST be after all route definitions
 app.include_router(api_router)
 
+from security_middleware import (
+    SecurityHeadersMiddleware,
+    RateLimitMiddleware,
+    SecurityMiddleware,
+    rate_limiter,
+    InputSanitizer
+)
+
+# Add security middleware (ORDER MATTERS - applied in reverse order)
+# 1. Rate limiting (first line of defense)
+app.add_middleware(RateLimitMiddleware)
+
+# 2. General security checks (suspicious activity detection)
+app.add_middleware(SecurityMiddleware)
+
+# 3. Security headers (applied to all responses)
+app.add_middleware(SecurityHeadersMiddleware)
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=os.environ.get('CORS_ORIGINS', 'https://ai-voice-studio.up.railway.app').split(','),
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "Cookie"],
+    expose_headers=["Content-Disposition"],
 )
 
 # ============================================================================
@@ -3046,8 +3088,77 @@ async def startup_job_recovery():
         logger.info("🚀 Started video temp directory cleanup task (runs every 30min, cleans 2h+ old dirs)")
     except Exception as e:
         logger.error(f"Error starting video cleanup task: {e}")
+        
+    try:
+        asyncio.create_task(rate_limiter.cleanup_old_entries())
+        logger.info("🔒 Started rate limiter cleanup task (runs every hour)")
+    except Exception as e:
+        logger.error(f"Error starting rate limiter cleanup task: {e}")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
     """Cleanup on shutdown"""
     client.close()
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """
+    Global exception handler for unhandled exceptions
+    
+    SECURITY: Never expose internal details in production
+    - Logs full error details for debugging
+    - Returns generic error message to users
+    - Prevents information disclosure
+    """
+    # Log full error details (including stack trace) for debugging
+    logger.error(f"Unhandled exception in {request.method} {request.url.path}")
+    logger.error(f"Error type: {type(exc).__name__}")
+    logger.error(f"Error message: {str(exc)}")
+    logger.exception(exc)  # Logs full stack trace
+    
+    # Import audit logger
+    from security_middleware import AuditLogger
+    
+    # Log security event for monitoring
+    await AuditLogger.log_event(
+        event_type="UNHANDLED_EXCEPTION",
+        request=request,
+        details={
+            "error_type": type(exc).__name__,
+            "error_message": str(exc)
+        }
+    )
+    
+    # Return generic error to user (no sensitive info)
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={
+            "detail": "An internal error occurred. Please try again later.",
+            "error_id": str(uuid.uuid4())[:8]  # For support reference
+        }
+    )
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    """
+    Handler for HTTP exceptions (400, 401, 403, 404, etc.)
+    
+    SECURITY: Log suspicious patterns (401, 403, etc.)
+    """
+    # Log authentication/authorization failures for security monitoring
+    if exc.status_code in [401, 403]:
+        from security_middleware import AuditLogger
+        await AuditLogger.log_event(
+            event_type=f"HTTP_{exc.status_code}",
+            request=request,
+            details={
+                "status_code": exc.status_code,
+                "detail": exc.detail
+            }
+        )
+    
+    # Return error response (HTTPException already has safe detail)
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail}
+    )
