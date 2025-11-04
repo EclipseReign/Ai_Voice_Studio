@@ -165,7 +165,7 @@ def generate_subtitle_filter(
         text = text.replace("\\", "\\\\")
         
         # 2. Escape single quotes (shell escaping)
-        text = text.replace("'", "'\''")
+        text = text.replace("'", " '")
         
         # 3. Remove or escape newlines
         text = text.replace("\n", " ").replace("\n\n", " ")
