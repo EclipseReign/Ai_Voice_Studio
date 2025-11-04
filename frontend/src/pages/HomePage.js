@@ -1194,7 +1194,91 @@ const HomePage = () => {
                       {videoType === "shorts" && t('videoGeneration.shortsDesc')}
                     </p>
                   </div>
-                  
+                  {/* Subtitle Settings */}
+                  <div className="space-y-4 p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="enable-subtitles"
+                        checked={subtitlesEnabled}
+                        onChange={(e) => setSubtitlesEnabled(e.target.checked)}
+                        disabled={isGeneratingVideo}
+                        className="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 dark:focus:ring-purple-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                      />
+                      <Label htmlFor="enable-subtitles" className="text-sm font-medium cursor-pointer">
+                        💬 {t('videoGeneration.enableSubtitles')}
+                      </Label>
+                    </div>
+                    
+                    {subtitlesEnabled && (
+                      <div className="space-y-3 ml-6 animate-in slide-in-from-top-2 duration-300">
+                        {/* Subtitle Style */}
+                        <div>
+                          <Label htmlFor="subtitle-style" className="text-sm">
+                            {t('videoGeneration.subtitleStyle')}
+                          </Label>
+                          <Select value={subtitleStyle} onValueChange={setSubtitleStyle} disabled={isGeneratingVideo}>
+                            <SelectTrigger id="subtitle-style" className="mt-1.5 bg-white dark:bg-slate-800">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="tiktok">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-lg">🎵</span>
+                                  <span>{t('videoGeneration.tiktokStyle')}</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="instagram">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-lg">📸</span>
+                                  <span>{t('videoGeneration.instagramStyle')}</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="minimal">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-lg">✨</span>
+                                  <span>{t('videoGeneration.minimalStyle')}</span>
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        {/* Subtitle Position */}
+                        <div>
+                          <Label className="text-sm mb-2 block">
+                            {t('videoGeneration.subtitlePosition')}
+                          </Label>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setSubtitlePosition("center")}
+                              disabled={isGeneratingVideo}
+                              className={`flex-1 px-3 py-2 text-sm rounded-md border transition-all ${
+                                subtitlePosition === "center"
+                                  ? 'bg-purple-600 text-white border-purple-600 shadow-md'
+                                  : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:border-purple-400'
+                              } ${isGeneratingVideo ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                            >
+                              ⬆️ {t('videoGeneration.centerPosition')}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setSubtitlePosition("bottom")}
+                              disabled={isGeneratingVideo}
+                              className={`flex-1 px-3 py-2 text-sm rounded-md border transition-all ${
+                                subtitlePosition === "bottom"
+                                  ? 'bg-purple-600 text-white border-purple-600 shadow-md'
+                                  : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:border-purple-400'
+                              } ${isGeneratingVideo ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                            >
+                              ⬇️ {t('videoGeneration.bottomPosition')}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                   {isGeneratingVideo && (
                     <div className="space-y-3">
                       <div className="flex items-center justify-between text-sm">
@@ -1333,91 +1417,7 @@ const HomePage = () => {
                             </span>
                           )}
                         </div>
-                        {/* Subtitle Settings */}
-                        <div className="space-y-4 p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id="enable-subtitles"
-                              checked={subtitlesEnabled}
-                              onChange={(e) => setSubtitlesEnabled(e.target.checked)}
-                              disabled={isGeneratingVideo}
-                              className="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 dark:focus:ring-purple-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                            />
-                            <Label htmlFor="enable-subtitles" className="text-sm font-medium cursor-pointer">
-                              💬 {t('videoGeneration.enableSubtitles')}
-                            </Label>
-                          </div>
-                          
-                          {subtitlesEnabled && (
-                            <div className="space-y-3 ml-6 animate-in slide-in-from-top-2 duration-300">
-                              {/* Subtitle Style */}
-                              <div>
-                                <Label htmlFor="subtitle-style" className="text-sm">
-                                  {t('videoGeneration.subtitleStyle')}
-                                </Label>
-                                <Select value={subtitleStyle} onValueChange={setSubtitleStyle} disabled={isGeneratingVideo}>
-                                  <SelectTrigger id="subtitle-style" className="mt-1.5 bg-white dark:bg-slate-800">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="tiktok">
-                                      <div className="flex items-center gap-2">
-                                        <span className="text-lg">🎵</span>
-                                        <span>{t('videoGeneration.tiktokStyle')}</span>
-                                      </div>
-                                    </SelectItem>
-                                    <SelectItem value="instagram">
-                                      <div className="flex items-center gap-2">
-                                        <span className="text-lg">📸</span>
-                                        <span>{t('videoGeneration.instagramStyle')}</span>
-                                      </div>
-                                    </SelectItem>
-                                    <SelectItem value="minimal">
-                                      <div className="flex items-center gap-2">
-                                        <span className="text-lg">✨</span>
-                                        <span>{t('videoGeneration.minimalStyle')}</span>
-                                      </div>
-                                    </SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              
-                              {/* Subtitle Position */}
-                              <div>
-                                <Label className="text-sm mb-2 block">
-                                  {t('videoGeneration.subtitlePosition')}
-                                </Label>
-                                <div className="flex gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => setSubtitlePosition("center")}
-                                    disabled={isGeneratingVideo}
-                                    className={`flex-1 px-3 py-2 text-sm rounded-md border transition-all ${
-                                      subtitlePosition === "center"
-                                        ? 'bg-purple-600 text-white border-purple-600 shadow-md'
-                                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:border-purple-400'
-                                    } ${isGeneratingVideo ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                                  >
-                                    ⬆️ {t('videoGeneration.centerPosition')}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => setSubtitlePosition("bottom")}
-                                    disabled={isGeneratingVideo}
-                                    className={`flex-1 px-3 py-2 text-sm rounded-md border transition-all ${
-                                      subtitlePosition === "bottom"
-                                        ? 'bg-purple-600 text-white border-purple-600 shadow-md'
-                                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:border-purple-400'
-                                    } ${isGeneratingVideo ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                                  >
-                                    ⬇️ {t('videoGeneration.bottomPosition')}
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
+                
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-slate-500">{new Date(video.created_at).toLocaleString()}</span>
                           <div className="flex gap-2">

@@ -164,17 +164,13 @@ def generate_subtitle_filter(
         # 1. Escape backslashes (MUST be first)
         text = text.replace("\\", "\\\\")
         
-        # 2. Escape percent signs (used in FFmpeg expressions)
-        text = text.replace("%", "\%")
-        
-        # 3. Escape colons (FFmpeg parameter separator)
-        text = text.replace(":", "\:")
-        
-        # 4. Escape single quotes (shell escaping)
+        # 2. Escape single quotes (shell escaping)
         text = text.replace("'", "'\''")
         
-        # 5. Remove or escape newlines
-        text = text.replace("\n", "\\n").replace("\n\n", "\\n\n")
+        # 3. Remove or escape newlines
+        text = text.replace("\n", " ").replace("\n\n", " ")
+        
+        # Note: We don't escape colons or percent signs as they're safe within single quotes
         
         start = phrase["start"]
         end = phrase["end"]
