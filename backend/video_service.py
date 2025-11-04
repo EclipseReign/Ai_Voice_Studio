@@ -160,12 +160,9 @@ def generate_subtitle_filter(
         # Escape text for FFmpeg drawtext filter
         # Order matters: backslash first, then other characters
         text = phrase["text"]
-        
+        text = text.replace("'", "")
         # 1. Escape backslashes (MUST be first)
         text = text.replace("\\", "\\\\")
-        
-        # 2. Escape single quotes (shell escaping)
-        text = text.replace("'", " '")
         
         # 3. Remove or escape newlines
         text = text.replace("\n", " ").replace("\n\n", " ")
