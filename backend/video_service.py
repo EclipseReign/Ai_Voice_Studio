@@ -22,6 +22,35 @@ logger = logging.getLogger(__name__)
 
 POLLINATIONS_API_URL = "https://image.pollinations.ai/prompt"
 
+SUBTITLE_STYLES = {
+    "tiktok": {
+        "fontsize": 70,
+        "fontcolor": "yellow",
+        "borderw": 4,
+        "bordercolor": "black",
+        "box": 1,
+        "boxcolor": "black@0.5",
+        "boxborderw": 10,
+        "bold": 1,
+    },
+    "instagram": {
+        "fontsize": 55,
+        "fontcolor": "white",
+        "borderw": 3,
+        "bordercolor": "black",
+        "bold": 1,
+        "shadowcolor": "black@0.7",
+        "shadowx": 3,
+        "shadowy": 3,
+    },
+    "minimal": {
+        "fontsize": 45,
+        "fontcolor": "white",
+        "borderw": 2,
+        "bordercolor": "black",
+    }
+}
+
 # Video settings by type
 VIDEO_SETTINGS = {
     "youtube_images": {
@@ -40,6 +69,143 @@ VIDEO_SETTINGS = {
         "images_per_minute": 10,  # Change image every 6 seconds (faster for shorts)
     }
 }
+
+def split_text_into_timed_words(text: str, audio_duration: float) -> List[Dict[str, any]]:
+    """
+    Split text into words with timing information.
+    Distributes words evenly across the audio duration.
+    
+    Args:
+        text: The full text content
+        audio_duration: Duration of audio in seconds
+        
+    Returns:
+        List of dicts with {word, start_time, end_time}
+    """
+    # Clean and split text into words
+    words = re.findall(r'\S+', text)  # Get all non-whitespace sequences
+    
+    if not words:
+        return []
+    
+    # Calculate time per word (with small overlap for smoother transitions)
+    time_per_word = audio_duration / len(words)
+    
+    timed_words = []
+    for i, word in enumerate(words):
+        start_time = i * time_per_word
+        end_time = (i + 1) * time_per_word
+        
+        timed_words.append({
+            "word": word,
+            "start_time": start_time,
+            "end_time": end_time
+        })
+    
+    logger.info(f"Split text into {len(timed_words)} timed words over {audio_duration:.1f}s")
+    return timed_words
+
+
+def generate_subtitle_filter(
+    timed_words: List[Dict[str, any]],
+    style: str,
+    position: str,
+    resolution: Tuple[int, int]
+) -> str:
+    """
+    Generate FFmpeg drawtext filter for subtitles.
+    
+    Args:
+        timed_words: List of words with timing info
+        style: Subtitle style (tiktok, instagram, minimal)
+        position: Subtitle position (center, bottom)
+        resolution: Video resolution (width, height)
+        
+    Returns:
+        FFmpeg filter string
+    """
+    if not timed_words or style not in SUBTITLE_STYLES:
+        return ""
+    
+    style_config = SUBTITLE_STYLES[style]
+    width, height = resolution
+    
+    # Calculate Y position
+    if position == "center":
+        y_pos = f"(h-text_h)/2"
+    else:  # bottom
+        y_pos = f"h-th-80"  # 80 pixels from bottom
+    
+    # Build drawtext filters for each word
+    filters = []
+    
+    # Group words into phrases (3-5 words per subtitle for better readability)
+    words_per_phrase = 4
+    phrases = []
+    
+    for i in range(0, len(timed_words), words_per_phrase):
+        phrase_words = timed_words[i:i + words_per_phrase]
+        phrase_text = " ".join([w["word"] for w in phrase_words])
+        start_time = phrase_words[0]["start_time"]
+        end_time = phrase_words[-1]["end_time"]
+        
+        phrases.append({
+            "text": phrase_text,
+            "start": start_time,
+            "end": end_time
+        })
+    
+    # Generate drawtext for each phrase
+    for phrase in phrases:
+        # Escape text for FFmpeg
+        text = phrase["text"].replace("'", "'''").replace(":", ":")
+        start = phrase["start"]
+        end = phrase["end"]
+        
+        # Base drawtext parameters
+        drawtext_params = [
+            f"text='{text}'",
+            f"fontsize={style_config['fontsize']}",
+            f"fontcolor={style_config['fontcolor']}",
+            f"x=(w-text_w)/2",  # Center horizontally
+            f"y={y_pos}",
+            f"borderw={style_config.get('borderw', 0)}",
+            f"bordercolor={style_config.get('bordercolor', 'black')}",
+        ]
+        
+        # Add style-specific parameters
+        if style_config.get('bold'):
+            drawtext_params.append("font=Arial-Bold")
+        
+        if style_config.get('box'):
+            drawtext_params.append(f"box={style_config['box']}")
+            drawtext_params.append(f"boxcolor={style_config['boxcolor']}")
+            drawtext_params.append(f"boxborderw={style_config['boxborderw']}")
+        
+        if style_config.get('shadowcolor'):
+            drawtext_params.append(f"shadowcolor={style_config['shadowcolor']}")
+            drawtext_params.append(f"shadowx={style_config['shadowx']}")
+            drawtext_params.append(f"shadowy={style_config['shadowy']}")
+        
+        # Add timing with fade in/out for smoother transitions
+        fade_duration = 0.2  # 200ms fade
+        drawtext_params.append(f"enable='between(t,{start},{end})'")
+        
+        # Add alpha for fade effects (Instagram style)
+        if style == "instagram":
+            # Bounce effect using sine wave
+            drawtext_params.append(f"y={y_pos}+10*sin(2*PI*t)")
+        
+        filter_str = "drawtext=" + ":".join(drawtext_params)
+        filters.append(filter_str)
+    
+    # Combine all drawtext filters
+    if filters:
+        combined_filter = ",".join(filters)
+        logger.info(f"Generated subtitle filter with {len(phrases)} phrases in {style} style")
+        return combined_filter
+    
+    return ""
 
 
 async def generate_image_prompts_from_text(text: str, num_prompts: int, video_type: str) -> List[str]:
@@ -282,7 +448,10 @@ async def create_slideshow_video(
     output_path: str,
     audio_duration: float,
     resolution: Tuple[int, int],
-    progress_callback=None
+    progress_callback=None,
+    subtitle_text: str = None,
+    subtitle_style: str = None,
+    subtitle_position: str = "center"
 ) -> str:
     """
     Create a slideshow video from images with audio using FFmpeg.
@@ -295,6 +464,9 @@ async def create_slideshow_video(
         audio_duration: Duration of audio in seconds
         resolution: Video resolution (width, height)
         progress_callback: Async function for progress updates
+        subtitle_text: Text for subtitles (optional)
+        subtitle_style: Subtitle style (tiktok, instagram, minimal) (optional)
+        subtitle_position: Subtitle position (center, bottom) (optional)
         
     Returns:
         Path to created video file
@@ -325,13 +497,26 @@ async def create_slideshow_video(
         
         # FFmpeg command with transitions and audio
         width, height = resolution
+        
+        # Build video filter
+        video_filter = f"scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,format=yuv420p"
+        
+        # Add subtitle filter if enabled
+        if subtitle_text and subtitle_style:
+            timed_words = split_text_into_timed_words(subtitle_text, audio_duration)
+            subtitle_filter = generate_subtitle_filter(timed_words, subtitle_style, subtitle_position, resolution)
+            
+            if subtitle_filter:
+                video_filter = f"{video_filter},{subtitle_filter}"
+                logger.info(f"Added {subtitle_style} subtitles at {subtitle_position} position")
+        
         cmd = [
             "ffmpeg",
             "-f", "concat",
             "-safe", "0",
             "-i", concat_file,
             "-i", audio_path,
-            "-vf", f"scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,format=yuv420p",
+            "-vf", video_filter,
             "-c:v", "libx264",
             "-preset", "medium",
             "-crf", "23",
@@ -384,7 +569,10 @@ async def create_video_with_images(
     audio_duration: float,
     output_path: str,
     video_type: str,
-    progress_callback=None
+    progress_callback=None,
+    subtitle_enabled: bool = False,
+    subtitle_style: str = "tiktok",
+    subtitle_position: str = "center"
 ) -> str:
     """
     Main function to create video from text and audio using images.
@@ -397,6 +585,9 @@ async def create_video_with_images(
         output_path: Path for output video
         video_type: Type of video (youtube_images or shorts)
         progress_callback: Async function for progress updates
+        subtitle_enabled: Whether to add subtitles
+        subtitle_style: Subtitle style (tiktok, instagram, minimal)
+        subtitle_position: Subtitle position (center, bottom)
         
     Returns:
         Path to created video file
@@ -411,6 +602,8 @@ async def create_video_with_images(
         num_images = max(3, int(duration_minutes * images_per_minute))  # At least 3 images
         
         logger.info(f"Creating {video_type} video: {num_images} images for {audio_duration:.1f}s audio")
+        if subtitle_enabled:
+            logger.info(f"Subtitles enabled: style={subtitle_style}, position={subtitle_position}")
         
         # Create temp directory for images
         temp_dir = tempfile.mkdtemp(prefix="video_images_")
@@ -443,7 +636,10 @@ async def create_video_with_images(
                 output_path,
                 audio_duration,
                 resolution,
-                progress_callback
+                progress_callback,
+                subtitle_text=text if subtitle_enabled else None,
+                subtitle_style=subtitle_style if subtitle_enabled else None,
+                subtitle_position=subtitle_position
             )
             
             return video_path

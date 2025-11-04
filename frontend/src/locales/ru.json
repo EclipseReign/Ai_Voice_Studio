@@ -99,7 +99,16 @@
     "generatedVideo": "Сгенерированное видео",
     "duration": "Длительность",
     "stage": "Этап",
-    "videosCount": "видео"
+    "videosCount": "видео",
+    "subtitles": "Субтитры",
+    "enableSubtitles": "Добавить субтитры",
+    "subtitleStyle": "Стиль субтитров",
+    "subtitlePosition": "Позиция субтитров",
+    "tiktokStyle": "TikTok стиль",
+    "instagramStyle": "Instagram Reels",
+    "minimalStyle": "Минималистичный",
+    "centerPosition": "По центру",
+    "bottomPosition": "Внизу"
   },
   "progress": {
     "loadingModel": "Загрузка модели",

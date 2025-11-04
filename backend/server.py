@@ -2753,6 +2753,9 @@ async def generate_video_with_progress(
                 "text_id": request.text_id,
                 "audio_id": request.audio_id,
                 "video_type": request.video_type,
+                "subtitle_enabled": request.subtitle_enabled,
+                "subtitle_style": request.subtitle_style if request.subtitle_enabled else None,
+                "subtitle_position": request.subtitle_position if request.subtitle_enabled else None,
                 "status": "processing",
                 "progress": 0,
                 "created_at": datetime.now(timezone.utc)
@@ -2806,7 +2809,10 @@ async def generate_video_with_progress(
                     audio_duration=audio_duration,
                     output_path=output_path,
                     video_type=request.video_type,
-                    progress_callback=lambda stage, curr, tot, msg: progress_callback(stage, curr, tot, msg).__anext__()
+                    progress_callback=lambda stage, curr, tot, msg: progress_callback(stage, curr, tot, msg).__anext__(),
+                    subtitle_enabled=request.subtitle_enabled,
+                    subtitle_style=request.subtitle_style,
+                    subtitle_position=request.subtitle_position
                 )
             
             elif request.video_type == "youtube_continuous":

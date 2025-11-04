@@ -138,6 +138,9 @@ class VideoGenerationRequest(BaseModel):
     text_id: str
     audio_id: str
     video_type: Literal["youtube_images", "youtube_continuous", "shorts"]
+    subtitle_enabled: bool = False
+    subtitle_style: Literal["tiktok", "instagram", "minimal"] = "tiktok"
+    subtitle_position: Literal["center", "bottom"] = "center"
     
 class VideoGenerationResponse(BaseModel):
     """Video generation response"""
