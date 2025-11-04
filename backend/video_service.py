@@ -158,7 +158,7 @@ def generate_subtitle_filter(
     # Generate drawtext for each phrase
     for phrase in phrases:
         # Escape text for FFmpeg
-        text = phrase["text"].replace("'", "'''").replace(":", ":")
+        text = phrase["text"].replace("\\", r"\\").replace("'",  r"\'").replace(":",  r"\:").replace("%",  r"\%")
         start = phrase["start"]
         end = phrase["end"]
         
