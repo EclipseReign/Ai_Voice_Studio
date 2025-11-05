@@ -24,30 +24,36 @@ POLLINATIONS_API_URL = "https://image.pollinations.ai/prompt"
 
 SUBTITLE_STYLES = {
     "tiktok": {
-        "fontsize": 70,
+        "fontsize": 80,
         "fontcolor": "yellow",
-        "borderw": 4,
+        "borderw": 5,
         "bordercolor": "black",
         "box": 1,
-        "boxcolor": "black@0.5",
-        "boxborderw": 10,
+        "boxcolor": "black@0.6",
+        "boxborderw": 15,
         "bold": 1,
+        "font": "Arial-Black",  # More bold font
+        "words_per_phrase": 2,  # 1-2 words at a time like TikTok
     },
     "instagram": {
-        "fontsize": 55,
+        "fontsize": 65,
         "fontcolor": "white",
-        "borderw": 3,
+        "borderw": 4,
         "bordercolor": "black",
         "bold": 1,
+        "font": "Arial-Bold",
         "shadowcolor": "black@0.7",
-        "shadowx": 3,
-        "shadowy": 3,
+        "shadowx": 4,
+        "shadowy": 4,
+        "words_per_phrase": 3,
     },
     "minimal": {
-        "fontsize": 45,
+        "fontsize": 50,
         "fontcolor": "white",
         "borderw": 2,
         "bordercolor": "black",
+        "font": "Arial",
+        "words_per_phrase": 4,
     }
 }
 
@@ -129,12 +135,12 @@ def generate_subtitle_filter(
     
     style_config = SUBTITLE_STYLES[style]
     width, height = resolution
-    
+    words_per_phrase = style_config.get('words_per_phrase', 2)
     # Calculate Y position
     if position == "center":
-        y_pos = f"(h-text_h)/2"
+        y_pos = "(h-text_h)/2"
     else:  # bottom
-        y_pos = f"h-th-80"  # 80 pixels from bottom
+        y_pos = "h-text_h-100"
     
     # Build drawtext filters for each word
     filters = []
@@ -171,21 +177,21 @@ def generate_subtitle_filter(
         
         start = phrase["start"]
         end = phrase["end"]
+        duration = end - start
         
+        fade_in = 0.15  # Quick fade in
+        fade_out = 0.1  # Quick fade out
+        
+        font_name = style_config.get('font', 'Arial-Bold')
         # Base drawtext parameters
         drawtext_params = [
             f"text='{text}'",
+            f"fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",  # Use system font
             f"fontsize={style_config['fontsize']}",
             f"fontcolor={style_config['fontcolor']}",
-            f"x=(w-text_w)/2",  # Center horizontally
-            f"y={y_pos}",
             f"borderw={style_config.get('borderw', 0)}",
             f"bordercolor={style_config.get('bordercolor', 'black')}",
         ]
-        
-        # Add style-specific parameters
-        if style_config.get('bold'):
-            drawtext_params.append("font=Arial-Bold")
         
         if style_config.get('box'):
             drawtext_params.append(f"box={style_config['box']}")
@@ -197,8 +203,32 @@ def generate_subtitle_filter(
             drawtext_params.append(f"shadowx={style_config['shadowx']}")
             drawtext_params.append(f"shadowy={style_config['shadowy']}")
         
-        # Add timing with fade in/out for smoother transitions
-        fade_duration = 0.2  # 200ms fade
+        if style == "tiktok":
+            # TikTok style: Zoom in + fade in effect
+            # Scale from 0.8 to 1.0 during fade in
+            scale_expr = f"if(lt(t-{start},{fade_in}),0.8+0.2*(t-{start})/{fade_in},1.0)"
+            # Centered position
+            drawtext_params.append(f"x=(w-text_w)/2")
+            drawtext_params.append(f"y={y_pos}")
+            
+            # Fade in/out with alpha
+            alpha_expr = f"if(lt(t,{start}),0,if(lt(t,{start}+{fade_in}),(t-{start})/{fade_in},if(lt(t,{end}-{fade_out}),1,1-(t-({end}-{fade_out}))/{fade_out})))"
+            
+        elif style == "instagram":
+            # Instagram style: Bounce effect
+            drawtext_params.append(f"x=(w-text_w)/2")
+            bounce = f"{y_pos}+15*sin(6*PI*(t-{start})/{duration})"
+            drawtext_params.append(f"y={bounce}")
+            alpha_expr = f"if(lt(t,{start}),0,if(lt(t,{start}+{fade_in}),(t-{start})/{fade_in},if(lt(t,{end}-{fade_out}),1,1-(t-({end}-{fade_out}))/{fade_out})))"
+            
+        else:  # minimal
+            # Simple fade in/out
+            drawtext_params.append(f"x=(w-text_w)/2")
+            drawtext_params.append(f"y={y_pos}")
+            alpha_expr = f"if(lt(t,{start}),0,if(lt(t,{start}+{fade_in}),(t-{start})/{fade_in},if(lt(t,{end}-{fade_out}),1,1-(t-({end}-{fade_out}))/{fade_out})))"
+        
+        # Add alpha for fade effects
+        drawtext_params.append(f"alpha='{alpha_expr}'")
         drawtext_params.append(f"enable='between(t,{start},{end})'")
         
         # Add alpha for fade effects (Instagram style)
@@ -212,7 +242,7 @@ def generate_subtitle_filter(
     # Combine all drawtext filters
     if filters:
         combined_filter = ",".join(filters)
-        logger.info(f"Generated subtitle filter with {len(phrases)} phrases in {style} style")
+        logger.info(f"Generated subtitle filter with {len(phrases)} phrases ({words_per_phrase} words each) in {style} style with animations")
         return combined_filter
     
     return ""
