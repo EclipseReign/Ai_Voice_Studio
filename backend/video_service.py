@@ -24,13 +24,10 @@ POLLINATIONS_API_URL = "https://image.pollinations.ai/prompt"
 
 SUBTITLE_STYLES = {
     "tiktok": {
-        "fontsize": 80,
+        "fontsize": 55,
         "fontcolor": "yellow",
-        "borderw": 5,
+        "borderw": 6,
         "bordercolor": "black",
-        "box": 1,
-        "boxcolor": "black@0.6",
-        "boxborderw": 15,
         "bold": 1,
         "font": "Arial-Black",  # More bold font
         "words_per_phrase": 2,  # 1-2 words at a time like TikTok
@@ -146,7 +143,6 @@ def generate_subtitle_filter(
     filters = []
     
     # Group words into phrases (3-5 words per subtitle for better readability)
-    words_per_phrase = 4
     phrases = []
     
     for i in range(0, len(timed_words), words_per_phrase):
@@ -179,8 +175,8 @@ def generate_subtitle_filter(
         end = phrase["end"]
         duration = end - start
         
-        fade_in = 0.15  # Quick fade in
-        fade_out = 0.1  # Quick fade out
+        fade_in = 0.08  # Quick fade in
+        fade_out = 0.08  # Quick fade out
         
         font_name = style_config.get('font', 'Arial-Bold')
         # Base drawtext parameters
@@ -204,12 +200,19 @@ def generate_subtitle_filter(
             drawtext_params.append(f"shadowy={style_config['shadowy']}")
         
         if style == "tiktok":
-            # TikTok style: Zoom in + fade in effect
-            # Scale from 0.8 to 1.0 during fade in
-            scale_expr = f"if(lt(t-{start},{fade_in}),0.8+0.2*(t-{start})/{fade_in},1.0)"
-            # Centered position
+            bounce_duration = 0.2  # Длительность прыжка
+            
+            # Вертикальный bounce эффект (прыжок вверх при появлении)
+            # Сначала прыгает вверх на 30px, потом возвращается
+            if position == "center":
+                y_base = "(h-text_h)/2"
+            else:
+                y_base = "h-text_h-100"
+            
+            # Bounce эффект: прыжок при появлении + небольшое покачивание
+            bounce_y = f"if(lt(t-{start},{bounce_duration}),-30*sin(PI*(t-{start})/{bounce_duration}),5*sin(4*PI*(t-{start})))"
             drawtext_params.append(f"x=(w-text_w)/2")
-            drawtext_params.append(f"y={y_pos}")
+            drawtext_params.append(f"y={y_base}+{bounce_y}")
             
             # Fade in/out with alpha
             alpha_expr = f"if(lt(t,{start}),0,if(lt(t,{start}+{fade_in}),(t-{start})/{fade_in},if(lt(t,{end}-{fade_out}),1,1-(t-({end}-{fade_out}))/{fade_out})))"
