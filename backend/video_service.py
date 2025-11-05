@@ -232,7 +232,7 @@ def generate_subtitle_filter(
             alpha_expr = f"if(lt(t,{start}),0,if(lt(t,{start}+{fade_in}),(t-{start})/{fade_in},if(lt(t,{end}-{fade_out}),1,1-(t-({end}-{fade_out}))/{fade_out})))"
         
         # Add alpha for fade effects
-        drawtext_params.append(f"alpha='{alpha_expr}'")
+        drawtext_params.append(f"alpha={alpha_expr}")
         drawtext_params.append(f"enable='between(t,{start},{end})'")
         
         # Add alpha for fade effects (Instagram style)
