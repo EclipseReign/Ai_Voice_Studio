@@ -73,7 +73,7 @@ VIDEO_SETTINGS = {
     }
 }
 
-def split_text_into_timed_words(text: str, audio_duration: float) -> List[Dict[str, any]]:
+def split_text_into_timed_words(text: str, audio_duration: float, words_per_second: float = 3.0) -> List[Dict[str, any]]:
     """
     Split text into words with timing information.
     Distributes words evenly across the audio duration.
@@ -92,20 +92,21 @@ def split_text_into_timed_words(text: str, audio_duration: float) -> List[Dict[s
         return []
     
     # Calculate time per word (with small overlap for smoother transitions)
-    time_per_word = audio_duration / len(words)
+    time_per_word = 1.0 / words_per_second
     
     timed_words = []
     for i, word in enumerate(words):
         start_time = i * time_per_word
         end_time = (i + 1) * time_per_word
-        
+        if start_time >= audio_duration:
+            break
         timed_words.append({
             "word": word,
             "start_time": start_time,
-            "end_time": end_time
+            "end_time": min(end_time, audio_duration)
         })
     
-    logger.info(f"Split text into {len(timed_words)} timed words over {audio_duration:.1f}s")
+    logger.info(f"Split text into {len(timed_words)} timed words at {words_per_second} words/sec over {audio_duration:.1f}s (showing {len(timed_words)}/{len(words)} words)")
     return timed_words
 
 
@@ -546,7 +547,8 @@ async def create_slideshow_video(
         
         # Add subtitle filter if enabled
         if subtitle_text and subtitle_style:
-            timed_words = split_text_into_timed_words(subtitle_text, audio_duration)
+            words_per_sec = 2.5 if subtitle_style == "tiktok" else 2.0
+            timed_words = split_text_into_timed_words(subtitle_text, audio_duration, words_per_second=words_per_sec)
             subtitle_filter = generate_subtitle_filter(timed_words, subtitle_style, subtitle_position, resolution)
             
             if subtitle_filter:
