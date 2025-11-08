@@ -11,10 +11,11 @@ import re
 import json
 import asyncio
 import aiohttp
+import shlex
 import tempfile
 import subprocess
 import urllib.parse
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict, Tuple, Optional, Any
 import time
 from pathlib import Path
 import logging
@@ -647,149 +648,150 @@ def create_placeholder_image(path: str, width: int, height: int, text: str):
     cv2.imwrite(path, img)
 
 
+def _ffprobe_duration(path: str) -> float:
+    """Надёжно пробуем вытащить длительность аудио через ffprobe."""
+    try:
+        out = subprocess.check_output(
+            [
+                "ffprobe", "-v", "error",
+                "-show_entries", "format=duration",
+                "-of", "default=noprint_wrappers=1:nokey=1",
+                path
+            ],
+            text=True
+        ).strip()
+        dur = float(out)
+        return dur if dur > 0 else 0.0
+    except Exception:
+        return 0.0
+
+
 async def create_slideshow_video(
     image_paths: List[str],
     audio_path: str,
-    output_path: str,
-    audio_duration: float,
     resolution: Tuple[int, int],
-    progress_callback=None,
-    subtitle_text: str = None,
-    subtitle_style: str = None,
-    subtitle_position: str = "center"
+    subtitle_text: Optional[str],
+    subtitle_style: Optional[str],
+    subtitle_position: str,
+    output_path: str,
 ) -> str:
     """
-    Create a slideshow video from images with audio using FFmpeg.
-    Images will be displayed evenly across the audio duration with smooth transitions.
-    
-    Args:
-        image_paths: List of image file paths
-        audio_path: Path to audio file
-        output_path: Path for output video
-        audio_duration: Duration of audio in seconds
-        resolution: Video resolution (width, height)
-        progress_callback: Async function for progress updates
-        subtitle_text: Text for subtitles (optional)
-        subtitle_style: Subtitle style (tiktok, instagram, minimal) (optional)
-        subtitle_position: Subtitle position (center, bottom) (optional)
-        
-    Returns:
-        Path to created video file
+    Сборка слайдшоу из изображений под аудио.
+    Субтитры накладываются через libass (subtitles=...), чтобы идти непрерывно по таймингам речи.
     """
-    try:
-        if progress_callback:
-            await progress_callback(
-                "video_creation",
-                0,
-                100,
-                "Создание видео из изображений..."
-            )
-        
-        # Calculate duration per image
-        num_images = len(image_paths)
-        duration_per_image = audio_duration / num_images
-        
-        logger.info(f"Creating slideshow: {num_images} images, {duration_per_image:.2f}s per image")
-        
-        # Create a concat file for FFmpeg
-        concat_file = output_path + ".concat.txt"
-        with open(concat_file, "w") as f:
-            for img_path in image_paths:
-                f.write(f"file '{img_path}'\n")
-                f.write(f"duration {duration_per_image}\n")
-            # Add last image again (FFmpeg concat demuxer requirement)
-            f.write(f"file '{image_paths[-1]}'\n")
-        
-        # FFmpeg command with transitions and audio
-        width, height = resolution
-        
-        # Build video filter
-        video_filter = f"scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,format=yuv420p"
-        
-        if subtitle_text and subtitle_style:
-            # Получаем точные тайминги слов под реальную озвучку
-            timed_words = await get_accurate_word_timestamps(audio_path, subtitle_text)
+    if not image_paths:
+        raise ValueError("image_paths is empty")
+    if not os.path.exists(audio_path):
+        raise FileNotFoundError(f"Audio not found: {audio_path}")
 
-            style_conf = SUBTITLE_STYLES.get(subtitle_style, {})
-            words_per_phrase = style_conf.get("words_per_phrase", 2)
+    width, height = resolution
 
-            # Подбираем параметры стиля для .ass
-            fontsize_ass = style_conf.get("fontsize", 60)
+    # 1) Длительность аудио -> длительность каждого слайда
+    audio_duration = _ffprobe_duration(audio_path)
+    if audio_duration <= 0:
+        raise RuntimeError("Failed to probe audio duration with ffprobe")
 
-            # Выбор выравнивания по позиции
-            # 2 — центр снизу; 8 — центр по центру
-            align = 8 if subtitle_position == "center" else 2
-            margin_v = 100 if subtitle_position == "bottom" else height // 2 - 50
+    n = len(image_paths)
+    duration_per_image = audio_duration / n
+    logger.info(f"Creating slideshow: {n} images, {duration_per_image:.2f}s per image")
 
-            # Генерим .ass файл во временной папке
-            ass_path = build_ass_from_words(
-                timed_words,
-                resolution=resolution,
-                words_per_phrase=words_per_phrase,
-                fontname="DejaVu Sans",
-                fontsize=fontsize_ass,
-                primary_color="&H00FFFFFF",   # белый
-                outline_color="&H00000000",   # чёрный контур
-                outline=style_conf.get("borderw", 4),
-                shadow=0,
-                margin_v=margin_v,
-                align=align,
-            )
+    # 2) Готовим concat-файл (демульсер читает duration для каждого кадра-изображения)
+    concat_fd, concat_path = tempfile.mkstemp(suffix=".concat.txt")
+    os.close(concat_fd)  # будем писать обычным open
+    with open(concat_path, "w", encoding="utf-8") as f:
+        for idx, p in enumerate(image_paths):
+            # путь в одинарных кавычках, экранируем внутри
+            p_escaped = p.replace("'", r"'\''")
+            f.write(f"file '{p_escaped}'\n")
+            if idx < n - 1:
+                f.write(f"duration {duration_per_image:.6f}\n")
+        # дублируем последний файл без duration (требование concat demuxer)
+        last_p = image_paths[-1].replace("'", r"'\''")
+        f.write(f"file '{last_p}'\n")
 
-            # Подключаем субтитры одним фильтром к финальному видеопотоку
-            # Важно: путь в одиночных кавычках; fontsdir можно указать системный
-            video_filter = (
-                f"{video_filter},subtitles='{ass_path}':fontsdir='/usr/share/fonts/truetype/dejavu'"
-            )
-        
-        cmd = [
-            "ffmpeg", "-y",
-            "-f", "concat", "-safe", "0", "-i", concat_file,
-            "-i", audio_path,
-            "-vf", video_filter,
-            "-fps_mode", "cfr",
-            "-r", "30",
-            "-c:v", "libx264", "-preset", "medium", "-crf", "23",
-            "-c:a", "aac", "-b:a", "192k",
-            "-shortest",
-            "-movflags", "+faststart",
-            output_path
-        ]
-        
-        logger.info(f"Running FFmpeg command: {' '.join(cmd)}")
-        
-        # Run FFmpeg
-        process = await asyncio.create_subprocess_exec(
-            *cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
+    # 3) Собираем видеофильтр: scale/pad -> fps=30 (ВНУТРИ графа) -> subtitles -> format
+    video_filter = (
+        f"scale={width}:{height}:force_original_aspect_ratio=decrease,"
+        f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,"
+        f"fps=30"
+    )
+
+    # 4) Если нужны субтитры — готовим .ass по word-таймингам и добавляем фильтр subtitles
+    if subtitle_text and subtitle_style:
+        logger.info(f"🎯 Analyzing audio with Whisper for accurate word timestamps: {audio_path}")
+        timed_words = await get_accurate_word_timestamps(audio_path, subtitle_text)
+        logger.info(f"✅ Got {len(timed_words)} accurate word timestamps from Whisper")
+
+        style_conf = SUBTITLE_STYLES.get(subtitle_style, {})
+        words_per_phrase = int(style_conf.get("words_per_phrase", 2))
+        fontsize_ass = int(style_conf.get("fontsize", 60))
+
+        # позиция: 2 — низ по центру; 8 — центр
+        align = 8 if subtitle_position == "center" else 2
+        margin_v = 100 if subtitle_position == "bottom" else max(50, height // 2 - 50)
+
+        # генерим .ass
+        ass_dir = tempfile.mkdtemp(prefix="ass_")
+        ass_path = os.path.join(ass_dir, "subs.ass")
+        ass_path = build_ass_from_words(
+            timed_words,
+            resolution=resolution,
+            words_per_phrase=words_per_phrase,
+            fontname="DejaVu Sans",
+            fontsize=fontsize_ass,
+            primary_color="&H00FFFFFF",    # белый
+            outline_color="&H00000000",    # чёрный контур
+            outline=int(style_conf.get("borderw", 4)),
+            shadow=0,
+            margin_v=margin_v,
+            align=align,
+            out_path=ass_path,
         )
-        
-        stdout, stderr = await process.communicate()
-        
-        if process.returncode != 0:
-            error_msg = stderr.decode() if stderr else "Unknown error"
-            logger.error(f"FFmpeg error: {error_msg}")
-            raise Exception(f"FFmpeg failed: {error_msg[:200]}")
-        
-        # Clean up concat file
-        os.remove(concat_file)
-        
-        if progress_callback:
-            await progress_callback(
-                "video_creation",
-                100,
-                100,
-                "Видео создано успешно!"
-            )
-        
-        logger.info(f"Video created successfully: {output_path}")
-        return output_path
-        
-    except Exception as e:
-        logger.error(f"Error creating slideshow video: {e}")
-        raise
 
+        # добавляем libass на финальный поток
+        video_filter = (
+            f"{video_filter},subtitles='{ass_path}':fontsdir='/usr/share/fonts/truetype/dejavu',"
+            f"format=yuv420p"
+        )
+    else:
+        # без субтитров — просто приводим к нужному формату в конце
+        video_filter = f"{video_filter},format=yuv420p"
+
+    # 5) Команда ffmpeg (НИКАКОГО -r/-fps_mode снаружи)
+    cmd = [
+        "ffmpeg",
+        "-y",
+        "-f", "concat",
+        "-safe", "0",
+        "-i", concat_path,
+        "-i", audio_path,
+        "-vf", video_filter,            # fps=30 и subtitles уже внутри графа
+        "-c:v", "libx264",
+        "-preset", "medium",
+        "-crf", "23",
+        "-c:a", "aac",
+        "-b:a", "192k",
+        "-shortest",
+        "-movflags", "+faststart",
+        output_path,
+    ]
+
+    logger.info("Running FFmpeg command: " + " ".join(shlex.quote(c) for c in cmd))
+
+    try:
+        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        if proc.returncode != 0:
+            logger.error("FFmpeg error: " + proc.stderr)
+            raise Exception(f"FFmpeg failed: {proc.stderr[:1000]}")
+    finally:
+        # concat-файл временный, но пусть система тоже чистит по своим правилам
+        try:
+            os.remove(concat_path)
+        except Exception:
+            pass
+
+    logger.info("✅ Slideshow video created: " + output_path)
+    return output_path
 
 async def create_video_with_images(
     text: str,
@@ -859,15 +861,13 @@ async def create_video_with_images(
             
             # Step 3: Create video
             video_path = await create_slideshow_video(
-                image_paths,
-                audio_path,
-                output_path,
-                audio_duration,
-                resolution,
-                progress_callback,
-                subtitle_text=text if subtitle_enabled else None,
-                subtitle_style=subtitle_style if subtitle_enabled else None,
-                subtitle_position=subtitle_position
+                image_paths=image_paths,
+                audio_path=audio_path,
+                resolution=resolution,
+                subtitle_text=(text if subtitle_enabled else None),
+                subtitle_style=(subtitle_style if subtitle_enabled else None),
+                subtitle_position=subtitle_position,
+                output_path=output_path,
             )
             
             return video_path
