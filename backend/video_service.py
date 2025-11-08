@@ -166,9 +166,6 @@ def build_ass_from_words(
 
     return os.path.abspath(out_path)
 
-import os, tempfile
-from typing import List, Dict, Tuple
-
 def build_ass_tiktok_from_words(
     timed_words: List[Dict[str, float]],
     *,
