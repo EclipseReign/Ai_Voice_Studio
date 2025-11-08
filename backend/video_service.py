@@ -170,46 +170,27 @@ def build_ass_tiktok_from_words(
     timed_words: List[Dict[str, float]],
     *,
     resolution: Tuple[int, int] = (720, 1280),
-    # две строки по 3 слова = 6 слов в блоке
-    lines_per_block: int = 2,
-    words_per_line: int = 3,
-
-    # Шрифт/размер
+    words_per_phrase: int = 6,          # 3–5 выглядит лучше, чем 1–2
     fontname: str = "DejaVu Sans",
     fontsize: int = 64,
-
-    # Цвета (ASS: &HaaBBGGRR, где aa=alpha; 00 = полностью непрозрачно)
-    # Базовый текст — светло-серый, хайлайт — неоновый розовый
-    primary_color: str = "&H00E6E6E6",   # #E6E6E6
-    secondary_color: str = "&H00CC66FF", # #FF66CC  (BB=CC, GG=66, RR=FF)
-    outline_color: str = "&H00000000",   # контур не нужен (есть бокс)
-    back_color: str = "&H33000000",      # полупрозрачный чёрный бокс (~20%)
-
-    # Бокс/контур/тени
+    # Цвета в формате &HaaBBGGRR (aa=alpha, 00 = непрозрачно)
+    primary_color: str = "&H00FFFFFF",   # белый для «неактивных» слов
+    secondary_color: str = "&H00FFFF00", # жёлтый хайлайт текущего слова (karaoke)
+    outline_color: str = "&H00000000",   # чёрный контур (для BorderStyle=1; здесь бокс)
+    back_color: str = "&H64000000",      # подложка: чёрная с ~40% прозрачности
     outline: int = 0,
     shadow: int = 0,
-    align: int = 2,                      # 2 = центр снизу; 8 = центр
+    align: int = 2,                      # 2 — центр снизу; 8 — центр
     margin_v: int = 100,
-
-    # Плавность и «скорость»
-    min_k_cs: int = 12,                  # минимум 0.12s подсветки на слово
-    fade_ms: int = 140,                  # мягкое появление/исчезновение строки
-    pop_scale: int = 108,                # максимум ~108% на пике
-    pop_in_ms: int = 240,                # время разгона pop
-    pop_back_ms: int = 520,              # время возврата к 100%
-
     out_path: str | None = None,
 ) -> str:
     """
     Делает .ass в стиле TikTok:
-    - Караоке-подсветка слова (\k) с минимумом времени на слово (min_k_cs).
-    - Лёгкий «поп» (увеличение до pop_scale%) и плавный откат.
-    - Две строки (lines_per_block x words_per_line) с разрывом \N.
-    - Полупрозрачный бокс позади текста (BorderStyle=3).
+    - Строки по 3–5 слов, караоке-подсветка \k на каждое слово.
+    - Лёгкий «поп»/bounce (увеличение до 112%, затем обратно) на старте слова.
+    - Полупрозрачный чёрный бокс позади текста (читабельно на любом фоне).
     """
     w, h = resolution
-    words_per_phrase = max(1, lines_per_block) * max(1, words_per_line)
-
     if not out_path:
         out_dir = tempfile.mkdtemp(prefix="ass_tiktok_")
         out_path = os.path.join(out_dir, "subs.ass")
@@ -226,7 +207,7 @@ def build_ass_tiktok_from_words(
         "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, "
         "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
         "Alignment, MarginL, MarginR, MarginV, Encoding",
-        # BorderStyle=3 — бокс; цвет задаёт BackColour
+        # BorderStyle=3 — непрозрачный бокс позади текста (цвет — BackColour)
         f"Style: TikTok,{fontname},{fontsize},{primary_color},{secondary_color},{outline_color},{back_color},"
         f"1,0,0,0,100,100,0,0,3,{outline},{shadow},{align},20,20,{margin_v},0",
         "",
@@ -234,64 +215,48 @@ def build_ass_tiktok_from_words(
         "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text",
     ]
 
+    # Группируем слова по words_per_phrase
     phrases: list[tuple[float, float, str]] = []
-
-    # Идём по словам блоками по words_per_phrase (на 2 строки)
     for i in range(0, len(timed_words), words_per_phrase):
         chunk = timed_words[i:i + words_per_phrase]
         if not chunk:
             continue
 
         start = float(chunk[0]["start_time"])
-        # базовый end — конец последнего слова
         end   = float(chunk[-1]["end_time"])
         if end <= start:
             end = start + 0.001
 
         line_ms_total = int(round((end - start) * 1000))
+        parts = [r"{\fad(80,80)}"]  # лёгкий fade in/out у всей строки
 
-        parts = [fr"{{\fad({fade_ms},{fade_ms})\blur1.2}}"]  # мягкий вход/выход + лёгкий блюр
-
-        sum_k_cs = 0
+        # собираем караоке-посекундно
         for j, wobj in enumerate(chunk):
             word = (wobj["word"]).replace("{", r"\{").replace("}", r"\}")
             word_start = float(wobj["start_time"])
             word_end   = float(chunk[j + 1]["start_time"]) if j + 1 < len(chunk) else end
 
-            # karaoke-слот в сотых сек; минимум min_k_cs
-            dur_cs = max(min_k_cs, int(round((word_end - word_start) * 100)))
-            sum_k_cs += dur_cs
-
-            # смещение внутри строки (для pop-трансформаций)
+            dur_cs = max(1, int(round((word_end - word_start) * 100)))  # \k — сотые секунды
             ofs_ms = int(round((word_start - start) * 1000))
-            pop_in   = ofs_ms
-            pop_peak = min(ofs_ms + pop_in_ms, line_ms_total)
-            pop_back = min(ofs_ms + pop_back_ms, line_ms_total)
 
-            # само слово
+            # мини-bounce: 112% → обратно
+            pop_in   = ofs_ms
+            pop_peak = min(ofs_ms + 180, line_ms_total)
+            pop_back = min(ofs_ms + 360, line_ms_total)
+
             parts.append(
                 "{"
                 f"\\k{dur_cs}"
-                f"\\t({pop_in},{pop_peak},\\fscx={pop_scale}\\fscy={pop_scale})"
+                f"\\t({pop_in},{pop_peak},\\fscx=112\\fscy=112)"
                 f"\\t({pop_peak},{pop_back},\\fscx=100\\fscy=100)"
                 "}"
                 + word
             )
-
-            # пробел или перевод строки
-            is_last = (j == len(chunk) - 1)
-            # ставим \N после каждых words_per_line слов, пока не конец блока
-            if (j + 1) % words_per_line == 0 and not is_last:
-                parts.append(r"\N")
-            elif not is_last:
+            if j != len(chunk) - 1:
                 parts.append(" ")
 
-        # Если сумма \k получилась больше, чем базовая длительность — продлим end,
-        # чтобы подсветка не «съедалась»
-        end_adj = max(end, start + (sum_k_cs / 100.0))
-
         line_text = "".join(parts)
-        phrases.append((start, end_adj, line_text))
+        phrases.append((start, end, line_text))
 
     events = [
         f"Dialogue: 0,{_sec_to_ass(s)},{_sec_to_ass(e)},TikTok,,0,0,0,,{txt}"
@@ -302,7 +267,6 @@ def build_ass_tiktok_from_words(
         f.write("\n".join(header + events) + "\n")
 
     return os.path.abspath(out_path)
-
 
 async def get_accurate_word_timestamps(audio_path: str, text: str) -> List[Dict[str, any]]:
     """
@@ -813,6 +777,11 @@ async def create_slideshow_video(
     subtitle_position: str,
     output_path: str,
 ) -> str:
+    """
+    Сборка слайдшоу из изображений под аудио.
+    Субтитры накладываются через libass (subtitles=...), чтобы идти непрерывно по таймингам речи.
+    Для subtitle_style == 'tiktok' включается караоке + bounce.
+    """
     if not image_paths:
         raise ValueError("image_paths is empty")
     if not os.path.exists(audio_path):
@@ -829,7 +798,7 @@ async def create_slideshow_video(
     duration_per_image = audio_duration / n
     logger.info(f"Creating slideshow: {n} images, {duration_per_image:.2f}s per image")
 
-    # 2) concat-файл
+    # 2) concat-файл (повтор последнего файла — обязателен)
     concat_fd, concat_path = tempfile.mkstemp(suffix=".concat.txt")
     os.close(concat_fd)
     with open(concat_path, "w", encoding="utf-8") as f:
@@ -848,11 +817,17 @@ async def create_slideshow_video(
         f"fps=30"
     )
 
-    # 4) Сабтайтлы (TikTok-версия с 2 строками и цветами)
+    # 4) Сабтайтлы: точные тайминги + выбор билдера
     if subtitle_text and subtitle_style:
         logger.info(f"🎯 Analyzing audio with Whisper for accurate word timestamps: {audio_path}")
         timed_words = await get_accurate_word_timestamps(audio_path, subtitle_text)
         logger.info(f"✅ Got {len(timed_words)} accurate word timestamps from Whisper")
+
+        style_conf = SUBTITLE_STYLES.get(subtitle_style, {})
+        # TikTok читается лучше при 3–5 словах на экран
+        default_wpp = 4 if subtitle_style.lower() == "tiktok" else 2
+        words_per_phrase = int(style_conf.get("words_per_phrase", default_wpp))
+        fontsize_ass     = int(style_conf.get("fontsize", 60))
 
         # позиция: 2 — низ по центру; 8 — центр
         align = 8 if subtitle_position == "center" else 2
@@ -862,43 +837,41 @@ async def create_slideshow_video(
         ass_path = os.path.join(ass_dir, "subs.ass")
 
         if subtitle_style.lower() == "tiktok":
-            # двухстрочные, медленнее, не белые
+            # ВИРУСНЫЙ стиль (караоке + bounce + бокс)
             ass_path = build_ass_tiktok_from_words(
                 timed_words,
                 resolution=resolution,
-                lines_per_block=2,
-                words_per_line=3,
+                words_per_phrase=words_per_phrase,
                 fontname="DejaVu Sans",
-                fontsize=64,
-                primary_color="&H00E6E6E6",   # светло-серый
-                secondary_color="&H00CC66FF", # неоновый розовый
-                back_color="&H33000000",      # лёгкая подложка
+                fontsize=fontsize_ass,
+                primary_color="&H00FFFFFF",   # белый неактивный
+                secondary_color="&H00FFFF00", # жёлтый хайлайт
+                outline_color="&H00000000",
+                back_color="&H64000000",      # ~40% чёрный бокс
+                outline=0,
+                shadow=0,
                 align=align,
                 margin_v=margin_v,
-                min_k_cs=12,                  # >=0.12s на слово
-                fade_ms=140,
-                pop_scale=108,
-                pop_in_ms=240,
-                pop_back_ms=520,
                 out_path=ass_path,
             )
         else:
-            # твой базовый билдер (если нужен другой стиль)
+            # Базовый аккуратный стиль (без караоке)
             ass_path = build_ass_from_words(
                 timed_words,
                 resolution=resolution,
-                words_per_phrase=4,
+                words_per_phrase=words_per_phrase,
                 fontname="DejaVu Sans",
-                fontsize=64,
+                fontsize=fontsize_ass,
                 primary_color="&H00FFFFFF",
                 outline_color="&H00000000",
-                outline=4,
+                outline=int(style_conf.get("borderw", 4)),
                 shadow=0,
                 margin_v=margin_v,
                 align=align,
                 out_path=ass_path,
             )
 
+        # libass на финальный поток; format — после субтитров
         video_filter = (
             f"{video_filter},subtitles='{ass_path}':fontsdir='/usr/share/fonts/truetype/dejavu',"
             f"format=yuv420p"
@@ -906,14 +879,20 @@ async def create_slideshow_video(
     else:
         video_filter = f"{video_filter},format=yuv420p"
 
-    # 5) Команда ffmpeg (никаких -r/-fps_mode снаружи)
+    # 5) Команда ffmpeg: НИЧЕГО типа -r/-fps_mode снаружи
     cmd = [
-        "ffmpeg", "-y",
-        "-f", "concat", "-safe", "0", "-i", concat_path,
+        "ffmpeg",
+        "-y",
+        "-f", "concat",
+        "-safe", "0",
+        "-i", concat_path,
         "-i", audio_path,
-        "-vf", video_filter,              # fps=30 и subtitles уже внутри графа
-        "-c:v", "libx264", "-preset", "medium", "-crf", "23",
-        "-c:a", "aac", "-b:a", "192k",
+        "-vf", video_filter,                # fps=30 и subtitles уже внутри -vf
+        "-c:v", "libx264",
+        "-preset", "medium",
+        "-crf", "23",
+        "-c:a", "aac",
+        "-b:a", "192k",
         "-shortest",
         "-movflags", "+faststart",
         output_path,
@@ -932,7 +911,6 @@ async def create_slideshow_video(
 
     logger.info("✅ Slideshow video created: " + output_path)
     return output_path
-
 
 async def create_video_with_images(
     text: str,
