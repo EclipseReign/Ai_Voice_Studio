@@ -15,6 +15,7 @@ import tempfile
 import subprocess
 import urllib.parse
 from typing import List, Dict, Tuple, Optional
+import time
 from pathlib import Path
 import logging
 
@@ -81,6 +82,88 @@ VIDEO_SETTINGS = {
         "images_per_minute": 10,  # Change image every 6 seconds (faster for shorts)
     }
 }
+
+
+def _sec_to_ass(ts: float) -> str:
+    """Преобразует секунды в формат ASS: H:MM:SS.cs (сотые)"""
+    if ts < 0:
+        ts = 0.0
+    h = int(ts // 3600)
+    m = int((ts % 3600) // 60)
+    s = int(ts % 60)
+    cs = int(round((ts - int(ts)) * 100))
+    return f"{h}:{m:02d}:{s:02d}.{cs:02d}"
+
+def build_ass_from_words(
+    timed_words: List[Dict[str, float]],
+    *,
+    resolution: Tuple[int, int] = (1080, 1920),
+    words_per_phrase: int = 2,
+    fontname: str = "DejaVu Sans",
+    fontsize: int = 64,
+    primary_color: str = "&H00FFFFFF",   # белый (AA BB GG RR, AA=00 прозрачность)
+    outline_color: str = "&H00000000",   # чёрный
+    outline: int = 4,
+    shadow: int = 0,
+    margin_v: int = 100,
+    align: int = 2,  # 2 — центр снизу, 8 — центр по центру
+    out_path: str | None = None,
+) -> str:
+    """
+    Группирует слова в фразы и пишет .ass; возвращает абсолютный путь к файлу.
+    """
+    w, h = resolution
+
+    header = [
+        "[Script Info]",
+        "ScriptType: v4.00+",
+        f"PlayResX: {w}",
+        f"PlayResY: {h}",
+        "ScaledBorderAndShadow: yes",
+        "",
+        "[V4+ Styles]",
+        "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, "
+        "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+        "Alignment, MarginL, MarginR, MarginV, Encoding",
+        # BackColour и SecondaryColour тут не используются по сути
+        f"Style: Default,{fontname},{fontsize},{primary_color},&H000000FF,{outline_color},&H64000000,"
+        f"0,0,0,0,100,100,0,0,1,{outline},{shadow},{align},20,20,{margin_v},0",
+        "",
+        "[Events]",
+        "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text",
+    ]
+
+    # Группируем слова в фразы
+    phrases: list[tuple[float, float, str]] = []
+    for i in range(0, len(timed_words), words_per_phrase):
+        chunk = timed_words[i:i + words_per_phrase]
+        if not chunk:
+            continue
+        text = " ".join(w["word"] for w in chunk)
+        # Экраним проблемные для ASS символы
+        text = text.replace("{", r"\{").replace("}", r"\}")
+        text = " ".join(text.split())
+
+        start = float(chunk[0]["start_time"])
+        end = float(chunk[-1]["end_time"])
+        if end <= start:
+            end = start + 0.001
+
+        phrases.append((start, end, text))
+
+    events = [
+        f"Dialogue: 0,{_sec_to_ass(s)},{_sec_to_ass(e)},Default,,0,0,0,,{t}"
+        for (s, e, t) in phrases
+    ]
+
+    if not out_path:
+        tmpdir = tempfile.mkdtemp(prefix="ass_")
+        out_path = os.path.join(tmpdir, "subs.ass")
+
+    with open(out_path, "w", encoding="utf-8") as f:
+        f.write("\n".join(header + events) + "\n")
+
+    return os.path.abspath(out_path)
 
 async def get_accurate_word_timestamps(audio_path: str, text: str) -> List[Dict[str, any]]:
     """
@@ -623,39 +706,51 @@ async def create_slideshow_video(
         # Build video filter
         video_filter = f"scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,format=yuv420p"
         
-        # Add subtitle filter if enabled - NOW WITH ACCURATE AUDIO SYNC!
         if subtitle_text and subtitle_style:
-            if progress_callback:
-                await progress_callback(
-                    "subtitle_sync",
-                    0,
-                    100,
-                    "🎯 Анализ аудио для точной синхронизации субтитров..."
-                )
-            
-            # Get ACCURATE word timestamps from audio (not estimated!)
+            # Получаем точные тайминги слов под реальную озвучку
             timed_words = await get_accurate_word_timestamps(audio_path, subtitle_text)
-            subtitle_filter = generate_subtitle_filter(timed_words, subtitle_style, subtitle_position, resolution)
-            
-            if subtitle_filter:
-                video_filter = f"{video_filter},{subtitle_filter}"
-                logger.info(f"✅ Added {subtitle_style} subtitles with ACCURATE audio synchronization at {subtitle_position} position")
-                
-            if progress_callback:
-                await progress_callback(
-                    "subtitle_sync",
-                    100,
-                    100,
-                    "✅ Субтитры синхронизированы с аудио!"
-                )
+
+            style_conf = SUBTITLE_STYLES.get(subtitle_style, {})
+            words_per_phrase = style_conf.get("words_per_phrase", 2)
+
+            # Подбираем параметры стиля для .ass
+            fontsize_ass = style_conf.get("fontsize", 60)
+
+            # Выбор выравнивания по позиции
+            # 2 — центр снизу; 8 — центр по центру
+            align = 8 if subtitle_position == "center" else 2
+            margin_v = 100 if subtitle_position == "bottom" else height // 2 - 50
+
+            # Генерим .ass файл во временной папке
+            ass_path = build_ass_from_words(
+                timed_words,
+                resolution=resolution,
+                words_per_phrase=words_per_phrase,
+                fontname="DejaVu Sans",
+                fontsize=fontsize_ass,
+                primary_color="&H00FFFFFF",   # белый
+                outline_color="&H00000000",   # чёрный контур
+                outline=style_conf.get("borderw", 4),
+                shadow=0,
+                margin_v=margin_v,
+                align=align,
+            )
+
+            # Подключаем субтитры одним фильтром к финальному видеопотоку
+            # Важно: путь в одиночных кавычках; fontsdir можно указать системный
+            video_filter = (
+                f"{video_filter},subtitles='{ass_path}':fontsdir='/usr/share/fonts/truetype/dejavu'"
+            )
         
         cmd = [
             "ffmpeg",
+            "-y",
+            "-r", "30",
             "-f", "concat",
             "-safe", "0",
             "-i", concat_file,
             "-i", audio_path,
-            "-vf", video_filter,
+            "-vf", video_filter,          # <-- оставляем video_filter как есть
             "-c:v", "libx264",
             "-preset", "medium",
             "-crf", "23",
@@ -663,7 +758,6 @@ async def create_slideshow_video(
             "-b:a", "192k",
             "-shortest",
             "-movflags", "+faststart",
-            "-y",
             output_path
         ]
         
