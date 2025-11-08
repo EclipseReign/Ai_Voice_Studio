@@ -745,12 +745,14 @@ async def create_slideshow_video(
         cmd = [
             "ffmpeg",
             "-y",
-            "-r", "30",
+            # НИКАКОГО -r перед входом!
             "-f", "concat",
             "-safe", "0",
             "-i", concat_file,
             "-i", audio_path,
-            "-vf", video_filter,          # <-- оставляем video_filter как есть
+            "-vf", video_filter,
+            "-vsync", "vfr",
+            "-r", "30",
             "-c:v", "libx264",
             "-preset", "medium",
             "-crf", "23",
