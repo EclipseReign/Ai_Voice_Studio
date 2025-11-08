@@ -241,13 +241,13 @@ def build_ass_tiktok_from_words(
 
             # мини-bounce: 112% → обратно
             pop_in   = ofs_ms
-            pop_peak = min(ofs_ms + 180, line_ms_total)
-            pop_back = min(ofs_ms + 360, line_ms_total)
+            pop_peak = min(ofs_ms + 220, line_ms_total)
+            pop_back = min(ofs_ms + 440, line_ms_total)
 
             parts.append(
                 "{"
                 f"\\k{dur_cs}"
-                f"\\t({pop_in},{pop_peak},\\fscx=112\\fscy=112)"
+                f"\\t({pop_in},{pop_peak},\\fscx=108\\fscy=108)"
                 f"\\t({pop_peak},{pop_back},\\fscx=100\\fscy=100)"
                 "}"
                 + word
