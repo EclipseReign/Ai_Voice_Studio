@@ -152,8 +152,7 @@ def _get_timestamps_sync(audio_path: str, original_text: str) -> List[Dict[str, 
         word_timestamps=True,  # Enable word-level timestamps
         vad_filter=True,  # Voice activity detection to remove silence
         vad_parameters=dict(
-            min_silence_duration_ms=500,  # Minimum silence to split
-            threshold=0.5  # Voice detection threshold
+            min_silence_duration_ms=500
         )
     )
     
