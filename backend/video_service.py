@@ -228,35 +228,33 @@ def generate_subtitle_filter(
     resolution: Tuple[int, int]
 ) -> str:
     """
-    Генерирует FFmpeg drawtext-фильтр для субтитров, без параметра `alpha`
-    (совместимо со старыми сборками ffmpeg). Появление/исчезновение контролируется
-    только через `enable` и анимацией позиции.
+    Генерирует FFmpeg drawtext-фильтр для субтитров без параметра alpha.
+    Появление/исчезновение контролируется через enable и анимацией позиции.
     """
     if not timed_words or style not in SUBTITLE_STYLES:
         return ""
 
     style_config = SUBTITLE_STYLES[style]
-    width, height = resolution  # на будущее, сейчас напрямую не используются
+    width, height = resolution
     words_per_phrase = style_config.get("words_per_phrase", 2)
 
     # Базовая Y-позиция
     if position == "center":
         y_pos = "(h-text_h)/2"
-    else:  # bottom
+    else:
         y_pos = "h-text_h-100"
 
     # Группируем слова в фразы
     phrases: List[Dict[str, float]] = []
     for i in range(0, len(timed_words), words_per_phrase):
-        phrase_words = timed_words[i : i + words_per_phrase]
+        phrase_words = timed_words[i: i + words_per_phrase]
         if not phrase_words:
             continue
+
         phrase_text = " ".join([w["word"] for w in phrase_words])
 
         start_time = float(phrase_words[0]["start_time"])
         end_time = float(phrase_words[-1]["end_time"])
-
-        # Подстрахуемся от нулевой/отрицательной длительности
         if end_time <= start_time:
             end_time = start_time + 0.001
 
@@ -267,18 +265,15 @@ def generate_subtitle_filter(
     for phrase in phrases:
         # Безопасная очистка текста для drawtext
         text = phrase["text"]
-        # 1) сначала экранируем обратный слеш
-        text = text.replace("\\", "\\\\")
-        # 2) убираем одиночные кавычки (чтобы не ломать аргумент text='...')
-        text = text.replace("'", "")
-        # 3) переводим переводы строк в пробелы
-        text = text.replace("\r\n", " ").replace("\n", " ")
+        text = text.replace("\\", "\\\\")          # экранируем обратный слеш
+        text = text.replace("'", "")               # убираем одиночные кавычки
+        text = text.replace("\r\n", " ").replace("\n", " ")  # переносы в пробел
 
         start = phrase["start"]
         end = phrase["end"]
         duration = max(end - start, 0.001)
 
-        # Базовые параметры drawtext (без alpha)
+        # Базовые параметры drawtext
         drawtext_params = [
             f"text='{text}'",
             "fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
@@ -298,34 +293,29 @@ def generate_subtitle_filter(
             drawtext_params.append(f"shadowx={style_config['shadowx']}")
             drawtext_params.append(f"shadowy={style_config['shadowy']}")
 
-        # Позиционирование и простая анимация (без прозрачности)
+        # Позиционирование + анимация
         if style == "tiktok":
             # Прыжок при появлении + лёгкое покачивание
-            if position == "center":
-                y_base = "(h-text_h)/2"
-            else:
-                y_base = "h-text_h-100"
-
+            y_base = "(h-text_h)/2" if position == "center" else "h-text_h-100"
             bounce_duration = 0.2
             bounce_y = (
                 f"if(lt(t-{start},{bounce_duration}),"
                 f"-30*sin(PI*(t-{start})/{bounce_duration}),"
                 f"5*sin(4*PI*(t-{start})))"
             )
-
-            drawtext_params.append("x=(w-text_w)/2")
-            drawtext_params.append(f"y={y_base}+{bounce_y}")
+            # ВАЖНО: значения x= и y= в кавычках (из-за запятых в if(...))
+            drawtext_params.append("x='(w-text_w)/2'")
+            drawtext_params.append(f"y='{y_base}+{bounce_y}'")
 
         elif style == "instagram":
-            # Небольшой bounce по Y в течение фразы
-            drawtext_params.append("x=(w-text_w)/2")
-            drawtext_params.append(f"y={y_pos}+15*sin(6*PI*(t-{start})/{duration})")
+            drawtext_params.append("x='(w-text_w)/2'")
+            drawtext_params.append(f"y='{y_pos}+15*sin(6*PI*(t-{start})/{duration})'")
 
         else:  # minimal
-            drawtext_params.append("x=(w-text_w)/2")
-            drawtext_params.append(f"y={y_pos}")
+            drawtext_params.append("x='(w-text_w)/2'")
+            drawtext_params.append(f"y='{y_pos}'")
 
-        # Включаем показ фразы только на интервале
+        # Показываем фразу только на её интервале
         drawtext_params.append(f"enable='between(t,{start},{end})'")
 
         filters.append("drawtext=" + ":".join(drawtext_params))
@@ -339,8 +329,6 @@ def generate_subtitle_filter(
         f"({words_per_phrase} words each) in {style} style (no alpha)"
     )
     return combined
-
-
 
 async def generate_image_prompts_from_text(text: str, num_prompts: int, video_type: str) -> List[str]:
     """
