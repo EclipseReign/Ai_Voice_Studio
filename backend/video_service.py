@@ -166,6 +166,108 @@ def build_ass_from_words(
 
     return os.path.abspath(out_path)
 
+def build_ass_tiktok_from_words(
+    timed_words: List[Dict[str, float]],
+    *,
+    resolution: Tuple[int, int] = (720, 1280),
+    words_per_phrase: int = 4,          # 3–5 выглядит лучше, чем 1–2
+    fontname: str = "DejaVu Sans",
+    fontsize: int = 64,
+    # Цвета в формате &HaaBBGGRR (aa=alpha, 00 = непрозрачно)
+    primary_color: str = "&H00FFFFFF",   # белый для «неактивных» слов
+    secondary_color: str = "&H00FFFF00", # жёлтый хайлайт текущего слова (karaoke)
+    outline_color: str = "&H00000000",   # чёрный контур (для BorderStyle=1; здесь бокс)
+    back_color: str = "&H64000000",      # подложка: чёрная с ~40% прозрачности
+    outline: int = 0,
+    shadow: int = 0,
+    align: int = 2,                      # 2 — центр снизу; 8 — центр
+    margin_v: int = 100,
+    out_path: str | None = None,
+) -> str:
+    """
+    Делает .ass в стиле TikTok:
+    - Строки по 3–5 слов, караоке-подсветка \k на каждое слово.
+    - Лёгкий «поп»/bounce (увеличение до 112%, затем обратно) на старте слова.
+    - Полупрозрачный чёрный бокс позади текста (читабельно на любом фоне).
+    """
+    w, h = resolution
+    if not out_path:
+        out_dir = tempfile.mkdtemp(prefix="ass_tiktok_")
+        out_path = os.path.join(out_dir, "subs.ass")
+
+    header = [
+        "[Script Info]",
+        "ScriptType: v4.00+",
+        f"PlayResX: {w}",
+        f"PlayResY: {h}",
+        "ScaledBorderAndShadow: yes",
+        "WrapStyle: 2",
+        "",
+        "[V4+ Styles]",
+        "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, "
+        "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+        "Alignment, MarginL, MarginR, MarginV, Encoding",
+        # BorderStyle=3 — непрозрачный бокс позади текста (цвет — BackColour)
+        f"Style: TikTok,{fontname},{fontsize},{primary_color},{secondary_color},{outline_color},{back_color},"
+        f"1,0,0,0,100,100,0,0,3,{outline},{shadow},{align},20,20,{margin_v},0",
+        "",
+        "[Events]",
+        "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text",
+    ]
+
+    # Группируем слова по words_per_phrase
+    phrases: list[tuple[float, float, str]] = []
+    for i in range(0, len(timed_words), words_per_phrase):
+        chunk = timed_words[i:i + words_per_phrase]
+        if not chunk:
+            continue
+
+        start = float(chunk[0]["start_time"])
+        end   = float(chunk[-1]["end_time"])
+        if end <= start:
+            end = start + 0.001
+
+        line_ms_total = int(round((end - start) * 1000))
+        parts = [r"{\fad(80,80)}"]  # лёгкий fade in/out у всей строки
+
+        # собираем караоке-посекундно
+        for j, wobj in enumerate(chunk):
+            word = (wobj["word"]).replace("{", r"\{").replace("}", r"\}")
+            word_start = float(wobj["start_time"])
+            word_end   = float(chunk[j + 1]["start_time"]) if j + 1 < len(chunk) else end
+
+            dur_cs = max(1, int(round((word_end - word_start) * 100)))  # \k — сотые секунды
+            ofs_ms = int(round((word_start - start) * 1000))
+
+            # мини-bounce: 112% → обратно
+            pop_in   = ofs_ms
+            pop_peak = min(ofs_ms + 180, line_ms_total)
+            pop_back = min(ofs_ms + 360, line_ms_total)
+
+            parts.append(
+                "{"
+                f"\\k{dur_cs}"
+                f"\\t({pop_in},{pop_peak},\\fscx=112\\fscy=112)"
+                f"\\t({pop_peak},{pop_back},\\fscx=100\\fscy=100)"
+                "}"
+                + word
+            )
+            if j != len(chunk) - 1:
+                parts.append(" ")
+
+        line_text = "".join(parts)
+        phrases.append((start, end, line_text))
+
+    events = [
+        f"Dialogue: 0,{_sec_to_ass(s)},{_sec_to_ass(e)},TikTok,,0,0,0,,{txt}"
+        for (s, e, txt) in phrases
+    ]
+
+    with open(out_path, "w", encoding="utf-8") as f:
+        f.write("\n".join(header + events) + "\n")
+
+    return os.path.abspath(out_path)
+
 async def get_accurate_word_timestamps(audio_path: str, text: str) -> List[Dict[str, any]]:
     """
     Get accurate word-level timestamps from audio file using Whisper.
@@ -678,6 +780,7 @@ async def create_slideshow_video(
     """
     Сборка слайдшоу из изображений под аудио.
     Субтитры накладываются через libass (subtitles=...), чтобы идти непрерывно по таймингам речи.
+    Для subtitle_style == 'tiktok' включается караоке + bounce.
     """
     if not image_paths:
         raise ValueError("image_paths is empty")
@@ -695,69 +798,88 @@ async def create_slideshow_video(
     duration_per_image = audio_duration / n
     logger.info(f"Creating slideshow: {n} images, {duration_per_image:.2f}s per image")
 
-    # 2) Готовим concat-файл (демульсер читает duration для каждого кадра-изображения)
+    # 2) concat-файл (повтор последнего файла — обязателен)
     concat_fd, concat_path = tempfile.mkstemp(suffix=".concat.txt")
-    os.close(concat_fd)  # будем писать обычным open
+    os.close(concat_fd)
     with open(concat_path, "w", encoding="utf-8") as f:
         for idx, p in enumerate(image_paths):
-            # путь в одинарных кавычках, экранируем внутри
             p_escaped = p.replace("'", r"'\''")
             f.write(f"file '{p_escaped}'\n")
             if idx < n - 1:
                 f.write(f"duration {duration_per_image:.6f}\n")
-        # дублируем последний файл без duration (требование concat demuxer)
         last_p = image_paths[-1].replace("'", r"'\''")
         f.write(f"file '{last_p}'\n")
 
-    # 3) Собираем видеофильтр: scale/pad -> fps=30 (ВНУТРИ графа) -> subtitles -> format
+    # 3) base-фильтр: scale/pad -> fps=30 (внутри графа, ДО subtitles)
     video_filter = (
         f"scale={width}:{height}:force_original_aspect_ratio=decrease,"
         f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,"
         f"fps=30"
     )
 
-    # 4) Если нужны субтитры — готовим .ass по word-таймингам и добавляем фильтр subtitles
+    # 4) Сабтайтлы: точные тайминги + выбор билдера
     if subtitle_text and subtitle_style:
         logger.info(f"🎯 Analyzing audio with Whisper for accurate word timestamps: {audio_path}")
         timed_words = await get_accurate_word_timestamps(audio_path, subtitle_text)
         logger.info(f"✅ Got {len(timed_words)} accurate word timestamps from Whisper")
 
         style_conf = SUBTITLE_STYLES.get(subtitle_style, {})
-        words_per_phrase = int(style_conf.get("words_per_phrase", 2))
-        fontsize_ass = int(style_conf.get("fontsize", 60))
+        # TikTok читается лучше при 3–5 словах на экран
+        default_wpp = 4 if subtitle_style.lower() == "tiktok" else 2
+        words_per_phrase = int(style_conf.get("words_per_phrase", default_wpp))
+        fontsize_ass     = int(style_conf.get("fontsize", 60))
 
         # позиция: 2 — низ по центру; 8 — центр
         align = 8 if subtitle_position == "center" else 2
         margin_v = 100 if subtitle_position == "bottom" else max(50, height // 2 - 50)
 
-        # генерим .ass
         ass_dir = tempfile.mkdtemp(prefix="ass_")
         ass_path = os.path.join(ass_dir, "subs.ass")
-        ass_path = build_ass_from_words(
-            timed_words,
-            resolution=resolution,
-            words_per_phrase=words_per_phrase,
-            fontname="DejaVu Sans",
-            fontsize=fontsize_ass,
-            primary_color="&H00FFFFFF",    # белый
-            outline_color="&H00000000",    # чёрный контур
-            outline=int(style_conf.get("borderw", 4)),
-            shadow=0,
-            margin_v=margin_v,
-            align=align,
-            out_path=ass_path,
-        )
 
-        # добавляем libass на финальный поток
+        if subtitle_style.lower() == "tiktok":
+            # ВИРУСНЫЙ стиль (караоке + bounce + бокс)
+            ass_path = build_ass_tiktok_from_words(
+                timed_words,
+                resolution=resolution,
+                words_per_phrase=words_per_phrase,
+                fontname="DejaVu Sans",
+                fontsize=fontsize_ass,
+                primary_color="&H00FFFFFF",   # белый неактивный
+                secondary_color="&H00FFFF00", # жёлтый хайлайт
+                outline_color="&H00000000",
+                back_color="&H64000000",      # ~40% чёрный бокс
+                outline=0,
+                shadow=0,
+                align=align,
+                margin_v=margin_v,
+                out_path=ass_path,
+            )
+        else:
+            # Базовый аккуратный стиль (без караоке)
+            ass_path = build_ass_from_words(
+                timed_words,
+                resolution=resolution,
+                words_per_phrase=words_per_phrase,
+                fontname="DejaVu Sans",
+                fontsize=fontsize_ass,
+                primary_color="&H00FFFFFF",
+                outline_color="&H00000000",
+                outline=int(style_conf.get("borderw", 4)),
+                shadow=0,
+                margin_v=margin_v,
+                align=align,
+                out_path=ass_path,
+            )
+
+        # libass на финальный поток; format — после субтитров
         video_filter = (
             f"{video_filter},subtitles='{ass_path}':fontsdir='/usr/share/fonts/truetype/dejavu',"
             f"format=yuv420p"
         )
     else:
-        # без субтитров — просто приводим к нужному формату в конце
         video_filter = f"{video_filter},format=yuv420p"
 
-    # 5) Команда ffmpeg (НИКАКОГО -r/-fps_mode снаружи)
+    # 5) Команда ffmpeg: НИЧЕГО типа -r/-fps_mode снаружи
     cmd = [
         "ffmpeg",
         "-y",
@@ -765,7 +887,7 @@ async def create_slideshow_video(
         "-safe", "0",
         "-i", concat_path,
         "-i", audio_path,
-        "-vf", video_filter,            # fps=30 и subtitles уже внутри графа
+        "-vf", video_filter,                # fps=30 и subtitles уже внутри -vf
         "-c:v", "libx264",
         "-preset", "medium",
         "-crf", "23",
@@ -784,11 +906,8 @@ async def create_slideshow_video(
             logger.error("FFmpeg error: " + proc.stderr)
             raise Exception(f"FFmpeg failed: {proc.stderr[:1000]}")
     finally:
-        # concat-файл временный, но пусть система тоже чистит по своим правилам
-        try:
-            os.remove(concat_path)
-        except Exception:
-            pass
+        try: os.remove(concat_path)
+        except Exception: pass
 
     logger.info("✅ Slideshow video created: " + output_path)
     return output_path
