@@ -170,27 +170,46 @@ def build_ass_tiktok_from_words(
     timed_words: List[Dict[str, float]],
     *,
     resolution: Tuple[int, int] = (720, 1280),
-    words_per_phrase: int = 4,          # 3–5 выглядит лучше, чем 1–2
+    # две строки по 3 слова = 6 слов в блоке
+    lines_per_block: int = 2,
+    words_per_line: int = 3,
+
+    # Шрифт/размер
     fontname: str = "DejaVu Sans",
     fontsize: int = 64,
-    # Цвета в формате &HaaBBGGRR (aa=alpha, 00 = непрозрачно)
-    primary_color: str = "&H00FFFFFF",   # белый для «неактивных» слов
-    secondary_color: str = "&H00FFFF00", # жёлтый хайлайт текущего слова (karaoke)
-    outline_color: str = "&H00000000",   # чёрный контур (для BorderStyle=1; здесь бокс)
-    back_color: str = "&H64000000",      # подложка: чёрная с ~40% прозрачности
+
+    # Цвета (ASS: &HaaBBGGRR, где aa=alpha; 00 = полностью непрозрачно)
+    # Базовый текст — светло-серый, хайлайт — неоновый розовый
+    primary_color: str = "&H00E6E6E6",   # #E6E6E6
+    secondary_color: str = "&H00CC66FF", # #FF66CC  (BB=CC, GG=66, RR=FF)
+    outline_color: str = "&H00000000",   # контур не нужен (есть бокс)
+    back_color: str = "&H33000000",      # полупрозрачный чёрный бокс (~20%)
+
+    # Бокс/контур/тени
     outline: int = 0,
     shadow: int = 0,
-    align: int = 2,                      # 2 — центр снизу; 8 — центр
+    align: int = 2,                      # 2 = центр снизу; 8 = центр
     margin_v: int = 100,
+
+    # Плавность и «скорость»
+    min_k_cs: int = 12,                  # минимум 0.12s подсветки на слово
+    fade_ms: int = 140,                  # мягкое появление/исчезновение строки
+    pop_scale: int = 108,                # максимум ~108% на пике
+    pop_in_ms: int = 240,                # время разгона pop
+    pop_back_ms: int = 520,              # время возврата к 100%
+
     out_path: str | None = None,
 ) -> str:
     """
     Делает .ass в стиле TikTok:
-    - Строки по 3–5 слов, караоке-подсветка \k на каждое слово.
-    - Лёгкий «поп»/bounce (увеличение до 112%, затем обратно) на старте слова.
-    - Полупрозрачный чёрный бокс позади текста (читабельно на любом фоне).
+    - Караоке-подсветка слова (\k) с минимумом времени на слово (min_k_cs).
+    - Лёгкий «поп» (увеличение до pop_scale%) и плавный откат.
+    - Две строки (lines_per_block x words_per_line) с разрывом \N.
+    - Полупрозрачный бокс позади текста (BorderStyle=3).
     """
     w, h = resolution
+    words_per_phrase = max(1, lines_per_block) * max(1, words_per_line)
+
     if not out_path:
         out_dir = tempfile.mkdtemp(prefix="ass_tiktok_")
         out_path = os.path.join(out_dir, "subs.ass")
@@ -207,7 +226,7 @@ def build_ass_tiktok_from_words(
         "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, "
         "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
         "Alignment, MarginL, MarginR, MarginV, Encoding",
-        # BorderStyle=3 — непрозрачный бокс позади текста (цвет — BackColour)
+        # BorderStyle=3 — бокс; цвет задаёт BackColour
         f"Style: TikTok,{fontname},{fontsize},{primary_color},{secondary_color},{outline_color},{back_color},"
         f"1,0,0,0,100,100,0,0,3,{outline},{shadow},{align},20,20,{margin_v},0",
         "",
@@ -215,48 +234,64 @@ def build_ass_tiktok_from_words(
         "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text",
     ]
 
-    # Группируем слова по words_per_phrase
     phrases: list[tuple[float, float, str]] = []
+
+    # Идём по словам блоками по words_per_phrase (на 2 строки)
     for i in range(0, len(timed_words), words_per_phrase):
         chunk = timed_words[i:i + words_per_phrase]
         if not chunk:
             continue
 
         start = float(chunk[0]["start_time"])
+        # базовый end — конец последнего слова
         end   = float(chunk[-1]["end_time"])
         if end <= start:
             end = start + 0.001
 
         line_ms_total = int(round((end - start) * 1000))
-        parts = [r"{\fad(80,80)}"]  # лёгкий fade in/out у всей строки
 
-        # собираем караоке-посекундно
+        parts = [fr"{{\fad({fade_ms},{fade_ms})\blur1.2}}"]  # мягкий вход/выход + лёгкий блюр
+
+        sum_k_cs = 0
         for j, wobj in enumerate(chunk):
             word = (wobj["word"]).replace("{", r"\{").replace("}", r"\}")
             word_start = float(wobj["start_time"])
             word_end   = float(chunk[j + 1]["start_time"]) if j + 1 < len(chunk) else end
 
-            dur_cs = max(1, int(round((word_end - word_start) * 100)))  # \k — сотые секунды
+            # karaoke-слот в сотых сек; минимум min_k_cs
+            dur_cs = max(min_k_cs, int(round((word_end - word_start) * 100)))
+            sum_k_cs += dur_cs
+
+            # смещение внутри строки (для pop-трансформаций)
             ofs_ms = int(round((word_start - start) * 1000))
-
-            # мини-bounce: 112% → обратно
             pop_in   = ofs_ms
-            pop_peak = min(ofs_ms + 180, line_ms_total)
-            pop_back = min(ofs_ms + 360, line_ms_total)
+            pop_peak = min(ofs_ms + pop_in_ms, line_ms_total)
+            pop_back = min(ofs_ms + pop_back_ms, line_ms_total)
 
+            # само слово
             parts.append(
                 "{"
                 f"\\k{dur_cs}"
-                f"\\t({pop_in},{pop_peak},\\fscx=112\\fscy=112)"
+                f"\\t({pop_in},{pop_peak},\\fscx={pop_scale}\\fscy={pop_scale})"
                 f"\\t({pop_peak},{pop_back},\\fscx=100\\fscy=100)"
                 "}"
                 + word
             )
-            if j != len(chunk) - 1:
+
+            # пробел или перевод строки
+            is_last = (j == len(chunk) - 1)
+            # ставим \N после каждых words_per_line слов, пока не конец блока
+            if (j + 1) % words_per_line == 0 and not is_last:
+                parts.append(r"\N")
+            elif not is_last:
                 parts.append(" ")
 
+        # Если сумма \k получилась больше, чем базовая длительность — продлим end,
+        # чтобы подсветка не «съедалась»
+        end_adj = max(end, start + (sum_k_cs / 100.0))
+
         line_text = "".join(parts)
-        phrases.append((start, end, line_text))
+        phrases.append((start, end_adj, line_text))
 
     events = [
         f"Dialogue: 0,{_sec_to_ass(s)},{_sec_to_ass(e)},TikTok,,0,0,0,,{txt}"
