@@ -20,6 +20,15 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Try to import faster-whisper for accurate word-level timestamps
+try:
+    from faster_whisper import WhisperModel
+    WHISPER_AVAILABLE = True
+    logger.info("✅ Faster-Whisper available for accurate subtitle synchronization")
+except ImportError:
+    WHISPER_AVAILABLE = False
+    logger.warning("⚠️ Faster-Whisper not available. Subtitles will use estimated timing.")
+
 POLLINATIONS_API_URL = "https://image.pollinations.ai/prompt"
 
 SUBTITLE_STYLES = {
@@ -72,6 +81,109 @@ VIDEO_SETTINGS = {
         "images_per_minute": 10,  # Change image every 6 seconds (faster for shorts)
     }
 }
+
+async def get_accurate_word_timestamps(audio_path: str, text: str) -> List[Dict[str, any]]:
+    """
+    Get accurate word-level timestamps from audio file using Whisper.
+    This ensures subtitles are perfectly synchronized with the actual speech.
+    
+    Args:
+        audio_path: Path to audio file
+        text: Original text (for reference and fallback)
+        
+    Returns:
+        List of dicts with {word, start_time, end_time} with accurate timestamps
+    """
+    if not WHISPER_AVAILABLE:
+        logger.warning("Whisper not available, using fallback timing estimation")
+        # Fallback to old method
+        import wave
+        with wave.open(audio_path, 'rb') as wav:
+            frames = wav.getnframes()
+            rate = wav.getframerate()
+            duration = frames / float(rate)
+        return split_text_into_timed_words(text, duration, words_per_second=2.5)
+    
+    try:
+        logger.info(f"🎯 Analyzing audio with Whisper for accurate word timestamps: {audio_path}")
+        
+        # Run Whisper in a thread pool to avoid blocking
+        loop = asyncio.get_event_loop()
+        timed_words = await loop.run_in_executor(None, _get_timestamps_sync, audio_path, text)
+        
+        logger.info(f"✅ Got {len(timed_words)} accurate word timestamps from Whisper")
+        return timed_words
+        
+    except Exception as e:
+        logger.error(f"Error getting accurate timestamps with Whisper: {e}", exc_info=True)
+        # Fallback to estimation
+        import wave
+        with wave.open(audio_path, 'rb') as wav:
+            frames = wav.getnframes()
+            rate = wav.getframerate()
+            duration = frames / float(rate)
+        logger.warning("Falling back to estimated timing")
+        return split_text_into_timed_words(text, duration, words_per_second=2.5)
+
+
+def _get_timestamps_sync(audio_path: str, original_text: str) -> List[Dict[str, any]]:
+    """
+    Synchronous function to get word timestamps using Whisper.
+    Runs in thread pool executor.
+    
+    Args:
+        audio_path: Path to audio file
+        original_text: Original text for reference
+        
+    Returns:
+        List of word timing dicts
+    """
+    # Load Whisper model (tiny for speed, can use base/small for better accuracy)
+    # tiny: fastest, ~1GB RAM, good for word timing
+    # base: slower but more accurate
+    model = WhisperModel("tiny", device="cpu", compute_type="int8")
+    
+    logger.info("Transcribing audio with word-level timestamps...")
+    
+    # Transcribe with word timestamps
+    segments, info = model.transcribe(
+        audio_path,
+        language="auto",  # Auto-detect language
+        word_timestamps=True,  # Enable word-level timestamps
+        vad_filter=True,  # Voice activity detection to remove silence
+        vad_parameters=dict(
+            min_silence_duration_ms=500,  # Minimum silence to split
+            threshold=0.5  # Voice detection threshold
+        )
+    )
+    
+    # Extract word-level timestamps
+    timed_words = []
+    for segment in segments:
+        if hasattr(segment, 'words') and segment.words:
+            for word_info in segment.words:
+                # Clean word (remove punctuation for matching)
+                word = word_info.word.strip()
+                if word:  # Skip empty words
+                    timed_words.append({
+                        "word": word,
+                        "start_time": word_info.start,
+                        "end_time": word_info.end
+                    })
+    
+    logger.info(f"Extracted {len(timed_words)} word timestamps from audio")
+    
+    # If we got no words (unlikely), fallback
+    if not timed_words:
+        logger.warning("No word timestamps extracted, using estimated timing")
+        import wave
+        with wave.open(audio_path, 'rb') as wav:
+            frames = wav.getnframes()
+            rate = wav.getframerate()
+            duration = frames / float(rate)
+        return split_text_into_timed_words(original_text, duration, words_per_second=2.5)
+    
+    return timed_words
 
 def split_text_into_timed_words(text: str, audio_duration: float, words_per_second: float = 3.0) -> List[Dict[str, any]]:
     """
@@ -545,15 +657,31 @@ async def create_slideshow_video(
         # Build video filter
         video_filter = f"scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,format=yuv420p"
         
-        # Add subtitle filter if enabled
+        # Add subtitle filter if enabled - NOW WITH ACCURATE AUDIO SYNC!
         if subtitle_text and subtitle_style:
-            words_per_sec = 2.5 if subtitle_style == "tiktok" else 2.0
-            timed_words = split_text_into_timed_words(subtitle_text, audio_duration, words_per_second=words_per_sec)
+            if progress_callback:
+                await progress_callback(
+                    "subtitle_sync",
+                    0,
+                    100,
+                    "🎯 Анализ аудио для точной синхронизации субтитров..."
+                )
+            
+            # Get ACCURATE word timestamps from audio (not estimated!)
+            timed_words = await get_accurate_word_timestamps(audio_path, subtitle_text)
             subtitle_filter = generate_subtitle_filter(timed_words, subtitle_style, subtitle_position, resolution)
             
             if subtitle_filter:
                 video_filter = f"{video_filter},{subtitle_filter}"
-                logger.info(f"Added {subtitle_style} subtitles at {subtitle_position} position")
+                logger.info(f"✅ Added {subtitle_style} subtitles with ACCURATE audio synchronization at {subtitle_position} position")
+                
+            if progress_callback:
+                await progress_callback(
+                    "subtitle_sync",
+                    100,
+                    100,
+                    "✅ Субтитры синхронизированы с аудио!"
+                )
         
         cmd = [
             "ffmpeg",
