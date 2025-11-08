@@ -148,7 +148,7 @@ def _get_timestamps_sync(audio_path: str, original_text: str) -> List[Dict[str, 
     # Transcribe with word timestamps
     segments, info = model.transcribe(
         audio_path,
-        language="auto",  # Auto-detect language
+        language=None,  # Auto-detect language
         word_timestamps=True,  # Enable word-level timestamps
         vad_filter=True,  # Voice activity detection to remove silence
         vad_parameters=dict(
@@ -345,11 +345,6 @@ def generate_subtitle_filter(
         # Add alpha for fade effects
         drawtext_params.append(f"alpha={alpha_expr}")
         drawtext_params.append(f"enable='between(t,{start},{end})'")
-        
-        # Add alpha for fade effects (Instagram style)
-        if style == "instagram":
-            # Bounce effect using sine wave
-            drawtext_params.append(f"y={y_pos}+10*sin(2*PI*t)")
         
         filter_str = "drawtext=" + ":".join(drawtext_params)
         filters.append(filter_str)
