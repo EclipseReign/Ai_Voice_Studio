@@ -228,134 +228,118 @@ def generate_subtitle_filter(
     resolution: Tuple[int, int]
 ) -> str:
     """
-    Generate FFmpeg drawtext filter for subtitles.
-    
-    Args:
-        timed_words: List of words with timing info
-        style: Subtitle style (tiktok, instagram, minimal)
-        position: Subtitle position (center, bottom)
-        resolution: Video resolution (width, height)
-        
-    Returns:
-        FFmpeg filter string
+    Генерирует FFmpeg drawtext-фильтр для субтитров, без параметра `alpha`
+    (совместимо со старыми сборками ffmpeg). Появление/исчезновение контролируется
+    только через `enable` и анимацией позиции.
     """
     if not timed_words or style not in SUBTITLE_STYLES:
         return ""
-    
+
     style_config = SUBTITLE_STYLES[style]
-    width, height = resolution
-    words_per_phrase = style_config.get('words_per_phrase', 2)
-    # Calculate Y position
+    width, height = resolution  # на будущее, сейчас напрямую не используются
+    words_per_phrase = style_config.get("words_per_phrase", 2)
+
+    # Базовая Y-позиция
     if position == "center":
         y_pos = "(h-text_h)/2"
     else:  # bottom
         y_pos = "h-text_h-100"
-    
-    # Build drawtext filters for each word
-    filters = []
-    
-    # Group words into phrases (3-5 words per subtitle for better readability)
-    phrases = []
-    
+
+    # Группируем слова в фразы
+    phrases: List[Dict[str, float]] = []
     for i in range(0, len(timed_words), words_per_phrase):
-        phrase_words = timed_words[i:i + words_per_phrase]
+        phrase_words = timed_words[i : i + words_per_phrase]
+        if not phrase_words:
+            continue
         phrase_text = " ".join([w["word"] for w in phrase_words])
-        start_time = phrase_words[0]["start_time"]
-        end_time = phrase_words[-1]["end_time"]
-        
-        phrases.append({
-            "text": phrase_text,
-            "start": start_time,
-            "end": end_time
-        })
-    
-    # Generate drawtext for each phrase
+
+        start_time = float(phrase_words[0]["start_time"])
+        end_time = float(phrase_words[-1]["end_time"])
+
+        # Подстрахуемся от нулевой/отрицательной длительности
+        if end_time <= start_time:
+            end_time = start_time + 0.001
+
+        phrases.append({"text": phrase_text, "start": start_time, "end": end_time})
+
+    filters: List[str] = []
+
     for phrase in phrases:
-        # Escape text for FFmpeg drawtext filter
-        # Order matters: backslash first, then other characters
+        # Безопасная очистка текста для drawtext
         text = phrase["text"]
-        text = text.replace("'", "")
-        # 1. Escape backslashes (MUST be first)
+        # 1) сначала экранируем обратный слеш
         text = text.replace("\\", "\\\\")
-        
-        # 3. Remove or escape newlines
-        text = text.replace("\n", " ").replace("\n\n", " ")
-        
-        # Note: We don't escape colons or percent signs as they're safe within single quotes
-        
+        # 2) убираем одиночные кавычки (чтобы не ломать аргумент text='...')
+        text = text.replace("'", "")
+        # 3) переводим переводы строк в пробелы
+        text = text.replace("\r\n", " ").replace("\n", " ")
+
         start = phrase["start"]
         end = phrase["end"]
-        duration = end - start
-        
-        fade_in = 0.08  # Quick fade in
-        fade_out = 0.08  # Quick fade out
-        
-        font_name = style_config.get('font', 'Arial-Bold')
-        # Base drawtext parameters
+        duration = max(end - start, 0.001)
+
+        # Базовые параметры drawtext (без alpha)
         drawtext_params = [
             f"text='{text}'",
-            f"fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",  # Use system font
+            "fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
             f"fontsize={style_config['fontsize']}",
             f"fontcolor={style_config['fontcolor']}",
             f"borderw={style_config.get('borderw', 0)}",
             f"bordercolor={style_config.get('bordercolor', 'black')}",
         ]
-        
-        if style_config.get('box'):
+
+        if style_config.get("box"):
             drawtext_params.append(f"box={style_config['box']}")
             drawtext_params.append(f"boxcolor={style_config['boxcolor']}")
             drawtext_params.append(f"boxborderw={style_config['boxborderw']}")
-        
-        if style_config.get('shadowcolor'):
+
+        if style_config.get("shadowcolor"):
             drawtext_params.append(f"shadowcolor={style_config['shadowcolor']}")
             drawtext_params.append(f"shadowx={style_config['shadowx']}")
             drawtext_params.append(f"shadowy={style_config['shadowy']}")
-        
+
+        # Позиционирование и простая анимация (без прозрачности)
         if style == "tiktok":
-            bounce_duration = 0.2  # Длительность прыжка
-            
-            # Вертикальный bounce эффект (прыжок вверх при появлении)
-            # Сначала прыгает вверх на 30px, потом возвращается
+            # Прыжок при появлении + лёгкое покачивание
             if position == "center":
                 y_base = "(h-text_h)/2"
             else:
                 y_base = "h-text_h-100"
-            
-            # Bounce эффект: прыжок при появлении + небольшое покачивание
-            bounce_y = f"if(lt(t-{start},{bounce_duration}),-30*sin(PI*(t-{start})/{bounce_duration}),5*sin(4*PI*(t-{start})))"
-            drawtext_params.append(f"x=(w-text_w)/2")
+
+            bounce_duration = 0.2
+            bounce_y = (
+                f"if(lt(t-{start},{bounce_duration}),"
+                f"-30*sin(PI*(t-{start})/{bounce_duration}),"
+                f"5*sin(4*PI*(t-{start})))"
+            )
+
+            drawtext_params.append("x=(w-text_w)/2")
             drawtext_params.append(f"y={y_base}+{bounce_y}")
-            
-            # Fade in/out with alpha
-            alpha_expr = f"if(lt(t,{start}),0,if(lt(t,{start}+{fade_in}),(t-{start})/{fade_in},if(lt(t,{end}-{fade_out}),1,1-(t-({end}-{fade_out}))/{fade_out})))"
-            
+
         elif style == "instagram":
-            # Instagram style: Bounce effect
-            drawtext_params.append(f"x=(w-text_w)/2")
-            bounce = f"{y_pos}+15*sin(6*PI*(t-{start})/{duration})"
-            drawtext_params.append(f"y={bounce}")
-            alpha_expr = f"if(lt(t,{start}),0,if(lt(t,{start}+{fade_in}),(t-{start})/{fade_in},if(lt(t,{end}-{fade_out}),1,1-(t-({end}-{fade_out}))/{fade_out})))"
-            
+            # Небольшой bounce по Y в течение фразы
+            drawtext_params.append("x=(w-text_w)/2")
+            drawtext_params.append(f"y={y_pos}+15*sin(6*PI*(t-{start})/{duration})")
+
         else:  # minimal
-            # Simple fade in/out
-            drawtext_params.append(f"x=(w-text_w)/2")
+            drawtext_params.append("x=(w-text_w)/2")
             drawtext_params.append(f"y={y_pos}")
-            alpha_expr = f"if(lt(t,{start}),0,if(lt(t,{start}+{fade_in}),(t-{start})/{fade_in},if(lt(t,{end}-{fade_out}),1,1-(t-({end}-{fade_out}))/{fade_out})))"
-        
-        # Add alpha for fade effects
-        drawtext_params.append(f"alpha={alpha_expr}")
+
+        # Включаем показ фразы только на интервале
         drawtext_params.append(f"enable='between(t,{start},{end})'")
-        
-        filter_str = "drawtext=" + ":".join(drawtext_params)
-        filters.append(filter_str)
-    
-    # Combine all drawtext filters
-    if filters:
-        combined_filter = ",".join(filters)
-        logger.info(f"Generated subtitle filter with {len(phrases)} phrases ({words_per_phrase} words each) in {style} style with animations")
-        return combined_filter
-    
-    return ""
+
+        filters.append("drawtext=" + ":".join(drawtext_params))
+
+    if not filters:
+        return ""
+
+    combined = ",".join(filters)
+    logger.info(
+        f"Generated subtitle filter with {len(phrases)} phrases "
+        f"({words_per_phrase} words each) in {style} style (no alpha)"
+    )
+    return combined
+
 
 
 async def generate_image_prompts_from_text(text: str, num_prompts: int, video_type: str) -> List[str]:
