@@ -166,6 +166,9 @@ def build_ass_from_words(
 
     return os.path.abspath(out_path)
 
+import os, tempfile
+from typing import List, Dict, Tuple
+
 def build_ass_tiktok_from_words(
     timed_words: List[Dict[str, float]],
     *,
@@ -302,6 +305,7 @@ def build_ass_tiktok_from_words(
         f.write("\n".join(header + events) + "\n")
 
     return os.path.abspath(out_path)
+
 
 async def get_accurate_word_timestamps(audio_path: str, text: str) -> List[Dict[str, any]]:
     """
@@ -812,11 +816,6 @@ async def create_slideshow_video(
     subtitle_position: str,
     output_path: str,
 ) -> str:
-    """
-    Сборка слайдшоу из изображений под аудио.
-    Субтитры накладываются через libass (subtitles=...), чтобы идти непрерывно по таймингам речи.
-    Для subtitle_style == 'tiktok' включается караоке + bounce.
-    """
     if not image_paths:
         raise ValueError("image_paths is empty")
     if not os.path.exists(audio_path):
@@ -833,7 +832,7 @@ async def create_slideshow_video(
     duration_per_image = audio_duration / n
     logger.info(f"Creating slideshow: {n} images, {duration_per_image:.2f}s per image")
 
-    # 2) concat-файл (повтор последнего файла — обязателен)
+    # 2) concat-файл
     concat_fd, concat_path = tempfile.mkstemp(suffix=".concat.txt")
     os.close(concat_fd)
     with open(concat_path, "w", encoding="utf-8") as f:
@@ -852,17 +851,11 @@ async def create_slideshow_video(
         f"fps=30"
     )
 
-    # 4) Сабтайтлы: точные тайминги + выбор билдера
+    # 4) Сабтайтлы (TikTok-версия с 2 строками и цветами)
     if subtitle_text and subtitle_style:
         logger.info(f"🎯 Analyzing audio with Whisper for accurate word timestamps: {audio_path}")
         timed_words = await get_accurate_word_timestamps(audio_path, subtitle_text)
         logger.info(f"✅ Got {len(timed_words)} accurate word timestamps from Whisper")
-
-        style_conf = SUBTITLE_STYLES.get(subtitle_style, {})
-        # TikTok читается лучше при 3–5 словах на экран
-        default_wpp = 4 if subtitle_style.lower() == "tiktok" else 2
-        words_per_phrase = int(style_conf.get("words_per_phrase", default_wpp))
-        fontsize_ass     = int(style_conf.get("fontsize", 60))
 
         # позиция: 2 — низ по центру; 8 — центр
         align = 8 if subtitle_position == "center" else 2
@@ -872,41 +865,43 @@ async def create_slideshow_video(
         ass_path = os.path.join(ass_dir, "subs.ass")
 
         if subtitle_style.lower() == "tiktok":
-            # ВИРУСНЫЙ стиль (караоке + bounce + бокс)
+            # двухстрочные, медленнее, не белые
             ass_path = build_ass_tiktok_from_words(
                 timed_words,
                 resolution=resolution,
-                words_per_phrase=words_per_phrase,
+                lines_per_block=2,
+                words_per_line=3,
                 fontname="DejaVu Sans",
-                fontsize=fontsize_ass,
-                primary_color="&H00FFFFFF",   # белый неактивный
-                secondary_color="&H00FFFF00", # жёлтый хайлайт
-                outline_color="&H00000000",
-                back_color="&H64000000",      # ~40% чёрный бокс
-                outline=0,
-                shadow=0,
+                fontsize=64,
+                primary_color="&H00E6E6E6",   # светло-серый
+                secondary_color="&H00CC66FF", # неоновый розовый
+                back_color="&H33000000",      # лёгкая подложка
                 align=align,
                 margin_v=margin_v,
+                min_k_cs=12,                  # >=0.12s на слово
+                fade_ms=140,
+                pop_scale=108,
+                pop_in_ms=240,
+                pop_back_ms=520,
                 out_path=ass_path,
             )
         else:
-            # Базовый аккуратный стиль (без караоке)
+            # твой базовый билдер (если нужен другой стиль)
             ass_path = build_ass_from_words(
                 timed_words,
                 resolution=resolution,
-                words_per_phrase=words_per_phrase,
+                words_per_phrase=4,
                 fontname="DejaVu Sans",
-                fontsize=fontsize_ass,
+                fontsize=64,
                 primary_color="&H00FFFFFF",
                 outline_color="&H00000000",
-                outline=int(style_conf.get("borderw", 4)),
+                outline=4,
                 shadow=0,
                 margin_v=margin_v,
                 align=align,
                 out_path=ass_path,
             )
 
-        # libass на финальный поток; format — после субтитров
         video_filter = (
             f"{video_filter},subtitles='{ass_path}':fontsdir='/usr/share/fonts/truetype/dejavu',"
             f"format=yuv420p"
@@ -914,20 +909,14 @@ async def create_slideshow_video(
     else:
         video_filter = f"{video_filter},format=yuv420p"
 
-    # 5) Команда ffmpeg: НИЧЕГО типа -r/-fps_mode снаружи
+    # 5) Команда ffmpeg (никаких -r/-fps_mode снаружи)
     cmd = [
-        "ffmpeg",
-        "-y",
-        "-f", "concat",
-        "-safe", "0",
-        "-i", concat_path,
+        "ffmpeg", "-y",
+        "-f", "concat", "-safe", "0", "-i", concat_path,
         "-i", audio_path,
-        "-vf", video_filter,                # fps=30 и subtitles уже внутри -vf
-        "-c:v", "libx264",
-        "-preset", "medium",
-        "-crf", "23",
-        "-c:a", "aac",
-        "-b:a", "192k",
+        "-vf", video_filter,              # fps=30 и subtitles уже внутри графа
+        "-c:v", "libx264", "-preset", "medium", "-crf", "23",
+        "-c:a", "aac", "-b:a", "192k",
         "-shortest",
         "-movflags", "+faststart",
         output_path,
@@ -946,6 +935,7 @@ async def create_slideshow_video(
 
     logger.info("✅ Slideshow video created: " + output_path)
     return output_path
+
 
 async def create_video_with_images(
     text: str,
