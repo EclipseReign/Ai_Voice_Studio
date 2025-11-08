@@ -550,16 +550,16 @@ async def generate_images_for_video(
                 results_dict[index] = image_path
             
             # Progress callback after each batch
-                if progress_callback:
-                    completed = len(results_dict)
-                    await progress_callback(
-                        "image_generation",
-                        completed,
-                        total_images,
-                        f"Сгенерировано {completed}/{total_images} изображений (батч {batch_start // BATCH_SIZE + 1})"
-                    )
+            if progress_callback:
+                completed = len(results_dict)
+                await progress_callback(
+                    "image_generation",
+                    completed,
+                    total_images,
+                    f"Сгенерировано {completed}/{total_images} изображений (батч {batch_start // BATCH_SIZE + 1})"
+                )
                 
-                logger.info(f"✅ Batch {batch_start // BATCH_SIZE + 1} completed: {batch_size} images generated")
+            logger.info(f"✅ Batch {batch_start // BATCH_SIZE + 1} completed: {batch_size} images generated")
                 
                 # Small delay between batches to avoid overwhelming the API
             if batch_end < total_images:
