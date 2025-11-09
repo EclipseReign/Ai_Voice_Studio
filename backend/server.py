@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, BackgroundTasks, Depends, Response, Request
+from fastapi import FastAPI, APIRouter, HTTPException, BackgroundTasks, Depends, Response, Request, File, UploadFile
 from fastapi.responses import FileResponse, StreamingResponse, JSONResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -2799,21 +2799,70 @@ async def generate_video_with_progress(
             output_path = f"/tmp/video_{job_id}.mp4"
             
             if request.video_type in ["youtube_images", "shorts"]:
-                # Image-based video
-                async for event in progress_callback("setup", 0, 100, f"Настройка генерации {request.video_type}..."):
-                    yield event
-                
-                video_path = await video_service.create_video_with_images(
-                    text=text,
-                    audio_path=temp_audio_path,
-                    audio_duration=audio_duration,
-                    output_path=output_path,
-                    video_type=request.video_type,
-                    progress_callback=lambda stage, curr, tot, msg: progress_callback(stage, curr, tot, msg).__anext__(),
-                    subtitle_enabled=request.subtitle_enabled,
-                    subtitle_style=request.subtitle_style,
-                    subtitle_position=request.subtitle_position
-                )
+                # Check if using background video (TikTok brainrot style)
+                if request.use_background_video and request.video_type == "shorts":
+                    async for event in progress_callback("setup", 0, 100, "Подготовка фонового видео..."):
+                        yield event
+                    
+                    # Get background video
+                    background_video_path = None
+                    if request.background_video_type == "preset" and request.background_video_preset:
+                        # Download/cache preset video
+                        cache_dir = "/tmp/preset_videos"
+                        async for event in progress_callback("downloading_bg", 0, 100, f"Загрузка фона {request.background_video_preset}..."):
+                            yield event
+                        
+                        background_video_path = await video_service.get_or_download_preset_video(
+                            request.background_video_preset,
+                            cache_dir
+                        )
+                    elif request.background_video_type == "upload" and request.background_video_file_id:
+                        # Get uploaded video from GridFS
+                        async for event in progress_callback("loading_bg", 0, 100, "Загрузка пользовательского фона..."):
+                            yield event
+                        
+                        from bson import ObjectId
+                        bg_gridfs_id = ObjectId(request.background_video_file_id)
+                        grid_out = fs.get(bg_gridfs_id)
+                        
+                        background_video_path = f"/tmp/bg_video_{job_id}.mp4"
+                        with open(background_video_path, "wb") as f:
+                            f.write(grid_out.read())
+                    
+                    if background_video_path:
+                        # Create video with background
+                        async for event in progress_callback("generating", 0, 100, "Создание видео с фоном..."):
+                            yield event
+                        
+                        settings = video_service.VIDEO_SETTINGS["shorts"]
+                        video_path = await video_service.create_video_with_background(
+                            background_video_path=background_video_path,
+                            audio_path=temp_audio_path,
+                            audio_duration=audio_duration,
+                            resolution=settings["resolution"],
+                            subtitle_text=(text if request.subtitle_enabled else None),
+                            subtitle_style=(request.subtitle_style if request.subtitle_enabled else None),
+                            subtitle_position=request.subtitle_position,
+                            output_path=output_path,
+                        )
+                    else:
+                        raise ValueError("Background video not provided")
+                else:
+                    # Image-based video (original logic)
+                    async for event in progress_callback("setup", 0, 100, f"Настройка генерации {request.video_type}..."):
+                        yield event
+                    
+                    video_path = await video_service.create_video_with_images(
+                        text=text,
+                        audio_path=temp_audio_path,
+                        audio_duration=audio_duration,
+                        output_path=output_path,
+                        video_type=request.video_type,
+                        progress_callback=lambda stage, curr, tot, msg: progress_callback(stage, curr, tot, msg).__anext__(),
+                        subtitle_enabled=request.subtitle_enabled,
+                        subtitle_style=request.subtitle_style,
+                        subtitle_position=request.subtitle_position
+                    )
             
             elif request.video_type == "youtube_continuous":
                 # Continuous video (Sora-like)
@@ -3000,6 +3049,56 @@ async def video_health():
         return {"ok": ok, "models": os.getenv("HF_IMAGE_MODELS", ""), "error": None if ok else "empty image"}
     except Exception as e:
         return JSONResponse(status_code=503, content={"ok": False, "models": os.getenv("HF_IMAGE_MODELS", ""), "error": str(e)})
+    
+@api_router.get("/video/preset-backgrounds")
+async def get_preset_backgrounds():
+    """Get list of available preset background videos for TikTok-style shorts"""
+    return {
+        "presets": [
+            {
+                "id": key,
+                "name": info["name"],
+                "description": info["description"],
+                "thumbnail": info["thumbnail"]
+            }
+            for key, info in video_service.PRESET_BACKGROUND_VIDEOS.items()
+        ]
+    }
+
+
+@api_router.post("/video/upload-background")
+async def upload_background_video(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user)
+):
+    """Upload custom background video for TikTok-style shorts"""
+    try:
+        # Read file content
+        file_content = await file.read()
+        # Validate file size (max 500MB)
+        max_size = 500 * 1024 * 1024  # 500MB
+        if len(file_content) > max_size:
+            raise HTTPException(status_code=400, detail=f"File too large. Max size: 500MB")
+        
+        # Save to GridFS
+        file_id = fs.put(
+            file_content,
+            filename=f"bg_video_{current_user.id}_{uuid.uuid4()}.mp4",
+            content_type=file.content_type or "video/mp4",
+            chunk_size=1024 * 1024  # 1MB chunks
+        )
+        
+        return {
+            "success": True,
+            "file_id": str(file_id),
+            "message": "Background video uploaded successfully"
+        }
+    
+    except Exception as e:
+        logger.error(f"Error uploading background video: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ============================================================================
 
 # Include router - MUST be after all route definitions

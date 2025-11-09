@@ -33,6 +33,34 @@ except ImportError:
 
 POLLINATIONS_API_URL = "https://image.pollinations.ai/prompt"
 
+# Preset background videos for TikTok brainrot style (no-copyright)
+PRESET_BACKGROUND_VIDEOS = {
+    "minecraft": {
+        "name": "Minecraft Parkour",
+        "url": "https://www.youtube.com/watch?v=85z7jqGAGcc",
+        "description": "High-quality Minecraft parkour gameplay",
+        "thumbnail": "https://i.ytimg.com/vi/u7kdVe8q5zs/maxresdefault.jpg"
+    },
+    "subway_surfers": {
+        "name": "Subway Surfers",
+        "url": "https://www.youtube.com/watch?v=CE_j46xFfro",
+        "description": "Classic Subway Surfers gameplay",
+        "thumbnail": "https://i.ytimg.com/vi/i0M4ARe9v0Y/maxresdefault.jpg"
+    },
+    "gta": {
+        "name": "GTA 5 Gameplay",
+        "url": "https://www.youtube.com/watch?v=iKFkCoqJAI8&list=PLdxE72LlkFoeehqbBVXGLF0cNINlpNufp",
+        "description": "GTA 5 driving gameplay",
+        "thumbnail": "https://i.ytimg.com/vi/w5ZdI4iuI0Y/maxresdefault.jpg"
+    },
+    "satisfying": {
+        "name": "Satisfying Video",
+        "url": "https://www.youtube.com/watch?v=ebnQsTk9s-s",
+        "description": "Relaxing satisfying content",
+        "thumbnail": "https://i.ytimg.com/vi/TdAUlaqG-Rg/maxresdefault.jpg"
+    }
+}
+
 SUBTITLE_STYLES = {
     "tiktok": {
         "fontsize": 70,  # Larger for more impact

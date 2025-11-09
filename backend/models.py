@@ -141,6 +141,11 @@ class VideoGenerationRequest(BaseModel):
     subtitle_enabled: bool = False
     subtitle_style: Literal["tiktok", "instagram", "minimal"] = "tiktok"
     subtitle_position: Literal["center", "bottom"] = "center"
+    # Background video options for shorts (TikTok brainrot style)
+    use_background_video: bool = False
+    background_video_type: Optional[Literal["preset", "upload"]] = None
+    background_video_preset: Optional[Literal["minecraft", "subway_surfers", "gta", "satisfying"]] = None
+    background_video_file_id: Optional[str] = None  # GridFS ID for uploaded video
     
 class VideoGenerationResponse(BaseModel):
     """Video generation response"""

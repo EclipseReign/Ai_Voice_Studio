@@ -79,6 +79,15 @@ const HomePage = () => {
   const [subtitleStyle, setSubtitleStyle] = useState("tiktok");
   const [subtitlePosition, setSubtitlePosition] = useState("center");
 
+  // Background video state (TikTok brainrot style)
+  const [useBackgroundVideo, setUseBackgroundVideo] = useState(false);
+  const [backgroundVideoType, setBackgroundVideoType] = useState("preset"); // "preset" or "upload"
+  const [backgroundVideoPreset, setBackgroundVideoPreset] = useState("minecraft");
+  const [presetBackgrounds, setPresetBackgrounds] = useState([]);
+  const [uploadedBackgroundFile, setUploadedBackgroundFile] = useState(null);
+  const [uploadedBackgroundFileId, setUploadedBackgroundFileId] = useState(null);
+  const [isUploadingBackground, setIsUploadingBackground] = useState(false);
+
   const getVoicesByLanguage = useMemo(() => {
     const langCode = language.split('-')[0].toLowerCase();
     return voices.filter(v => v.locale.toLowerCase().startsWith(langCode));
@@ -90,6 +99,7 @@ const HomePage = () => {
     fetchHistory();
     fetchVideoHistory(); // Fetch video history on mount
     checkPendingJobs(); // NEW: Check for pending jobs on mount (recovery)
+    fetchPresetBackgrounds(); // Fetch preset background videos
   }, []);
   
   // Update selected voice when language changes
@@ -139,6 +149,70 @@ const HomePage = () => {
       toast.error(t('notifications.failedToLoadHistory'));
     } finally {
       setIsLoadingHistory(false);
+    }
+  };
+
+  const fetchPresetBackgrounds = async () => {
+    try {
+      const response = await axios.get(API + '/video/preset-backgrounds', {
+        withCredentials: true
+      });
+      setPresetBackgrounds(response.data.presets);
+      if (response.data.presets.length > 0) {
+        setBackgroundVideoPreset(response.data.presets[0].id);
+      }
+    } catch (error) {
+      console.error("Error fetching preset backgrounds:", error);
+      toast.error("Failed to load preset backgrounds");
+    }
+  };
+  
+  const handleBackgroundVideoUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    // Validate file type
+    const validTypes = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska'];
+    if (!validTypes.includes(file.type) && !file.name.match(/.(mp4|mov|avi|mkv)$/i)) {
+      toast.error("Please upload a valid video file (MP4, MOV, AVI, MKV)");
+      return;
+    }
+    
+    // Validate file size (max 500MB)
+    const maxSize = 500 * 1024 * 1024; // 500MB
+    if (file.size > maxSize) {
+      toast.error("Video file is too large. Maximum size is 500MB.");
+      return;
+    }
+    
+    try {
+      setIsUploadingBackground(true);
+      setUploadedBackgroundFile(file);
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await axios.post(API + '/video/upload-background', formData, {
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          console.log(`Upload progress: ${percentCompleted}%`);
+        }
+      });
+      
+      setUploadedBackgroundFileId(response.data.file_id);
+      toast.success("Background video uploaded successfully!");
+      
+    } catch (error) {
+      console.error("Error uploading background video:", error);
+      toast.error("Failed to upload background video. " + (error.response?.data?.detail || ""));
+      setUploadedBackgroundFile(null);
+      setUploadedBackgroundFileId(null);
+    } finally {
+      setIsUploadingBackground(false);
     }
   };
   
@@ -524,7 +598,13 @@ const HomePage = () => {
       toast.error(t('notifications.createTextAndAudioFirst'));
       return;
     }
-    
+    // Validate background video settings if enabled
+    if (useBackgroundVideo && videoType === 'shorts') {
+      if (backgroundVideoType === 'upload' && !uploadedBackgroundFileId) {
+        toast.error("Please upload a background video first");
+        return;
+      }
+    }
     setIsGeneratingVideo(true);
     setVideoProgress(0);
     setVideoProgressMessage(t('progress.startingVideoGeneration'));
@@ -547,7 +627,12 @@ const HomePage = () => {
             video_type: videoType,
             subtitle_enabled: subtitlesEnabled,
             subtitle_style: subtitleStyle,
-            subtitle_position: subtitlePosition
+            subtitle_position: subtitlePosition,
+            // Background video options (TikTok brainrot style)
+            use_background_video: useBackgroundVideo,
+            background_video_type: useBackgroundVideo ? backgroundVideoType : null,
+            background_video_preset: (useBackgroundVideo && backgroundVideoType === 'preset') ? backgroundVideoPreset : null,
+            background_video_file_id: (useBackgroundVideo && backgroundVideoType === 'upload') ? uploadedBackgroundFileId : null
           })
         }
       );
@@ -1279,6 +1364,137 @@ const HomePage = () => {
                       </div>
                     )}
                   </div>
+
+                  {/* Background Video Settings (TikTok Brainrot Style) - Only for Shorts */}
+                  {videoType === "shorts" && (
+                    <div className="space-y-4 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="enable-background-video"
+                          checked={useBackgroundVideo}
+                          onChange={(e) => setUseBackgroundVideo(e.target.checked)}
+                          disabled={isGeneratingVideo}
+                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                        />
+                        <Label htmlFor="enable-background-video" className="text-sm font-medium cursor-pointer">
+                          🎮 Use Background Video (TikTok Style)
+                        </Label>
+                      </div>
+                      
+                      {useBackgroundVideo && (
+                        <div className="space-y-3 ml-6 animate-in slide-in-from-top-2 duration-300">
+                          {/* Video Type Selection */}
+                          <div>
+                            <Label className="text-sm mb-2 block">
+                              Video Source
+                            </Label>
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setBackgroundVideoType("preset")}
+                                disabled={isGeneratingVideo}
+                                className={`flex-1 px-3 py-2 text-sm rounded-md border transition-all ${
+                                  backgroundVideoType === "preset"
+                                    ? 'bg-blue-600 text-white border-blue-600 shadow-md'
+                                    : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:border-blue-400'
+                                } ${isGeneratingVideo ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                              >
+                                📦 Preset
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setBackgroundVideoType("upload")}
+                                disabled={isGeneratingVideo}
+                                className={`flex-1 px-3 py-2 text-sm rounded-md border transition-all ${
+                                  backgroundVideoType === "upload"
+                                    ? 'bg-blue-600 text-white border-blue-600 shadow-md'
+                                    : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:border-blue-400'
+                                } ${isGeneratingVideo ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                              >
+                                ⬆️ Upload
+                              </button>
+                            </div>
+                          </div>
+                          
+                          {/* Preset Selection */}
+                          {backgroundVideoType === "preset" && (
+                            <div className="space-y-2">
+                              <Label className="text-sm">Choose Background</Label>
+                              <div className="grid grid-cols-2 gap-2">
+                                {presetBackgrounds.map((preset) => (
+                                  <button
+                                    key={preset.id}
+                                    type="button"
+                                    onClick={() => setBackgroundVideoPreset(preset.id)}
+                                    disabled={isGeneratingVideo}
+                                    className={`relative p-2 rounded-lg border-2 transition-all ${
+                                      backgroundVideoPreset === preset.id
+                                        ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30'
+                                        : 'border-slate-200 dark:border-slate-700 hover:border-blue-400'
+                                    } ${isGeneratingVideo ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                  >
+                                    <div className="aspect-video bg-slate-200 dark:bg-slate-700 rounded mb-2 overflow-hidden">
+                                      <img 
+                                        src={preset.thumbnail} 
+                                        alt={preset.name}
+                                        className="w-full h-full object-cover"
+                                      />
+                                    </div>
+                                    <p className="text-xs font-medium text-center">{preset.name}</p>
+                                    {backgroundVideoPreset === preset.id && (
+                                      <div className="absolute top-1 right-1 bg-blue-600 text-white rounded-full w-5 h-5 flex items-center justify-center">
+                                        ✓
+                                      </div>
+                                    )}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Upload Option */}
+                          {backgroundVideoType === "upload" && (
+                            <div className="space-y-2">
+                              <Label htmlFor="bg-video-upload" className="text-sm">
+                                Upload Your Video
+                              </Label>
+                              <input
+                                type="file"
+                                id="bg-video-upload"
+                                accept="video/*"
+                                onChange={handleBackgroundVideoUpload}
+                                disabled={isGeneratingVideo || isUploadingBackground}
+                                className="block w-full text-sm text-slate-500
+                                  file:mr-4 file:py-2 file:px-4
+                                  file:rounded-md file:border-0
+                                  file:text-sm file:font-semibold
+                                  file:bg-blue-50 file:text-blue-700
+                                  hover:file:bg-blue-100
+                                  dark:file:bg-blue-900 dark:file:text-blue-300
+                                  disabled:opacity-50 disabled:cursor-not-allowed"
+                              />
+                              {isUploadingBackground && (
+                                <p className="text-xs text-blue-600">
+                                  <Loader2 className="inline w-3 h-3 animate-spin mr-1" />
+                                  Uploading video...
+                                </p>
+                              )}
+                              {uploadedBackgroundFile && !isUploadingBackground && (
+                                <p className="text-xs text-green-600">
+                                  ✓ {uploadedBackgroundFile.name} uploaded
+                                </p>
+                              )}
+                              <p className="text-xs text-slate-500">
+                                Max 500MB • MP4, MOV, AVI, MKV
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {isGeneratingVideo && (
                     <div className="space-y-3">
                       <div className="flex items-center justify-between text-sm">
