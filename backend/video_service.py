@@ -1073,7 +1073,7 @@ async def get_or_download_preset_video(preset_name: str, cache_dir: str) -> str:
             'socket_timeout': 30,  # 30 second timeout for socket operations
             'retries': 3,  # Retry failed downloads
             'fragment_retries': 3,  # Retry failed fragments
-            'ffmpeg_location': '/usr/local/bin/ffmpeg',  # Specify ffmpeg path for yt-dlp
+            'ffmpeg_location': '/usr/bin/ffmpeg',  # Specify ffmpeg path for yt-dlp
         }
         logger.info(f"Downloading preset video from YouTube: {preset['name']} (this may take a minute...)")
         logger.info(f"URL: {preset['url']}")
