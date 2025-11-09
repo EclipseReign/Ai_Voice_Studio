@@ -35,33 +35,45 @@ POLLINATIONS_API_URL = "https://image.pollinations.ai/prompt"
 
 SUBTITLE_STYLES = {
     "tiktok": {
-        "fontsize": 55,
-        "fontcolor": "yellow",
-        "borderw": 6,
+        "fontsize": 70,  # Larger for more impact
+        "fontcolor": "yellow",  # Classic TikTok yellow
+        "borderw": 8,  # Thick border for pop effect
         "bordercolor": "black",
         "bold": 1,
-        "font": "Arial-Black",  # More bold font
+        "font": "Liberation Sans Narrow",  # Bold condensed font like TikTok
         "words_per_phrase": 2,  # 1-2 words at a time like TikTok
+        "primary_color": "&H0000FFFF",  # Yellow (AABBGGRR format)
+        "outline_color": "&H00000000",  # Black outline
+        "shadow": 2,  # Add shadow for depth
+        "use_pop_animation": True,  # Enable pop animation in ASS
     },
     "instagram": {
-        "fontsize": 65,
+        "fontsize": 68,
         "fontcolor": "white",
-        "borderw": 4,
+        "borderw": 5,
         "bordercolor": "black",
         "bold": 1,
-        "font": "Arial-Bold",
-        "shadowcolor": "black@0.7",
-        "shadowx": 4,
-        "shadowy": 4,
+        "font": "Liberation Sans",  # Clean modern font
+        "shadowcolor": "black@0.8",
+        "shadowx": 3,
+        "shadowy": 3,
         "words_per_phrase": 3,
+        "primary_color": "&H00FFFFFF",  # White
+        "outline_color": "&H00000000",  # Black outline
+        "shadow": 4,  # Strong shadow for Instagram look
+        "use_pop_animation": False,
     },
     "minimal": {
-        "fontsize": 50,
+        "fontsize": 60,
         "fontcolor": "white",
-        "borderw": 2,
-        "bordercolor": "black",
-        "font": "Arial",
+        "borderw": 3,
+        "bordercolor": "&H40000000",  # Semi-transparent black
+        "font": "DejaVu Serif",  # Elegant serif font for aesthetic look
         "words_per_phrase": 4,
+        "primary_color": "&H00FFFFFF",  # Pure white
+        "outline_color": "&H40000000",  # Semi-transparent outline
+        "shadow": 1,  # Subtle shadow
+        "use_pop_animation": False,
     }
 }
 
@@ -109,11 +121,13 @@ def build_ass_from_words(
     margin_v: int = 100,
     align: int = 2,  # 2 — центр снизу, 8 — центр по центру
     out_path: str | None = None,
+    use_pop_animation: bool = False,
 ) -> str:
     """
     Группирует слова в фразы и пишет .ass; возвращает абсолютный путь к файлу.
     """
     w, h = resolution
+    bold = 1 if "Sans" in fontname or "Liberation" in fontname else 0
 
     header = [
         "[Script Info]",
@@ -128,7 +142,7 @@ def build_ass_from_words(
         "Alignment, MarginL, MarginR, MarginV, Encoding",
         # BackColour и SecondaryColour тут не используются по сути
         f"Style: Default,{fontname},{fontsize},{primary_color},&H000000FF,{outline_color},&H64000000,"
-        f"0,0,0,0,100,100,0,0,1,{outline},{shadow},{align},20,20,{margin_v},0",
+        f"{bold},0,0,0,100,100,0,0,1,{outline},{shadow},{align},20,20,{margin_v},0",
         "",
         "[Events]",
         "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text",
@@ -152,10 +166,25 @@ def build_ass_from_words(
 
         phrases.append((start, end, text))
 
-    events = [
-        f"Dialogue: 0,{_sec_to_ass(s)},{_sec_to_ass(e)},Default,,0,0,0,,{t}"
-        for (s, e, t) in phrases
-    ]
+    # Create events with optional pop animation
+    events = []
+    for (s, e, t) in phrases:
+        if use_pop_animation:
+            # TikTok-style pop animation: scale from 80% to 110% then back to 100%
+            duration_ms = int((e - s) * 1000)
+            pop_time = min(200, duration_ms // 3)  # Animation duration in ms
+            
+            # Animation: scale up quickly then settle
+            # 	(start,end,\fscX\fscY) - scale animation
+            animation = (
+                r"{	(0," + str(pop_time) + r",fscx110fscy110)"
+                r"	(" + str(pop_time) + "," + str(pop_time * 2) + r",fscx100fscy100)}"
+            )
+            text_with_animation = f"{animation}{t}"
+            events.append(f"Dialogue: 0,{_sec_to_ass(s)},{_sec_to_ass(e)},Default,,0,0,0,,{text_with_animation}")
+        else:
+            # Standard subtitles without animation
+            events.append(f"Dialogue: 0,{_sec_to_ass(s)},{_sec_to_ass(e)},Default,,0,0,0,,{t}")
 
     if not out_path:
         tmpdir = tempfile.mkdtemp(prefix="ass_")
@@ -725,6 +754,15 @@ async def create_slideshow_video(
         style_conf = SUBTITLE_STYLES.get(subtitle_style, {})
         words_per_phrase = int(style_conf.get("words_per_phrase", 2))
         fontsize_ass = int(style_conf.get("fontsize", 60))
+        fontname = style_conf.get("font", "DejaVu Sans")
+        
+        # Get colors from style config (ASS format: &HAABBGGRR)
+        primary_color = style_conf.get("primary_color", "&H00FFFFFF")
+        outline_color = style_conf.get("outline_color", "&H00000000")
+        
+        # Get shadow and animation settings
+        shadow = int(style_conf.get("shadow", 0))
+        use_pop_animation = style_conf.get("use_pop_animation", False)
 
         # позиция: 2 — низ по центру; 8 — центр
         align = 8 if subtitle_position == "center" else 2
@@ -737,20 +775,22 @@ async def create_slideshow_video(
             timed_words,
             resolution=resolution,
             words_per_phrase=words_per_phrase,
-            fontname="DejaVu Sans",
+            fontname=fontname,
             fontsize=fontsize_ass,
-            primary_color="&H00FFFFFF",    # белый
-            outline_color="&H00000000",    # чёрный контур
+            primary_color=primary_color,
+            outline_color=outline_color,
             outline=int(style_conf.get("borderw", 4)),
-            shadow=0,
+            shadow=shadow,
             margin_v=margin_v,
             align=align,
             out_path=ass_path,
+            use_pop_animation=use_pop_animation,
         )
 
         # добавляем libass на финальный поток
         video_filter = (
-            f"{video_filter},subtitles='{ass_path}':fontsdir='/usr/share/fonts/truetype/dejavu',"
+            f"{video_filter},subtitles='{ass_path}':"
+            f"fontsdir='/usr/share/fonts/truetype/dejavu:/usr/share/fonts/truetype/liberation',"
             f"format=yuv420p"
         )
     else:
