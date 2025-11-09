@@ -1060,28 +1060,68 @@ async def get_or_download_preset_video(preset_name: str, cache_dir: str) -> str:
     try:
         # Use yt-dlp to download the video
         import yt_dlp
-        
+        # Format selection that works with modern YouTube:
+        # - Prefer 720p or lower resolution
+        # - Merge video and audio streams automatically
+        # - Use mp4 container for compatibility
         ydl_opts = {
-            'format': 'best[height<=720][ext=mp4]/best[height<=720]/best[ext=mp4]/best',  # Prefer 720p MP4
+            'format': '(bv*[height<=720][ext=mp4]+ba[ext=m4a])/(bv*[height<=720]+ba)/best[height<=720]/best',  # Best video+audio <=720p or best available
             'outtmpl': cache_path,
             'quiet': True,
             'no_warnings': True,
-            'extract_flat': False,
-            'postprocessors': [{
-                'key': 'FFmpegVideoConvertor',
-                'preferedformat': 'mp4',
-            }],
+            'merge_output_format': 'mp4',  # Merge to MP4
+            'socket_timeout': 30,  # 30 second timeout for socket operations
+            'retries': 3,  # Retry failed downloads
+            'fragment_retries': 3,  # Retry failed fragments
+            'ffmpeg_location': '/usr/local/bin/ffmpeg',  # Specify ffmpeg path for yt-dlp
         }
+        logger.info(f"Downloading preset video from YouTube: {preset['name']} (this may take a minute...)")
+        logger.info(f"URL: {preset['url']}")
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([preset['url']])
+            info = ydl.extract_info(preset['url'], download=True)
+            logger.info(f"Video info: {info.get('title', 'Unknown')} - {info.get('duration', 0)}s")
         
-        logger.info(f"✅ Downloaded and cached preset video: {preset_name}")
+        # Check if file was created
+        if not os.path.exists(cache_path):
+            # yt-dlp might have saved with a different name, look for similar files
+            cache_dir_files = os.listdir(cache_dir)
+            logger.warning(f"Expected file not found at: {cache_path}")
+            logger.info(f"Files in cache dir: {cache_dir_files}")
+            
+            # Try to find the downloaded file
+            for file in cache_dir_files:
+                if preset_name in file and (file.endswith('.mp4') or file.endswith('.mkv') or file.endswith('.webm')):
+                    found_path = os.path.join(cache_dir, file)
+                    logger.info(f"Found downloaded file: {found_path}, renaming to {cache_path}")
+                    os.rename(found_path, cache_path)
+                    break
+        
+        if not os.path.exists(cache_path):
+            raise Exception("Downloaded file not found after yt-dlp execution. The file may have been saved with a different name.")
+        
+        
+        file_size_mb = os.path.getsize(cache_path) / 1024 / 1024
+        logger.info(f"✅ Downloaded and cached preset video: {preset_name} ({file_size_mb:.1f} MB)")
         return cache_path
         
     except Exception as e:
         logger.error(f"Error downloading preset video {preset_name}: {e}")
-        raise Exception(f"Failed to download preset video: {str(e)}")
+        # Provide helpful error message
+        error_msg = str(e)
+        if "403" in error_msg or "Forbidden" in error_msg:
+            raise Exception(
+                f"Failed to download preset video from YouTube (403 Forbidden). "
+                f"YouTube may be blocking automated downloads."
+                f"Please try again later or upload your own background video instead."
+            )
+        elif "timeout" in error_msg.lower():
+            raise Exception(
+                f"Failed to download preset video: Connection timeout."
+                f"Please check your internet connection and try again, or upload your own background video."
+            )
+        else:
+            raise Exception(f"Failed to download preset video: {error_msg}")
 
 
 async def create_video_with_background(
