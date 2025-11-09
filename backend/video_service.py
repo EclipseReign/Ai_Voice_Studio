@@ -1029,6 +1029,212 @@ def get_video_duration(video_path: str) -> float:
         logger.error(f"Error getting video duration: {e}")
         return 0.0
 
+
+async def get_or_download_preset_video(preset_name: str, cache_dir: str) -> str:
+    """
+    Download and cache a preset background video from YouTube.
+    
+    Args:
+        preset_name: Name of the preset (e.g., "minecraft", "subway_surfers")
+        cache_dir: Directory to cache downloaded videos
+        
+    Returns:
+        Path to the downloaded/cached video file
+    """
+    if preset_name not in PRESET_BACKGROUND_VIDEOS:
+        raise ValueError(f"Unknown preset: {preset_name}")
+    
+    preset = PRESET_BACKGROUND_VIDEOS[preset_name]
+    os.makedirs(cache_dir, exist_ok=True)
+    
+    # Create a cache filename based on preset name
+    cache_path = os.path.join(cache_dir, f"{preset_name}.mp4")
+    
+    # Check if already cached
+    if os.path.exists(cache_path):
+        logger.info(f"✅ Using cached preset video: {preset_name}")
+        return cache_path
+    
+    logger.info(f"📥 Downloading preset video: {preset['name']} from YouTube...")
+    
+    try:
+        # Use yt-dlp to download the video
+        import yt_dlp
+        
+        ydl_opts = {
+            'format': 'best[height<=720][ext=mp4]/best[height<=720]/best[ext=mp4]/best',  # Prefer 720p MP4
+            'outtmpl': cache_path,
+            'quiet': True,
+            'no_warnings': True,
+            'extract_flat': False,
+            'postprocessors': [{
+                'key': 'FFmpegVideoConvertor',
+                'preferedformat': 'mp4',
+            }],
+        }
+        
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([preset['url']])
+        
+        logger.info(f"✅ Downloaded and cached preset video: {preset_name}")
+        return cache_path
+        
+    except Exception as e:
+        logger.error(f"Error downloading preset video {preset_name}: {e}")
+        raise Exception(f"Failed to download preset video: {str(e)}")
+
+
+async def create_video_with_background(
+    background_video_path: str,
+    audio_path: str,
+    audio_duration: float,
+    resolution: Tuple[int, int],
+    output_path: str,
+    subtitle_text: Optional[str] = None,
+    subtitle_style: Optional[str] = "tiktok",
+    subtitle_position: str = "center",
+) -> str:
+    """
+    Create a TikTok/Shorts style video with background video and audio + subtitles overlay.
+    
+    This creates the "brainrot" style content where:
+    - Background video (e.g., Minecraft parkour, Subway Surfers) plays continuously
+    - Audio narration plays over it
+    - Subtitles appear in TikTok/Instagram style
+    
+    Args:
+        background_video_path: Path to background video file
+        audio_path: Path to audio narration file
+        audio_duration: Duration of audio in seconds
+        resolution: Video resolution (width, height) - should be 9:16 for shorts
+        output_path: Path for output video
+        subtitle_text: Text for subtitles (optional)
+        subtitle_style: Subtitle style (tiktok, instagram, minimal)
+        subtitle_position: Subtitle position (center, bottom)
+        
+    Returns:
+        Path to created video file
+    """
+    if not os.path.exists(background_video_path):
+        raise FileNotFoundError(f"Background video not found: {background_video_path}")
+    if not os.path.exists(audio_path):
+        raise FileNotFoundError(f"Audio not found: {audio_path}")
+    
+    width, height = resolution
+    
+    logger.info(f"Creating video with background: {background_video_path}")
+    logger.info(f"Resolution: {width}x{height}, Audio duration: {audio_duration:.1f}s")
+    
+    # Get background video duration
+    bg_duration = get_video_duration(background_video_path)
+    if bg_duration <= 0:
+        raise RuntimeError("Failed to get background video duration")
+    
+    # Build video filter chain
+    # 1. Loop background video to match audio duration
+    # 2. Scale and crop to target resolution (shorts: 9:16)
+    # 3. Add subtitles if requested
+    
+    # Calculate how many times to loop the background
+    num_loops = int(audio_duration / bg_duration) + 2  # +2 for safety margin
+    
+    video_filter = (
+        f"[0:v]loop={num_loops}:size=1,"  # Loop background video
+        f"scale={width}:{height}:force_original_aspect_ratio=increase,"  # Scale to cover
+        f"crop={width}:{height},"  # Crop to exact size
+        f"setpts=PTS-STARTPTS,"  # Reset timestamps
+        f"fps=30"  # Set frame rate
+    )
+    
+    # Add subtitles if requested
+    if subtitle_text and subtitle_style:
+        logger.info(f"🎯 Adding subtitles with Whisper word-level timing: style={subtitle_style}")
+        
+        # Get accurate word timestamps from audio
+        timed_words = await get_accurate_word_timestamps(audio_path, subtitle_text)
+        logger.info(f"✅ Got {len(timed_words)} accurate word timestamps")
+        
+        style_conf = SUBTITLE_STYLES.get(subtitle_style, {})
+        words_per_phrase = int(style_conf.get("words_per_phrase", 2))
+        fontsize_ass = int(style_conf.get("fontsize", 70))
+        fontname = style_conf.get("font", "Liberation Sans Narrow")
+        
+        # Get colors from style config (ASS format: &HAABBGGRR)
+        primary_color = style_conf.get("primary_color", "&H0000FFFF")  # Yellow for TikTok
+        outline_color = style_conf.get("outline_color", "&H00000000")  # Black outline
+        
+        # Get shadow and animation settings
+        shadow = int(style_conf.get("shadow", 2))
+        use_pop_animation = style_conf.get("use_pop_animation", True)
+        
+        # Position: 2 = bottom center, 8 = middle center
+        align = 8 if subtitle_position == "center" else 2
+        margin_v = 100 if subtitle_position == "bottom" else max(50, height // 2 - 50)
+        
+        # Generate ASS subtitle file
+        ass_dir = tempfile.mkdtemp(prefix="ass_")
+        ass_path = os.path.join(ass_dir, "subs.ass")
+        ass_path = build_ass_from_words(
+            timed_words,
+            resolution=resolution,
+            words_per_phrase=words_per_phrase,
+            fontname=fontname,
+            fontsize=fontsize_ass,
+            primary_color=primary_color,
+            outline_color=outline_color,
+            outline=int(style_conf.get("borderw", 8)),
+            shadow=shadow,
+            margin_v=margin_v,
+            align=align,
+            out_path=ass_path,
+            use_pop_animation=use_pop_animation,
+        )
+        
+        # Add subtitles filter
+        video_filter = (
+            f"{video_filter}[v];[v]subtitles='{ass_path}':"
+            f"fontsdir='/usr/share/fonts/truetype'"
+        )
+    else:
+        video_filter = f"{video_filter}[v];[v]null"
+    
+    # Add final format conversion
+    video_filter = f"{video_filter},format=yuv420p"
+    
+    # Build FFmpeg command
+    cmd = [
+        "ffmpeg",
+        "-y",
+        "-i", background_video_path,
+        "-i", audio_path,
+        "-filter_complex", video_filter,
+        "-t", str(audio_duration),  # Trim to audio duration
+        "-c:v", "libx264",
+        "-preset", "medium",
+        "-crf", "23",
+        "-c:a", "aac",
+        "-b:a", "192k",
+        "-shortest",
+        "-movflags", "+faststart",
+        output_path,
+    ]
+    
+    logger.info("Running FFmpeg command: " + " ".join(shlex.quote(c) for c in cmd))
+    
+    try:
+        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        if proc.returncode != 0:
+            logger.error("FFmpeg error: " + proc.stderr)
+            raise Exception(f"FFmpeg failed: {proc.stderr[:1000]}")
+    except Exception as e:
+        logger.error(f"Error creating video with background: {e}")
+        raise
+    
+    logger.info("✅ Video with background created: " + output_path)
+    return output_path
+
+
+
 import time 
 async def cleanup_old_video_temp_directories(max_age_hours: float = 2.0):
     """
