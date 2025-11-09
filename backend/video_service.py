@@ -790,7 +790,7 @@ async def create_slideshow_video(
         # добавляем libass на финальный поток
         video_filter = (
             f"{video_filter},subtitles='{ass_path}':"
-            f"fontsdir='/usr/share/fonts/truetype/dejavu:/usr/share/fonts/truetype/liberation',"
+            f"fontsdir='/usr/share/fonts/truetype',"
             f"format=yuv420p"
         )
     else:
