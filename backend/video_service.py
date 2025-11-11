@@ -32,30 +32,34 @@ except ImportError:
     logger.warning("⚠️ Faster-Whisper not available. Subtitles will use estimated timing.")
 
 POLLINATIONS_API_URL = "https://image.pollinations.ai/prompt"
-
-# Preset background videos for TikTok brainrot style (no-copyright)
+# Preset background videos for TikTok brainrot style
+# These videos are stored in Cloudflare R2 to avoid YouTube 403 errors
 PRESET_BACKGROUND_VIDEOS = {
     "minecraft": {
         "name": "Minecraft Parkour",
-        "url": "https://www.youtube.com/watch?v=85z7jqGAGcc",
+        "r2_key": "preset/minecraft.mp4",  # Key in R2 bucket
+        "youtube_url": "https://www.youtube.com/watch?v=85z7jqGAGcc",  # For reference/manual download
         "description": "High-quality Minecraft parkour gameplay",
         "thumbnail": "https://i.ytimg.com/vi/u7kdVe8q5zs/maxresdefault.jpg"
     },
     "subway_surfers": {
         "name": "Subway Surfers",
-        "url": "https://www.youtube.com/watch?v=CE_j46xFfro",
+        "r2_key": "preset/subway_surfers.mp4",
+        "youtube_url": "https://www.youtube.com/watch?v=CE_j46xFfro",
         "description": "Classic Subway Surfers gameplay",
         "thumbnail": "https://i.ytimg.com/vi/i0M4ARe9v0Y/maxresdefault.jpg"
     },
     "gta": {
         "name": "GTA 5 Gameplay",
-        "url": "https://www.youtube.com/watch?v=iKFkCoqJAI8&list=PLdxE72LlkFoeehqbBVXGLF0cNINlpNufp",
+        "r2_key": "preset/gta.mp4",
+        "youtube_url": "https://www.youtube.com/watch?v=iKFkCoqJAI8&list=PLdxE72LlkFoeehqbBVXGLF0cNINlpNufp",
         "description": "GTA 5 driving gameplay",
         "thumbnail": "https://i.ytimg.com/vi/w5ZdI4iuI0Y/maxresdefault.jpg"
     },
     "satisfying": {
         "name": "Satisfying Video",
-        "url": "https://www.youtube.com/watch?v=ebnQsTk9s-s",
+        "r2_key": "preset/satisfying.mp4",
+        "youtube_url": "https://www.youtube.com/watch?v=ebnQsTk9s-s",
         "description": "Relaxing satisfying content",
         "thumbnail": "https://i.ytimg.com/vi/TdAUlaqG-Rg/maxresdefault.jpg"
     }
@@ -1030,19 +1034,20 @@ def get_video_duration(video_path: str) -> float:
         return 0.0
 
 
-async def get_or_download_preset_video(preset_name: str, cache_dir: str) -> str:
+async def get_preset_video_from_r2(preset_name: str, cache_dir: str) -> str:
     """
-    Download and cache a preset background video from YouTube.
+    Get preset background video from Cloudflare R2 storage.
+    Downloads from R2 and caches locally for fast access.
     
     Args:
         preset_name: Name of the preset (e.g., "minecraft", "subway_surfers")
         cache_dir: Directory to cache downloaded videos
         
     Returns:
-        Path to the downloaded/cached video file
+        Path to the cached video file
     """
     if preset_name not in PRESET_BACKGROUND_VIDEOS:
-        raise ValueError(f"Unknown preset: {preset_name}")
+        raise ValueError(f"Unknown preset: {preset_name}. Available presets: {', '.join(PRESET_BACKGROUND_VIDEOS.keys())}")
     
     preset = PRESET_BACKGROUND_VIDEOS[preset_name]
     os.makedirs(cache_dir, exist_ok=True)
@@ -1050,78 +1055,40 @@ async def get_or_download_preset_video(preset_name: str, cache_dir: str) -> str:
     # Create a cache filename based on preset name
     cache_path = os.path.join(cache_dir, f"{preset_name}.mp4")
     
-    # Check if already cached
+    # Check if already cached locally
     if os.path.exists(cache_path):
-        logger.info(f"✅ Using cached preset video: {preset_name}")
+        logger.info(f"✅ Using locally cached preset video: {preset_name}")
         return cache_path
     
-    logger.info(f"📥 Downloading preset video: {preset['name']} from YouTube...")
+    logger.info(f"📥 Downloading preset video from R2: {preset['name']}...")
     
     try:
-        # Use yt-dlp to download the video
-        import yt_dlp
-        # Format selection that works with modern YouTube:
-        # - Prefer 720p or lower resolution
-        # - Merge video and audio streams automatically
-        # - Use mp4 container for compatibility
-        ydl_opts = {
-            'format': '(bv*[height<=720][ext=mp4]+ba[ext=m4a])/(bv*[height<=720]+ba)/best[height<=720]/best',  # Best video+audio <=720p or best available
-            'outtmpl': cache_path,
-            'quiet': True,
-            'no_warnings': True,
-            'merge_output_format': 'mp4',  # Merge to MP4
-            'socket_timeout': 30,  # 30 second timeout for socket operations
-            'retries': 3,  # Retry failed downloads
-            'fragment_retries': 3,  # Retry failed fragments
-            'ffmpeg_location': '/usr/bin/ffmpeg',  # Specify ffmpeg path for yt-dlp
-        }
-        logger.info(f"Downloading preset video from YouTube: {preset['name']} (this may take a minute...)")
-        logger.info(f"URL: {preset['url']}")
+        # Import R2 service
+        from r2_service import get_r2_service
+        r2 = get_r2_service()
         
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(preset['url'], download=True)
-            logger.info(f"Video info: {info.get('title', 'Unknown')} - {info.get('duration', 0)}s")
+        # Get R2 bucket name for preset videos
+        bucket_name = r2.bucket_preset_videos
+        r2_key = preset['r2_key']
         
-        # Check if file was created
-        if not os.path.exists(cache_path):
-            # yt-dlp might have saved with a different name, look for similar files
-            cache_dir_files = os.listdir(cache_dir)
-            logger.warning(f"Expected file not found at: {cache_path}")
-            logger.info(f"Files in cache dir: {cache_dir_files}")
-            
-            # Try to find the downloaded file
-            for file in cache_dir_files:
-                if preset_name in file and (file.endswith('.mp4') or file.endswith('.mkv') or file.endswith('.webm')):
-                    found_path = os.path.join(cache_dir, file)
-                    logger.info(f"Found downloaded file: {found_path}, renaming to {cache_path}")
-                    os.rename(found_path, cache_path)
-                    break
+        # Check if file exists in R2
+        if not r2.file_exists(bucket_name, r2_key):
+            raise Exception(
+                f"Preset video '{preset_name}' not found in R2 storage at {bucket_name}/{r2_key}. "
+                f"Please upload the preset video first using the upload script. "
+                f"YouTube URL for manual download: {preset.get('youtube_url', 'N/A')}"
+            )
         
-        if not os.path.exists(cache_path):
-            raise Exception("Downloaded file not found after yt-dlp execution. The file may have been saved with a different name.")
-        
+        # Download from R2 to local cache
+        r2.download_file(bucket_name, r2_key, cache_path)
         
         file_size_mb = os.path.getsize(cache_path) / 1024 / 1024
-        logger.info(f"✅ Downloaded and cached preset video: {preset_name} ({file_size_mb:.1f} MB)")
+        logger.info(f"✅ Downloaded preset video from R2: {preset_name} ({file_size_mb:.1f} MB)")
         return cache_path
         
     except Exception as e:
-        logger.error(f"Error downloading preset video {preset_name}: {e}")
-        # Provide helpful error message
-        error_msg = str(e)
-        if "403" in error_msg or "Forbidden" in error_msg:
-            raise Exception(
-                f"Failed to download preset video from YouTube (403 Forbidden). "
-                f"YouTube may be blocking automated downloads."
-                f"Please try again later or upload your own background video instead."
-            )
-        elif "timeout" in error_msg.lower():
-            raise Exception(
-                f"Failed to download preset video: Connection timeout."
-                f"Please check your internet connection and try again, or upload your own background video."
-            )
-        else:
-            raise Exception(f"Failed to download preset video: {error_msg}")
+        logger.error(f"Error getting preset video from R2: {e}")
+        raise Exception(f"Failed to get preset video '{preset_name}' from R2: {str(e)}")
 
 
 async def create_video_with_background(

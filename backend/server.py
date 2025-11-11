@@ -2807,12 +2807,12 @@ async def generate_video_with_progress(
                     # Get background video
                     background_video_path = None
                     if request.background_video_type == "preset" and request.background_video_preset:
-                        # Download/cache preset video
+                        # Get preset video from R2 storage
                         cache_dir = "/tmp/preset_videos"
-                        async for event in progress_callback("downloading_bg", 0, 100, f"Загрузка фона {request.background_video_preset}..."):
+                        async for event in progress_callback("downloading_bg", 0, 100, f"Загрузка фона {request.background_video_preset} из R2..."):
                             yield event
                         
-                        background_video_path = await video_service.get_or_download_preset_video(
+                        background_video_path = await video_service.get_preset_video_from_r2(
                             request.background_video_preset,
                             cache_dir
                         )
