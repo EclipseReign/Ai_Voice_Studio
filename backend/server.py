@@ -3136,6 +3136,69 @@ app.add_middleware(
 # Users can manually delete files if needed via cleanup endpoint
 # ============================================================================
 
+# ============================================================================
+# VIRAL HOOKS & TEMPLATES API (New Feature)
+# ============================================================================
+
+from viral_hooks import generate_viral_hook, analyze_hook_performance
+
+@api_router.post("/hooks/generate")
+async def generate_hook_endpoint(
+    topic: str,
+    platform: str = "tiktok",
+    hook_type: str = None,
+    custom_context: str = None,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Generate viral hooks for social media content
+    Inspired by Revid AI's hook generator
+    """
+    try:
+        result = await generate_viral_hook(
+            topic=topic,
+            platform=platform,
+            hook_type=hook_type,
+            custom_context=custom_context
+        )
+        return result
+    except Exception as e:
+        logger.error(f"Error generating hook: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating hook: {str(e)}")
+
+@api_router.post("/hooks/analyze")
+async def analyze_hook_endpoint(
+    hook_text: str,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Analyze a hook's viral potential
+    """
+    try:
+        result = await analyze_hook_performance(hook_text)
+        return result
+    except Exception as e:
+        logger.error(f"Error analyzing hook: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error analyzing hook: {str(e)}")
+
+@api_router.get("/templates/library")
+async def get_template_library(
+    category: str = None,
+    current_user: User = Depends(get_current_user_optional)
+):
+    """
+    Get video template library
+    Templates are pre-configured settings for quick video creation
+    """
+    # Templates are defined in frontend, this endpoint can provide metadata
+    # or server-side templates in the future
+    return {
+        "success": True,
+        "message": "Template library available in frontend",
+        "categories": ["viral", "educational", "motivational", "tips", "storytelling"]
+    }
+
+
 @app.on_event("startup")
 async def startup_job_recovery():
     """Job recovery on app startup - mark interrupted jobs as resumable"""
