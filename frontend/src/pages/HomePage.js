@@ -14,11 +14,17 @@ import { Slider } from "@/components/ui/slider";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { Loader2, Sparkles, Mic, Download, Clock, Volume2, User, LogOut } from "lucide-react";
+import { Loader2, Sparkles, Mic, Download, Clock, Volume2, User, LogOut, Wand2, LayoutGrid } from "lucide-react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import Footer from "@/components/Footer";
 import { VoiceSettingsSkeleton, HistorySkeleton } from "@/components/LoadingStates";
+// Phase 1: New Components from Revid AI inspiration
+import VideoWizard from "@/components/VideoWizard";
+import TemplateLibrary from "@/components/TemplateLibrary";
+import ViralHookGenerator from "@/components/ViralHookGenerator";
+import DragDropUpload from "@/components/DragDropUpload";
+import EnhancedProgress from "@/components/EnhancedProgress";
 
 const HomePage = () => {
   const { t } = useTranslation();
@@ -87,6 +93,12 @@ const HomePage = () => {
   const [uploadedBackgroundFile, setUploadedBackgroundFile] = useState(null);
   const [uploadedBackgroundFileId, setUploadedBackgroundFileId] = useState(null);
   const [isUploadingBackground, setIsUploadingBackground] = useState(false);
+
+    // Phase 1: Mode and Wizard state
+  const [uiMode, setUiMode] = useState("classic"); // "classic" or "wizard"
+  const [wizardStep, setWizardStep] = useState(1);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [selectedHook, setSelectedHook] = useState("");
 
   const getVoicesByLanguage = useMemo(() => {
     const langCode = language.split('-')[0].toLowerCase();
@@ -167,8 +179,26 @@ const HomePage = () => {
     }
   };
   
+  // Wrapper for DragDropUpload component
+  const handleBackgroundVideoUploadDragDrop = async (file, error) => {
+    if (error) {
+      toast.error(error);
+      return;
+    }
+    if (!file) return;
+    
+    // Call the original upload function with mock event
+    await handleBackgroundVideoUploadOriginal(file);
+  };
+
   const handleBackgroundVideoUpload = async (event) => {
-    const file = event.target.files[0];
+      const file = event.target.files[0];
+      if (!file) return;
+      await handleBackgroundVideoUploadOriginal(file);
+    };
+
+  // Renamed original function
+  const handleBackgroundVideoUploadOriginal = async (file) => {
     if (!file) return;
     
     // Validate file type
@@ -791,6 +821,40 @@ const HomePage = () => {
                 <CardDescription className="text-sm">{t('home.chooseGenerationMethod')}</CardDescription>
               </CardHeader>
               <CardContent>
+                {/* Phase 1: Mode Switcher */}
+                <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <h3 className="text-sm font-semibold text-purple-900 dark:text-purple-100">
+                        ✨ {t('modes.wizard')} - Новое!
+                      </h3>
+                      <p className="text-xs text-purple-700 dark:text-purple-300 mt-1">
+                        {t('modes.wizardDesc')}
+                      </p>
+                    </div>
+                    <Button
+                      variant={uiMode === "wizard" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setUiMode(uiMode === "classic" ? "wizard" : "classic")}
+                      className={uiMode === "wizard" ? "bg-purple-600 hover:bg-purple-700" : ""}
+                    >
+                      {uiMode === "classic" ? (
+                        <>
+                          <Wand2 className="w-4 h-4 mr-2" />
+                          {t('modes.wizard')}
+                        </>
+                      ) : (
+                        <>
+                          <LayoutGrid className="w-4 h-4 mr-2" />
+                          {t('modes.classic')}
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Classic Mode - Original Interface */}
+                {uiMode === "classic" && (
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
                   <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-6 h-auto" data-testid="mode-tabs">
                     <TabsTrigger value="ai-generate" data-testid="ai-generate-tab" className="text-sm sm:text-base py-2">
@@ -1120,6 +1184,477 @@ const HomePage = () => {
                     </div>
                   </TabsContent>
                 </Tabs>
+                )}
+
+                {/* Wizard Mode - Step-by-step with templates and hooks */}
+                {uiMode === "wizard" && (
+                  <VideoWizard
+                    currentStep={wizardStep}
+                    onStepChange={setWizardStep}
+                    canProceed={
+                      (wizardStep === 1) || 
+                      (wizardStep === 2 && (generatedText || manualText)) ||
+                      (wizardStep === 3 && audioUrl) ||
+                      (wizardStep === 4) ||
+                      (wizardStep === 5 && videoUrl)
+                    }
+                    totalSteps={5}
+                  >
+                    {/* Step 1: Choose Method & Template */}
+                    {wizardStep === 1 && (
+                      <div className="space-y-6">
+                        <TemplateLibrary
+                          onSelectTemplate={(template) => {
+                            setSelectedTemplate(template);
+                            // Apply template settings
+                            if (template.settings) {
+                              setSubtitleStyle(template.settings.subtitle_style || "tiktok");
+                              setSubtitlePosition(template.settings.subtitle_position || "center");
+                              setVideoType(template.settings.video_type || "youtube_images");
+                              setUseBackgroundVideo(template.settings.use_background || false);
+                              if (template.settings.background_preset) {
+                                setBackgroundVideoPreset(template.settings.background_preset);
+                              }
+                            }
+                            toast.success(`Шаблон "${template.name}" применен!`);
+                          }}
+                        />
+                        
+                        <div className="mt-6">
+                          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                            <TabsList className="grid w-full grid-cols-2">
+                              <TabsTrigger value="ai-generate">
+                                <Sparkles className="w-4 h-4 mr-2" />
+                                {t('home.aiGeneration')}
+                              </TabsTrigger>
+                              <TabsTrigger value="manual-input">
+                                <Mic className="w-4 h-4 mr-2" />
+                                {t('home.manualInput')}
+                              </TabsTrigger>
+                            </TabsList>
+                          </Tabs>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Step 2: Script Generation with Viral Hooks */}
+                    {wizardStep === 2 && (
+                      <div className="space-y-6">
+                        {/* Viral Hook Generator */}
+                        <ViralHookGenerator
+                          onSelectHook={(hook) => {
+                            setSelectedHook(hook);
+                            // Prepend hook to prompt or manual text
+                            if (activeTab === "ai-generate") {
+                              setPrompt(hook + "\n\n" + prompt);
+                            } else {
+                              setManualText(hook + "\n\n" + manualText);
+                            }
+                            toast.success("Хук добавлен в начало текста!");
+                          }}
+                        />
+
+                        {/* AI or Manual Input */}
+                        {activeTab === "ai-generate" ? (
+                          <div className="space-y-4">
+                            <div>
+                              <Label htmlFor="wizard-prompt">{t('home.topicPrompt')}</Label>
+                              <Textarea
+                                id="wizard-prompt"
+                                placeholder={t('home.promptPlaceholderLong')}
+                                value={prompt}
+                                onChange={(e) => setPrompt(e.target.value)}
+                                rows={4}
+                                className="mt-2"
+                              />
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <Label htmlFor="wizard-duration">
+                                  <Clock className="w-4 h-4 inline mr-2" />
+                                  {t('home.targetDuration')}: {duration} {t('home.minutes')}
+                                </Label>
+                                <Slider
+                                  id="wizard-duration"
+                                  value={[duration]}
+                                  onValueChange={(val) => setDuration(val[0])}
+                                  min={1}
+                                  max={60}
+                                  step={1}
+                                  className="mt-2"
+                                />
+                              </div>
+                              
+                              <div>
+                                <Label htmlFor="wizard-language">{t('home.language')}</Label>
+                                <Select value={language} onValueChange={setLanguage}>
+                                  <SelectTrigger id="wizard-language" className="mt-2">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="ru-RU">🇷🇺 {t('languages.russian')}</SelectItem>
+                                    <SelectItem value="en-US">🇺🇸 {t('languages.english')}</SelectItem>
+                                    <SelectItem value="de-DE">🇩🇪 {t('languages.german')}</SelectItem>
+                                    <SelectItem value="zh-CN">🇨🇳 {t('languages.chinese')}</SelectItem>
+                                    <SelectItem value="it-IT">🇮🇹 {t('languages.italian')}</SelectItem>
+                                    <SelectItem value="es-ES">🇪🇸 {t('languages.spanish')}</SelectItem>
+                                    <SelectItem value="fr-FR">🇫🇷 {t('languages.french')}</SelectItem>
+                                    <SelectItem value="pt-BR">🇧🇷 {t('languages.portuguese')}</SelectItem>
+                                    <SelectItem value="ja-JP">🇯🇵 {t('languages.japanese')}</SelectItem>
+                                    <SelectItem value="ko-KR">🇰🇷 {t('languages.korean')}</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                            
+                            <Button
+                              onClick={handleGenerateText}
+                              disabled={isGeneratingText || !prompt.trim()}
+                              className="w-full"
+                              size="lg"
+                            >
+                              {isGeneratingText ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  {t('aiGeneration.generatingText')}
+                                </>
+                              ) : (
+                                <>
+                                  <Sparkles className="mr-2 h-4 w-4" />
+                                  {t('aiGeneration.generateText')}
+                                </>
+                              )}
+                            </Button>
+                            
+                            {generatedText && (
+                              <div className="mt-4">
+                                <Label>{t('aiGeneration.editText')}</Label>
+                                <Textarea
+                                  value={generatedText}
+                                  onChange={(e) => setGeneratedText(e.target.value)}
+                                  rows={6}
+                                  className="mt-2 font-mono text-sm"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            <div>
+                              <Label htmlFor="wizard-manual-text">{t('manualInput.title')}</Label>
+                              <Textarea
+                                id="wizard-manual-text"
+                                placeholder={t('manualInput.placeholder')}
+                                value={manualText}
+                                onChange={(e) => setManualText(e.target.value)}
+                                rows={8}
+                                className="mt-2"
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Progress Display */}
+                        {(isGeneratingText || textProgress > 0) && (
+                          <EnhancedProgress
+                            progress={textProgress}
+                            message={textProgressMessage}
+                            eta={audioEta}
+                            speed={audioSpeed}
+                            stage={audioStage || textProgressMessage}
+                            completedSegments={completedSegments}
+                            totalSegments={totalSegments}
+                            queuePosition={queuePosition}
+                            generationTime={generationTime}
+                          />
+                        )}
+                      </div>
+                    )}
+
+                    {/* Step 3: Voice & Audio Generation */}
+                    {wizardStep === 3 && (
+                      <div className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="wizard-voice">{t('home.selectAVoice')}</Label>
+                            <Select value={selectedVoice} onValueChange={setSelectedVoice}>
+                              <SelectTrigger id="wizard-voice" className="mt-2">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent className="max-h-[200px]">
+                                {getVoicesByLanguage.map((voice) => (
+                                  <SelectItem key={voice.short_name} value={voice.short_name}>
+                                    {voice.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor="wizard-speed">
+                              {t('home.speedLabel')}: {(speed[0] / 50).toFixed(1)}x
+                            </Label>
+                            <Slider
+                              id="wizard-speed"
+                              value={speed}
+                              onValueChange={setSpeed}
+                              min={25}
+                              max={100}
+                              step={5}
+                              className="mt-2"
+                            />
+                          </div>
+                        </div>
+
+                        <Button
+                          onClick={handleSynthesize}
+                          disabled={isSynthesizing || (!generatedText && !manualText) || !selectedVoice}
+                          className="w-full"
+                          size="lg"
+                        >
+                          {isSynthesizing ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              {t('aiGeneration.generatingAudio')}
+                            </>
+                          ) : (
+                            <>
+                              <Volume2 className="mr-2 h-4 w-4" />
+                              {t('aiGeneration.synthesizeAudio')}
+                            </>
+                          )}
+                        </Button>
+
+                        {/* Audio Progress */}
+                        {(isSynthesizing || audioProgress > 0) && (
+                          <EnhancedProgress
+                            progress={audioProgress}
+                            message={audioProgressMessage}
+                            eta={audioEta}
+                            speed={audioSpeed}
+                            stage={audioStage}
+                            completedSegments={completedSegments}
+                            totalSegments={totalSegments}
+                            queuePosition={queuePosition}
+                            generationTime={generationTime}
+                          />
+                        )}
+
+                        {/* Audio Player */}
+                        {audioUrl && (
+                          <Card className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20">
+                            <CardContent className="pt-6">
+                              <div className="flex items-center justify-between mb-3">
+                                <span className="text-sm font-medium text-green-800 dark:text-green-200">
+                                  ✅ {t('home.audioPlayer')}
+                                </span>
+                                <span className="text-xs text-green-600 dark:text-green-300">
+                                  <Clock className="w-3 h-3 inline mr-1" />
+                                  {Math.floor(audioDuration / 60)}:{String(Math.floor(audioDuration % 60)).padStart(2, '0')}
+                                </span>
+                              </div>
+                              <audio controls src={audioUrl} className="w-full" />
+                            </CardContent>
+                          </Card>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Step 4: Video Customization */}
+                    {wizardStep === 4 && (
+                      <div className="space-y-6">
+                        <div className="space-y-4">
+                          {/* Video Type */}
+                          <div>
+                            <Label htmlFor="wizard-video-type">{t('video.videoType')}</Label>
+                            <Select value={videoType} onValueChange={setVideoType}>
+                              <SelectTrigger id="wizard-video-type" className="mt-2">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="youtube_images">{t('video.aiGeneratedImages')}</SelectItem>
+                                <SelectItem value="stock">{t('video.stockFootage')}</SelectItem>
+                                <SelectItem value="upload">{t('video.uploadOwn')}</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          {/* Subtitles */}
+                          <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg">
+                            <div>
+                              <Label>{t('video.subtitles')}</Label>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                {t('video.subtitlesDesc')}
+                              </p>
+                            </div>
+                            <Button
+                              variant={subtitlesEnabled ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setSubtitlesEnabled(!subtitlesEnabled)}
+                            >
+                              {subtitlesEnabled ? t('common.on') : t('common.off')}
+                            </Button>
+                          </div>
+
+                          {subtitlesEnabled && (
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <Label>{t('video.subtitleStyle')}</Label>
+                                <Select value={subtitleStyle} onValueChange={setSubtitleStyle}>
+                                  <SelectTrigger className="mt-2">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="tiktok">TikTok Style</SelectItem>
+                                    <SelectItem value="youtube">YouTube Style</SelectItem>
+                                    <SelectItem value="instagram">Instagram Style</SelectItem>
+                                    <SelectItem value="podcast">Podcast Style</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              
+                              <div>
+                                <Label>{t('video.subtitlePosition')}</Label>
+                                <Select value={subtitlePosition} onValueChange={setSubtitlePosition}>
+                                  <SelectTrigger className="mt-2">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="top">{t('video.top')}</SelectItem>
+                                    <SelectItem value="center">{t('video.center')}</SelectItem>
+                                    <SelectItem value="bottom">{t('video.bottom')}</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Background Video */}
+                          <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg">
+                            <div>
+                              <Label>{t('video.backgroundVideo')}</Label>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                {t('video.backgroundVideoDesc')}
+                              </p>
+                            </div>
+                            <Button
+                              variant={useBackgroundVideo ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setUseBackgroundVideo(!useBackgroundVideo)}
+                            >
+                              {useBackgroundVideo ? t('common.on') : t('common.off')}
+                            </Button>
+                          </div>
+
+                          {useBackgroundVideo && (
+                            <div className="space-y-4">
+                              <Tabs value={backgroundVideoType} onValueChange={setBackgroundVideoType}>
+                                <TabsList className="grid w-full grid-cols-2">
+                                  <TabsTrigger value="preset">{t('video.presetBackgrounds')}</TabsTrigger>
+                                  <TabsTrigger value="upload">{t('video.uploadCustom')}</TabsTrigger>
+                                </TabsList>
+                                
+                                <TabsContent value="preset" className="mt-4">
+                                  <Select value={backgroundVideoPreset} onValueChange={setBackgroundVideoPreset}>
+                                    <SelectTrigger>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {presetBackgrounds.map((preset) => (
+                                        <SelectItem key={preset.id} value={preset.id}>
+                                          {preset.name}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </TabsContent>
+                                
+                                <TabsContent value="upload" className="mt-4">
+                                  <DragDropUpload
+                                    onFileSelect={handleBackgroundVideoUploadDragDrop}
+                                    acceptedFileTypes={{ 'video/*': ['.mp4', '.mov', '.avi', '.mkv'] }}
+                                    maxSize={500 * 1024 * 1024}
+                                    isUploading={isUploadingBackground}
+                                  />
+                                </TabsContent>
+                              </Tabs>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Step 5: Preview & Generate */}
+                    {wizardStep === 5 && (
+                      <div className="space-y-6">
+                        <div className="text-center">
+                          <h3 className="text-lg font-semibold mb-2">{t('wizard.step5')}</h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {t('wizard.step5Desc')}
+                          </p>
+                        </div>
+
+                        <Button
+                          onClick={handleGenerateVideo}
+                          disabled={isGeneratingVideo || !audioUrl}
+                          className="w-full"
+                          size="lg"
+                        >
+                          {isGeneratingVideo ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              {t('video.generatingVideo')}
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="mr-2 h-4 w-4" />
+                              {t('video.generateVideo')}
+                            </>
+                          )}
+                        </Button>
+
+                        {/* Video Progress */}
+                        {(isGeneratingVideo || videoProgress > 0) && (
+                          <EnhancedProgress
+                            progress={videoProgress}
+                            message={videoProgressMessage}
+                            eta=""
+                            speed={0}
+                            stage={videoStage}
+                            completedSegments={0}
+                            totalSegments={0}
+                            queuePosition={0}
+                            generationTime={0}
+                          />
+                        )}
+
+                        {/* Video Player */}
+                        {videoUrl && (
+                          <Card className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20">
+                            <CardContent className="pt-6">
+                              <div className="flex items-center justify-between mb-3">
+                                <span className="text-sm font-medium text-purple-800 dark:text-purple-200">
+                                  ✅ {t('video.videoReady')}
+                                </span>
+                                <Button
+                                  onClick={() => downloadVideo(currentVideoId)}
+                                  size="sm"
+                                  variant="outline"
+                                >
+                                  <Download className="w-4 h-4 mr-2" />
+                                  {t('video.download')}
+                                </Button>
+                              </div>
+                              <video controls src={videoUrl} className="w-full rounded-lg" />
+                            </CardContent>
+                          </Card>
+                        )}
+                      </div>
+                    )}
+                  </VideoWizard>
+                )}
               </CardContent>
             </Card>
           </div>

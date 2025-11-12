@@ -3098,6 +3098,265 @@ async def upload_background_video(
         logger.error(f"Error uploading background video: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# ============================================================================
+# VIRAL HOOKS & TEMPLATES ENDPOINTS (Phase 1 Integration)
+# ============================================================================
+
+from viral_hooks import generate_viral_hook, analyze_hook_performance
+
+@api_router.post("/hooks/generate")
+async def generate_hook_endpoint(
+    request: Request,
+    current_user: User = Depends(get_current_user)
+):
+    """Generate viral hooks for social media content"""
+    try:
+        data = await request.json()
+        topic = data.get("topic", "")
+        platform = data.get("platform", "tiktok")
+        hook_type = data.get("hook_type")
+        custom_context = data.get("custom_context")
+        
+        if not topic:
+            raise HTTPException(status_code=400, detail="Topic is required")
+        
+        result = await generate_viral_hook(
+            topic=topic,
+            platform=platform,
+            hook_type=hook_type,
+            custom_context=custom_context
+        )
+        
+        return result
+    
+    except Exception as e:
+        logger.error(f"Error generating viral hook: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@api_router.post("/hooks/analyze")
+async def analyze_hook_endpoint(
+    request: Request,
+    current_user: User = Depends(get_current_user)
+):
+    """Analyze viral potential of a hook"""
+    try:
+        data = await request.json()
+        hook_text = data.get("hook_text", "")
+        
+        if not hook_text:
+            raise HTTPException(status_code=400, detail="Hook text is required")
+        
+        result = await analyze_hook_performance(hook_text)
+        
+        return result
+    
+    except Exception as e:
+        logger.error(f"Error analyzing hook: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@api_router.get("/templates/library")
+async def get_template_library(
+    current_user: User = Depends(get_current_user_optional)
+):
+    """Get library of video templates"""
+    templates = [
+        {
+            "id": "viral_tiktok_1",
+            "name": "Viral TikTok Storytime",
+            "category": "viral",
+            "description": "Perfect for engaging storytelling videos that keep viewers hooked",
+            "thumbnail": "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=400",
+            "views": "1.2M",
+            "engagement": "8.5%",
+            "duration": "30-60s",
+            "platform": "tiktok",
+            "features": ["Dynamic subtitles", "Background music", "Attention-grabbing hooks"],
+            "settings": {
+                "subtitle_style": "tiktok",
+                "subtitle_position": "center",
+                "video_type": "youtube_images",
+                "use_background": True,
+                "background_preset": "minecraft"
+            }
+        },
+        {
+            "id": "educational_explainer",
+            "name": "Educational Explainer",
+            "category": "educational",
+            "description": "Clean, professional format for educational content",
+            "thumbnail": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400",
+            "views": "890K",
+            "engagement": "7.2%",
+            "duration": "60-120s",
+            "platform": "youtube",
+            "features": ["Clear subtitles", "Professional look", "Easy to follow"],
+            "settings": {
+                "subtitle_style": "youtube",
+                "subtitle_position": "bottom",
+                "video_type": "youtube_images",
+                "use_background": False
+            }
+        },
+        {
+            "id": "motivational_quotes",
+            "name": "Motivational Quotes",
+            "category": "motivational",
+            "description": "Inspiring quotes with stunning visuals",
+            "thumbnail": "https://images.unsplash.com/photo-1504805572947-34fad45aed93?w=400",
+            "views": "2.3M",
+            "engagement": "9.1%",
+            "duration": "15-30s",
+            "platform": "instagram",
+            "features": ["Bold text", "Cinematic background", "Emotional impact"],
+            "settings": {
+                "subtitle_style": "instagram",
+                "subtitle_position": "center",
+                "video_type": "youtube_images",
+                "use_background": True,
+                "background_preset": "nature"
+            }
+        },
+        {
+            "id": "quick_tips",
+            "name": "Quick Tips & Hacks",
+            "category": "tips",
+            "description": "Fast-paced tips and life hacks format",
+            "thumbnail": "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=400",
+            "views": "1.8M",
+            "engagement": "8.9%",
+            "duration": "30-45s",
+            "platform": "tiktok",
+            "features": ["Quick transitions", "Numbered points", "Easy to digest"],
+            "settings": {
+                "subtitle_style": "tiktok",
+                "subtitle_position": "center",
+                "video_type": "youtube_images",
+                "use_background": True,
+                "background_preset": "city"
+            }
+        },
+        {
+            "id": "story_narrative",
+            "name": "Story Narrative",
+            "category": "storytelling",
+            "description": "Compelling narrative storytelling format",
+            "thumbnail": "https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=400",
+            "views": "3.1M",
+            "engagement": "10.2%",
+            "duration": "60-90s",
+            "platform": "youtube",
+            "features": ["Cinematic feel", "Story arc", "Emotional connection"],
+            "settings": {
+                "subtitle_style": "youtube",
+                "subtitle_position": "bottom",
+                "video_type": "youtube_images",
+                "use_background": False
+            }
+        },
+        {
+            "id": "podcast_clips",
+            "name": "Podcast Highlights",
+            "category": "viral",
+            "description": "Engaging podcast clip format for social media",
+            "thumbnail": "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=400",
+            "views": "950K",
+            "engagement": "7.8%",
+            "duration": "45-90s",
+            "platform": "instagram",
+            "features": ["Waveform animation", "Clean subtitles", "Professional"],
+            "settings": {
+                "subtitle_style": "podcast",
+                "subtitle_position": "center",
+                "video_type": "youtube_images",
+                "use_background": True,
+                "background_preset": "abstract"
+            }
+        },
+        {
+            "id": "product_review",
+            "name": "Product Review",
+            "category": "tips",
+            "description": "Honest product review and recommendation format",
+            "thumbnail": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400",
+            "views": "1.5M",
+            "engagement": "8.3%",
+            "duration": "60-120s",
+            "platform": "youtube",
+            "features": ["Structured format", "Pros & cons", "Call to action"],
+            "settings": {
+                "subtitle_style": "youtube",
+                "subtitle_position": "bottom",
+                "video_type": "youtube_images",
+                "use_background": False
+            }
+        },
+        {
+            "id": "gaming_commentary",
+            "name": "Gaming Commentary",
+            "category": "viral",
+            "description": "Engaging gaming content with commentary",
+            "thumbnail": "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400",
+            "views": "4.2M",
+            "engagement": "11.5%",
+            "duration": "30-60s",
+            "platform": "tiktok",
+            "features": ["Fast-paced", "Gaming background", "Exciting"],
+            "settings": {
+                "subtitle_style": "tiktok",
+                "subtitle_position": "bottom",
+                "video_type": "youtube_images",
+                "use_background": True,
+                "background_preset": "gaming"
+            }
+        },
+        {
+            "id": "before_after",
+            "name": "Before & After Transformation",
+            "category": "motivational",
+            "description": "Transformation story format",
+            "thumbnail": "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400",
+            "views": "2.8M",
+            "engagement": "9.8%",
+            "duration": "45-75s",
+            "platform": "instagram",
+            "features": ["Transformation arc", "Inspiring", "Visual progress"],
+            "settings": {
+                "subtitle_style": "instagram",
+                "subtitle_position": "center",
+                "video_type": "youtube_images",
+                "use_background": True,
+                "background_preset": "fitness"
+            }
+        },
+        {
+            "id": "mystery_reveal",
+            "name": "Mystery & Reveal",
+            "category": "storytelling",
+            "description": "Build suspense and reveal format",
+            "thumbnail": "https://images.unsplash.com/photo-1516410529446-2c777cb7366d?w=400",
+            "views": "3.5M",
+            "engagement": "10.8%",
+            "duration": "30-60s",
+            "platform": "tiktok",
+            "features": ["Suspense building", "Plot twist", "Engaging"],
+            "settings": {
+                "subtitle_style": "tiktok",
+                "subtitle_position": "center",
+                "video_type": "youtube_images",
+                "use_background": True,
+                "background_preset": "mystery"
+            }
+        }
+    ]
+    
+    return {
+        "success": True,
+        "templates": templates,
+        "total": len(templates)
+    }
+
 
 # ============================================================================
 

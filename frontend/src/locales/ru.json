@@ -44,7 +44,57 @@
     "preview": "Предпросмотр",
     "useTemplate": "Использовать шаблон",
     "cancel": "Отмена",
-    "noResults": "Шаблонов не найдено. Попробуйте другие ключевые слова."
+    "noResults": "Шаблонов не найдено. Попробуйте другие ключевые слова.",
+    "views": "просмотров",
+    "engagement": "вовлеченность"
+  },
+  "hooks": {
+    "title": "Генератор вирусных хуков",
+    "subtitle": "AI создаст идеальные хуки для вашего контента",
+    "topicLabel": "Тема вашего видео",
+    "topicPlaceholder": "О чем будет ваше видео?",
+    "platformLabel": "Платформа",
+    "contextLabel": "Дополнительный контекст (опционально)",
+    "contextPlaceholder": "Целевая аудитория, тон, специфические детали...",
+    "generate": "Сгенерировать хуки",
+    "generating": "Генерация хуков...",
+    "primary": "Основной хук",
+    "alternative": "Альтернативный",
+    "backup": "Запасной",
+    "trigger": "Триггер",
+    "explanation": "Объяснение",
+    "tips": "Советы",
+    "useHook": "Использовать этот хук",
+    "analyze": "Анализировать",
+    "noHooks": "Нажмите 'Сгенерировать хуки' для начала",
+    "tiktok": "TikTok",
+    "youtube": "YouTube",
+    "instagram": "Instagram"
+  },
+  "modes": {
+    "classic": "Классический режим",
+    "wizard": "Визард режим",
+    "classicDesc": "Быстрая генерация с полным контролем",
+    "wizardDesc": "Пошаговое создание с шаблонами и хуками"
+  },
+  "dragDrop": {
+    "title": "Перетащите файл сюда",
+    "or": "или",
+    "browse": "выберите файл",
+    "uploading": "Загрузка...",
+    "uploaded": "Загружено",
+    "error": "Ошибка загрузки",
+    "maxSize": "Максимальный размер",
+    "acceptedFormats": "Поддерживаемые форматы"
+  },
+  "progress": {
+    "enhanced": "Расширенный прогресс",
+    "eta": "Осталось времени",
+    "speed": "Скорость",
+    "segmentsPerSec": "сегментов/сек",
+    "queuePosition": "Позиция в очереди",
+    "stage": "Этап",
+    "startingGeneration": "Начало генерации..."
   },
   "home": {
     "title": "Генерация и Озвучка",
@@ -415,6 +465,31 @@
       "organizationDesc": "Владелец проекта",
       "email": "Электронная почта",
       "emailDesc": "Для связи и поддержки"
+    },
+    "video": {
+      "videoType": "Тип видео",
+      "aiGeneratedImages": "AI изображения",
+      "stockFootage": "Стоковое видео",
+      "uploadOwn": "Загрузить свое",
+      "subtitles": "Субтитры",
+      "subtitlesDesc": "Добавить субтитры к видео",
+      "subtitleStyle": "Стиль субтитров",
+      "subtitlePosition": "Позиция субтитров",
+      "top": "Сверху",
+      "center": "По центру",
+      "bottom": "Снизу",
+      "backgroundVideo": "Фоновое видео",
+      "backgroundVideoDesc": "Добавить фоновое видео (TikTok стиль)",
+      "presetBackgrounds": "Готовые фоны",
+      "uploadCustom": "Загрузить свой",
+      "generatingVideo": "Генерация видео...",
+      "generateVideo": "Сгенерировать видео",
+      "videoReady": "Видео готово",
+      "download": "Скачать"
+    },
+    "common": {
+      "on": "Вкл",
+      "off": "Выкл"
     }
   }
 }
