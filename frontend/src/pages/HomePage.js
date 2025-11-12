@@ -1204,6 +1204,7 @@ const HomePage = () => {
                     {wizardStep === 1 && (
                       <div className="space-y-6">
                         <TemplateLibrary
+                          selectedTemplate={selectedTemplate}
                           onSelectTemplate={(template) => {
                             setSelectedTemplate(template);
                             // Apply template settings
@@ -1242,6 +1243,7 @@ const HomePage = () => {
                       <div className="space-y-6">
                         {/* Viral Hook Generator */}
                         <ViralHookGenerator
+                          selectedHookText={selectedHook}
                           onSelectHook={(hook) => {
                             setSelectedHook(hook);
                             // Prepend hook to prompt or manual text
@@ -1394,15 +1396,15 @@ const HomePage = () => {
                           
                           <div>
                             <Label htmlFor="wizard-speed">
-                              {t('home.speedLabel')}: {(speed[0] / 50).toFixed(1)}x
+                              {t('home.speedLabel')}: {speed[0] > 0 ? '+' : ''}{speed[0]}% ({(1 + speed[0]/100).toFixed(1)}x)
                             </Label>
                             <Slider
                               id="wizard-speed"
                               value={speed}
                               onValueChange={setSpeed}
-                              min={25}
+                              min={-50}
                               max={100}
-                              step={5}
+                              step={10}
                               className="mt-2"
                             />
                           </div>

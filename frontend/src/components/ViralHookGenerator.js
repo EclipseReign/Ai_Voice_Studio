@@ -20,7 +20,7 @@ import { API } from '../App';
  * ViralHookGenerator - Generate attention-grabbing hooks for content
  * Inspired by Revid AI's hook generation feature
  */
-const ViralHookGenerator = ({ onSelectHook, className = "" }) => {
+const ViralHookGenerator = ({ onSelectHook, selectedHookText, className = "" }) => {
   const { t } = useTranslation();
   const [topic, setTopic] = useState('');
   const [platform, setPlatform] = useState('tiktok');
@@ -107,6 +107,14 @@ const ViralHookGenerator = ({ onSelectHook, className = "" }) => {
       onSelectHook(hookText);
     }
     toast.success('Hook added to your prompt!');
+    // Scroll to text generation area after short delay
+    setTimeout(() => {
+      const textArea = document.querySelector('#wizard-prompt, #wizard-manual-text');
+      if (textArea) {
+        textArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        textArea.focus();
+      }
+    }, 300);
   };
 
   const getTriggerBadgeColor = (trigger) => {
@@ -229,7 +237,11 @@ const ViralHookGenerator = ({ onSelectHook, className = "" }) => {
         <div className="space-y-4">
           {/* Primary Hook */}
           {hooks.primary && (
-            <Card className="border-2 border-green-500 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20">
+            <Card className={`border-2 ${
+              selectedHookText === hooks.primary.hook 
+                ? 'border-blue-500 ring-4 ring-blue-300 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30' 
+                : 'border-green-500 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20'
+            }`}>
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -292,7 +304,11 @@ const ViralHookGenerator = ({ onSelectHook, className = "" }) => {
 
           {/* Alternative Hook */}
           {hooks.alternative && (
-            <Card>
+           <Card className={
+              selectedHookText === hooks.alternative.hook 
+                ? 'border-2 border-blue-500 ring-4 ring-blue-300 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30' 
+                : ''
+            }>
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center gap-2">
                   💡 Alternative Hook
@@ -346,7 +362,11 @@ const ViralHookGenerator = ({ onSelectHook, className = "" }) => {
 
           {/* Backup Hook */}
           {hooks.backup && (
-            <Card>
+            <Card className={
+              selectedHookText === hooks.backup.hook 
+                ? 'border-2 border-blue-500 ring-4 ring-blue-300 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30' 
+                : ''
+            }>
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center gap-2">
                   🛡️ Backup Hook (Safe Option)

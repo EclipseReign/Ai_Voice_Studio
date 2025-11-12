@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
  * TemplateLibrary Component - Pre-made templates for quick video creation
  * Inspired by Revid AI's template system
  */
-const TemplateLibrary = ({ onSelectTemplate, className = "" }) => {
+const TemplateLibrary = ({ onSelectTemplate, selectedTemplate, className = "" }) => {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -211,6 +211,13 @@ const TemplateLibrary = ({ onSelectTemplate, className = "" }) => {
     if (previewTemplate && onSelectTemplate) {
       onSelectTemplate(previewTemplate);
       setPreviewTemplate(null);
+      // Scroll to next button after short delay
+      setTimeout(() => {
+        const nextButton = document.querySelector('[data-wizard-next]');
+        if (nextButton) {
+          nextButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 300);
     }
   };
 
@@ -263,7 +270,11 @@ const TemplateLibrary = ({ onSelectTemplate, className = "" }) => {
         {filteredTemplates.map(template => (
           <Card
             key={template.id}
-            className="cursor-pointer hover:shadow-lg transition-all hover:scale-105 group"
+            className={`cursor-pointer hover:shadow-lg transition-all hover:scale-105 group ${
+              selectedTemplate?.id === template.id 
+                ? 'ring-4 ring-blue-500 bg-blue-50 dark:bg-blue-950/30' 
+                : ''
+            }`}
             onClick={() => handleTemplateClick(template)}
           >
             <CardHeader className="pb-3">

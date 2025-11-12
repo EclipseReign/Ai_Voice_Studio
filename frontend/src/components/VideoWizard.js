@@ -168,6 +168,7 @@ const VideoWizard = ({
               onClick={handleNext}
               disabled={!canProceed}
               className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+              data-wizard-next
             >
               {t('wizard.next')}
               <ChevronRight className="w-4 h-4" />
