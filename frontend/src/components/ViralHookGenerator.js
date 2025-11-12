@@ -20,7 +20,7 @@ import { API } from '../App';
  * ViralHookGenerator - Generate attention-grabbing hooks for content
  * Inspired by Revid AI's hook generation feature
  */
-const ViralHookGenerator = ({ onHookSelect, className = "" }) => {
+const ViralHookGenerator = ({ onSelectHook, className = "" }) => {
   const { t } = useTranslation();
   const [topic, setTopic] = useState('');
   const [platform, setPlatform] = useState('tiktok');
@@ -103,8 +103,8 @@ const ViralHookGenerator = ({ onHookSelect, className = "" }) => {
   };
 
   const handleUseHook = (hookText) => {
-    if (onHookSelect) {
-      onHookSelect(hookText);
+    if (onSelectHook) {
+      onSelectHook(hookText);
     }
     toast.success('Hook added to your prompt!');
   };

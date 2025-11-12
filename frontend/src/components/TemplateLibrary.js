@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
  * TemplateLibrary Component - Pre-made templates for quick video creation
  * Inspired by Revid AI's template system
  */
-const TemplateLibrary = ({ onTemplateSelect, className = "" }) => {
+const TemplateLibrary = ({ onSelectTemplate, className = "" }) => {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -208,8 +208,8 @@ const TemplateLibrary = ({ onTemplateSelect, className = "" }) => {
   };
 
   const handleUseTemplate = () => {
-    if (previewTemplate && onTemplateSelect) {
-      onTemplateSelect(previewTemplate);
+    if (previewTemplate && onSelectTemplate) {
+      onSelectTemplate(previewTemplate);
       setPreviewTemplate(null);
     }
   };

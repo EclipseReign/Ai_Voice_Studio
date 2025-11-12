@@ -112,7 +112,7 @@ async def generate_viral_hook(
     platform_config = VIRAL_PATTERNS.get(platform.lower(), VIRAL_PATTERNS["tiktok"])
     
     # Build the prompt for hook generation
-    prompt = f"""Generate a viral hook for social media content.
+    prompt = f"""Generate 3 COMPLETELY DIFFERENT viral hooks for social media content.
 
 Topic: {topic}
 Platform: {platform}
@@ -123,34 +123,35 @@ Max length: {platform_config['max_length']} characters
 
 {f'Hook type: {hook_type}' if hook_type else 'Choose the most effective hook type for this topic'}
 
-Generate 3 different hook variations:
-1. A primary hook (most viral potential)
-2. An alternative hook (different angle)
-3. A backup hook (safe but effective)
+IMPORTANT: Each hook MUST be UNIQUE and use a DIFFERENT approach:
+1. PRIMARY HOOK: Use shocking facts, statistics, or bold statements (highest viral potential)
+2. ALTERNATIVE HOOK: Use questions, curiosity gaps, or mystery (different psychological angle)  
+3. BACKUP HOOK: Use storytelling, relatability, or emotional connection (safe but effective)
 
-For each hook, explain why it works and what psychological trigger it uses.
+Each hook should target a DIFFERENT psychological trigger and have COMPLETELY DIFFERENT wording.
 
 Format your response as JSON:
 {{
     "primary": {{
-        "hook": "the hook text",
-        "trigger": "psychological trigger used",
+        "hook": "the hook text - MUST be shocking/bold",
+        "trigger": "shocking/urgency/controversial",
         "explanation": "why this works"
     }},
     "alternative": {{
-        "hook": "the hook text",
-        "trigger": "psychological trigger used", 
+        "hook": "the hook text - MUST be question/curiosity based",
+        "trigger": "curiosity/question/mystery",
         "explanation": "why this works"
     }},
     "backup": {{
-        "hook": "the hook text",
-        "trigger": "psychological trigger used",
+        "hook": "the hook text - MUST be story/emotional based",
+        "trigger": "transformation/story/emotional",
         "explanation": "why this works"
     }},
     "tips": ["tip1", "tip2", "tip3"]
 }}
 
-Make hooks attention-grabbing, authentic, and optimized for {platform}."""
+Make hooks attention-grabbing, authentic, and optimized for {platform}. 
+DO NOT repeat similar phrases or structures across the three hooks."""
 
     try:
         # Use LLM to generate hooks
