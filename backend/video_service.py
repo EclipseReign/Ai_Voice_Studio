@@ -106,6 +106,85 @@ SUBTITLE_STYLES = {
         "outline_color": "&H40000000",  # Semi-transparent outline
         "shadow": 1,  # Subtle shadow
         "use_pop_animation": False,
+    },
+    "youtube": {
+        "fontsize": 65,
+        "fontcolor": "white",
+        "borderw": 4,
+        "bordercolor": "black",
+        "bold": 1,
+        "font": "Liberation Sans",
+        "words_per_phrase": 5,  # More words for longer format
+        "primary_color": "&H00FFFFFF",  # White
+        "outline_color": "&H00000000",  # Black outline
+        "shadow": 2,
+        "use_pop_animation": False,
+    },
+    "podcast": {
+        "fontsize": 58,
+        "fontcolor": "white",
+        "borderw": 3,
+        "bordercolor": "&H80000000",  # More transparent for subtle look
+        "font": "DejaVu Serif",
+        "words_per_phrase": 6,  # Even more words for podcast style
+        "primary_color": "&H00FFFFFF",  # White
+        "outline_color": "&H80000000",  # Semi-transparent outline
+        "shadow": 1,
+        "use_pop_animation": False,
+    },
+    "neon": {
+        "fontsize": 72,
+        "fontcolor": "#00FFFF",  # Cyan/neon color
+        "borderw": 6,
+        "bordercolor": "#FF00FF",  # Magenta border
+        "bold": 1,
+        "font": "Liberation Sans Narrow",
+        "words_per_phrase": 2,
+        "primary_color": "&H00FFFF00",  # Cyan (AABBGGRR format)
+        "outline_color": "&H00FF00FF",  # Magenta outline
+        "shadow": 3,
+        "use_pop_animation": True,
+    },
+    "elegant": {
+        "fontsize": 62,
+        "fontcolor": "#FFD700",  # Gold
+        "borderw": 4,
+        "bordercolor": "#000000",
+        "bold": 1,
+        "font": "DejaVu Serif",
+        "shadowcolor": "black@0.6",
+        "shadowx": 2,
+        "shadowy": 2,
+        "words_per_phrase": 4,
+        "primary_color": "&H0000D7FF",  # Gold (AABBGGRR format)
+        "outline_color": "&H00000000",  # Black outline
+        "shadow": 2,
+        "use_pop_animation": False,
+    },
+    "bold": {
+        "fontsize": 75,
+        "fontcolor": "red",
+        "borderw": 9,
+        "bordercolor": "black",
+        "bold": 1,
+        "font": "Liberation Sans Narrow",
+        "words_per_phrase": 1,  # One word at a time for maximum impact
+        "primary_color": "&H000000FF",  # Red (AABBGGRR format)
+        "outline_color": "&H00000000",  # Black outline
+        "shadow": 3,
+        "use_pop_animation": True,
+    },
+    "soft": {
+        "fontsize": 55,
+        "fontcolor": "#E6E6FA",  # Lavender
+        "borderw": 2,
+        "bordercolor": "&H60000000",  # Very transparent
+        "font": "DejaVu Sans",
+        "words_per_phrase": 5,
+        "primary_color": "&H00FAE6E6",  # Lavender (AABBGGRR format)
+        "outline_color": "&H60000000",  # Very transparent outline
+        "shadow": 1,
+        "use_pop_animation": False,
     }
 }
 

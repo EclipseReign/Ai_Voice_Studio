@@ -469,10 +469,17 @@ const HomePage = () => {
   };
   
   const handleSynthesize = async (textOverride = null, jobId = null) => {
-    // Use provided text or fall back to current text based on active tab
-    const text = textOverride || (activeTab === "ai-generate" ? generatedText : manualText);
-    
-    if (!text.trim()) {
+    // Use provided text or fall back to current text based on active tab or wizard mode
+    let text = textOverride;
+    if (!text) {
+      // In wizard mode, always prefer generatedText first, then manualText
+      if (uiMode === "wizard") {
+        text = generatedText || manualText;
+      } else {
+        text = (activeTab === "ai-generate" ? generatedText : manualText);
+      }
+    }
+    if (!text || !text.trim()) {
       toast.error(t('notifications.enterText'));
       return;
     }
@@ -1509,10 +1516,15 @@ const HomePage = () => {
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="tiktok">TikTok Style</SelectItem>
-                                    <SelectItem value="youtube">YouTube Style</SelectItem>
-                                    <SelectItem value="instagram">Instagram Style</SelectItem>
-                                    <SelectItem value="podcast">Podcast Style</SelectItem>
+                                    <SelectItem value="tiktok">🎵 TikTok Style (Yellow, Bold)</SelectItem>
+                                    <SelectItem value="youtube">📺 YouTube Style (White, Clean)</SelectItem>
+                                    <SelectItem value="instagram">📷 Instagram Style (White, Shadow)</SelectItem>
+                                    <SelectItem value="podcast">🎙️ Podcast Style (Subtle, Serif)</SelectItem>
+                                    <SelectItem value="neon">⚡ Neon Style (Cyan/Magenta)</SelectItem>
+                                    <SelectItem value="elegant">👑 Elegant Style (Gold)</SelectItem>
+                                    <SelectItem value="bold">💥 Bold Style (Red, Impact)</SelectItem>
+                                    <SelectItem value="soft">🌸 Soft Style (Lavender)</SelectItem>
+                                    <SelectItem value="minimal">✨ Minimal Style (Simple)</SelectItem>
                                   </SelectContent>
                                 </Select>
                               </div>
@@ -1847,19 +1859,55 @@ const HomePage = () => {
                               <SelectItem value="tiktok">
                                 <div className="flex items-center gap-2">
                                   <span className="text-lg">🎵</span>
-                                  <span>{t('videoGeneration.tiktokStyle')}</span>
+                                  <span>TikTok (Yellow, Bold)</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="youtube">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-lg">📺</span>
+                                  <span>YouTube (White, Clean)</span>
                                 </div>
                               </SelectItem>
                               <SelectItem value="instagram">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-lg">📸</span>
-                                  <span>{t('videoGeneration.instagramStyle')}</span>
+                                  <span className="text-lg">📷</span>
+                                  <span>Instagram (White, Shadow)</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="podcast">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-lg">🎙️</span>
+                                  <span>Podcast (Subtle)</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="neon">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-lg">⚡</span>
+                                  <span>Neon (Cyan/Magenta)</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="elegant">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-lg">👑</span>
+                                  <span>Elegant (Gold)</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="bold">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-lg">💥</span>
+                                  <span>Bold (Red, Impact)</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="soft">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-lg">🌸</span>
+                                  <span>Soft (Lavender)</span>
                                 </div>
                               </SelectItem>
                               <SelectItem value="minimal">
                                 <div className="flex items-center gap-2">
                                   <span className="text-lg">✨</span>
-                                  <span>{t('videoGeneration.minimalStyle')}</span>
+                                  <span>Minimal (Simple)</span>
                                 </div>
                               </SelectItem>
                             </SelectContent>

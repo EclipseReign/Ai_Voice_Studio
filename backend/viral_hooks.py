@@ -155,9 +155,10 @@ DO NOT repeat similar phrases or structures across the three hooks."""
 
     try:
         # Use LLM to generate hooks
+        api_key = os.environ.get('OPENAI_API_KEY') or os.environ.get('EMERGENT_LLM_KEY')
         llm = LlmChat(
             model="gpt-4o-mini",  # Fast and good for short-form content
-            api_key=os.environ.get('EMERGENT_LLM_KEY')
+            api_key=api_key
         )
         
         response = llm.chat([UserMessage(content=prompt)])
@@ -273,9 +274,10 @@ Also provide:
 Format as JSON."""
 
     try:
+        api_key = os.environ.get('OPENAI_API_KEY') or os.environ.get('EMERGENT_LLM_KEY')
         llm = LlmChat(
             model="gpt-4o-mini",
-            api_key=os.environ.get('EMERGENT_LLM_KEY')
+            api_key=api_key
         )
         
         response = llm.chat([UserMessage(content=prompt)])
