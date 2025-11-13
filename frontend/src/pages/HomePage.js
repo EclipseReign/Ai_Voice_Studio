@@ -479,6 +479,12 @@ const HomePage = () => {
         text = (activeTab === "ai-generate" ? generatedText : manualText);
       }
     }
+
+    // Ensure text is a string before calling trim()
+    if (typeof text !== 'string') {
+      text = String(text || '');
+    }
+
     if (!text || !text.trim()) {
       toast.error(t('notifications.enterText'));
       return;

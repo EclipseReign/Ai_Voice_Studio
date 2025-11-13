@@ -391,6 +391,7 @@ const ViralHookGenerator = ({ onSelectHook, selectedHookText, className = "" }) 
                     variant="outline"
                     size="sm"
                     onClick={() => handleCopyHook(hooks.backup.hook)}
+                    className="flex-1"
                   >
                     {copiedHook === hooks.backup.hook ? (
                       <><Check className="w-4 h-4 mr-2" /> Copied!</>
@@ -399,9 +400,21 @@ const ViralHookGenerator = ({ onSelectHook, selectedHookText, className = "" }) 
                     )}
                   </Button>
                   <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleAnalyzeHook(hooks.backup.hook)}
+                    disabled={isAnalyzing}
+                    className="flex-1"
+                  >
+                    <BarChart3 className="w-4 h-4 mr-2" />
+                    Analyze
+                  </Button>
+                  <Button
                     size="sm"
                     onClick={() => handleUseHook(hooks.backup.hook)}
+                    className="flex-1"
                   >
+                    <Sparkles className="w-4 h-4 mr-2" />
                     Use
                   </Button>
                 </div>
