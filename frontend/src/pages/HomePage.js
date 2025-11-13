@@ -484,6 +484,15 @@ const HomePage = () => {
     if (typeof text !== 'string') {
       text = String(text || '');
     }
+    
+    console.log('[handleSynthesize] Text to synthesize:', {
+      length: text.length,
+      preview: text.substring(0, 100),
+      generatedText: generatedText?.substring(0, 50),
+      manualText: manualText?.substring(0, 50),
+      activeTab,
+      uiMode
+    });
 
     if (!text || !text.trim()) {
       toast.error(t('notifications.enterText'));
@@ -1390,6 +1399,27 @@ const HomePage = () => {
                     {/* Step 3: Voice & Audio Generation */}
                     {wizardStep === 3 && (
                       <div className="space-y-6">
+                        {/* Show current text to be synthesized */}
+                        {(generatedText || manualText) && (
+                          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
+                            <CardHeader>
+                              <CardTitle className="text-base flex items-center gap-2">
+                                <Sparkles className="w-4 h-4" />
+                                Текст для озвучивания
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="bg-white dark:bg-gray-900 p-4 rounded-lg max-h-40 overflow-y-auto">
+                                <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                                  {generatedText || manualText}
+                                </p>
+                              </div>
+                              <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                {(generatedText || manualText).length} символов
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <Label htmlFor="wizard-voice">{t('home.selectAVoice')}</Label>
