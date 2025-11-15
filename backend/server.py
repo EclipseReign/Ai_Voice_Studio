@@ -1600,6 +1600,9 @@ def split_text_into_segments(text: str, max_segment_length: int = 1000) -> list:
     Larger segments = fewer total segments = less memory overhead during concatenation
     Also adds pauses at punctuation marks for more natural speech
     """
+    # DEBUG: Log input text
+    logger.info(f"[DEBUG split_text_into_segments] Input text length: {len(text)} chars")
+    logger.info(f"[DEBUG split_text_into_segments] Text preview (first 200 chars): {text[:200]}")
     # Add pauses at punctuation for natural speech rhythm
     # Add longer pause after sentence-ending punctuation (.!?)
     text = re.sub(r'([.!?])\s+', r'\1 ... ', text)  # Add pause after sentences
@@ -1608,7 +1611,7 @@ def split_text_into_segments(text: str, max_segment_length: int = 1000) -> list:
     
     # Split by sentences (periods, exclamation marks, question marks)
     sentences = re.split(r'(?<=[.!?])\s+', text)
-    
+    logger.info(f"[DEBUG split_text_into_segments] Split into {len(sentences)} sentences")
     segments = []
     current_segment = ""
     
@@ -1623,6 +1626,10 @@ def split_text_into_segments(text: str, max_segment_length: int = 1000) -> list:
     # Add remaining segment
     if current_segment:
         segments.append(current_segment.strip())
+    
+    logger.info(f"[DEBUG split_text_into_segments] Created {len(segments)} segments")
+    for i, seg in enumerate(segments[:3]):  # Log first 3 segments
+        logger.info(f"[DEBUG split_text_into_segments] Segment {i+1} length: {len(seg)} chars, preview: {seg[:100]}")
     
     return segments
 
@@ -1819,10 +1826,15 @@ async def synthesize_audio_with_progress(
     
     async def generate_progress():
         try:
+            # DEBUG: Log incoming request text
+            logger.info(f"[DEBUG synthesize_audio_with_progress] Received text length: {len(request.text)} chars")
+            logger.info(f"[DEBUG synthesize_audio_with_progress] Text preview (first 300 chars): {request.text[:300]}")
+            logger.info(f"[DEBUG synthesize_audio_with_progress] Voice: {request.voice}, Rate: {request.rate}, Language: {request.language}")
             text_sanitized = InputSanitizer.sanitize_string(request.text, max_length=200000)  # ~1 hour audio
             voice_sanitized = InputSanitizer.sanitize_string(request.voice, max_length=100)
             language_sanitized = InputSanitizer.sanitize_string(request.language, max_length=20)
-            
+            # DEBUG: Log after sanitization
+            logger.info(f"[DEBUG synthesize_audio_with_progress] After sanitization, text length: {len(text_sanitized)} chars")
             # Update request with sanitized values
             request.text = text_sanitized
             request.voice = voice_sanitized
