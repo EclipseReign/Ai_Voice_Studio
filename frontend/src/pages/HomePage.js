@@ -480,18 +480,44 @@ const HomePage = () => {
       }
     }
 
-    // Ensure text is a string before calling trim()
+    // DEBUG: Log raw values before conversion
+    console.log('[handleSynthesize] RAW VALUES:', {
+      textOverride,
+      text,
+      textType: typeof text,
+      textIsObject: typeof text === 'object',
+      textIsArray: Array.isArray(text),
+      generatedText,
+      generatedTextType: typeof generatedText,
+      manualText,
+      manualTextType: typeof manualText,
+      uiMode,
+      activeTab
+    });
+
+    // Ensure text is a string - handle objects properly
     if (typeof text !== 'string') {
-      text = String(text || '');
+      if (text === null || text === undefined) {
+        text = '';
+      } else if (typeof text === 'object') {
+        // If it's an object, try to extract text property or stringify it properly
+        console.error('[handleSynthesize] ERROR: text is an object!', text);
+        if (text.text && typeof text.text === 'string') {
+          text = text.text;
+        } else if (text.toString && text.toString() !== '[object Object]') {
+          text = text.toString();
+        } else {
+          text = JSON.stringify(text);
+        }
+      } else {
+        text = String(text || '');
+      }
     }
     
     console.log('[handleSynthesize] Text to synthesize:', {
       length: text.length,
       preview: text.substring(0, 100),
-      generatedText: generatedText?.substring(0, 50),
-      manualText: manualText?.substring(0, 50),
-      activeTab,
-      uiMode
+      textType: typeof text
     });
 
     if (!text || !text.trim()) {
