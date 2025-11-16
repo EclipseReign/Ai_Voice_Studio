@@ -1480,7 +1480,7 @@ const HomePage = () => {
                         </div>
 
                         <Button
-                          onClick={handleSynthesize}
+                          onClick={() => handleSynthesize()}
                           disabled={isSynthesizing || (!generatedText && !manualText) || !selectedVoice}
                           className="w-full"
                           size="lg"
