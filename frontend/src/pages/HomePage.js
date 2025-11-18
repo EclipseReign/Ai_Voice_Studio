@@ -1665,17 +1665,78 @@ const HomePage = () => {
                     {/* Step 5: Preview & Generate */}
                     {wizardStep === 5 && (
                       <div className="space-y-6">
-                        <div className="text-center">
+                        <div className="text-center mb-4">
                           <h3 className="text-lg font-semibold mb-2">{t('wizard.step5')}</h3>
                           <p className="text-sm text-gray-600 dark:text-gray-400">
                             {t('wizard.step5Desc')}
                           </p>
                         </div>
+                        {/* Settings Preview */}
+                        <Card className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-blue-950/30 dark:via-purple-950/30 dark:to-pink-950/30 border-blue-200 dark:border-blue-800">
+                          <CardHeader>
+                            <CardTitle className="text-lg flex items-center gap-2">
+                              <Video className="w-5 h-5" />
+                              Предпросмотр настроек
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            {/* Audio Preview */}
+                            {audioUrl && (
+                              <div className="p-4 bg-white/60 dark:bg-slate-800/60 rounded-lg">
+                                <div className="flex items-center gap-3 mb-2">
+                                  <Volume2 className="w-5 h-5 text-blue-600" />
+                                  <span className="font-semibold">Аудио</span>
+                                </div>
+                                <audio controls src={audioUrl} className="w-full" />
+                              </div>
+                            )}
 
+                            {/* Video Settings Summary */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              <div className="p-3 bg-white/60 dark:bg-slate-800/60 rounded-lg">
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Тип видео</p>
+                                <p className="font-medium">
+                                  {videoType === 'youtube_images' && '📺 AI Картинки'}
+                                  {videoType === 'stock' && '🎬 Стоковое'}
+                                  {videoType === 'shorts' && '📱 Shorts'}
+                                </p>
+                              </div>
+                              
+                              <div className="p-3 bg-white/60 dark:bg-slate-800/60 rounded-lg">
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Субтитры</p>
+                                <p className="font-medium">
+                                  {subtitlesEnabled ? (
+                                    <>✅ {subtitleStyle} ({subtitlePosition})</>
+                                  ) : (
+                                    '❌ Выключены'
+                                  )}
+                                </p>
+                              </div>
+
+                              {useBackgroundVideo && videoType === 'shorts' && (
+                                <div className="p-3 bg-white/60 dark:bg-slate-800/60 rounded-lg col-span-2">
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Фоновое видео</p>
+                                  <p className="font-medium">
+                                    ✅ {backgroundVideoType === 'preset' ? `Готовый фон: ${backgroundVideoPreset}` : 'Пользовательский фон'}
+                                  </p>
+                                </div>
+                              )}
+
+                              {generatedText && (
+                                <div className="p-3 bg-white/60 dark:bg-slate-800/60 rounded-lg col-span-2">
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Текст</p>
+                                  <p className="text-sm line-clamp-3">{generatedText || manualText}</p>
+                                </div>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        {/* Generate Button */}
                         <Button
                           onClick={handleGenerateVideo}
                           disabled={isGeneratingVideo || !audioUrl}
-                          className="w-full"
+                          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                           size="lg"
                         >
                           {isGeneratingVideo ? (
@@ -1708,11 +1769,11 @@ const HomePage = () => {
 
                         {/* Video Player */}
                         {videoUrl && (
-                          <Card className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20">
+                          <Card className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800">
                             <CardContent className="pt-6">
                               <div className="flex items-center justify-between mb-3">
-                                <span className="text-sm font-medium text-purple-800 dark:text-purple-200">
-                                  ✅ {t('video.videoReady')}
+                                <span className="text-sm font-medium text-green-800 dark:text-green-200 flex items-center gap-2">
+                                  ✅ Видео готово!
                                 </span>
                                 <Button
                                   onClick={() => downloadVideo(currentVideoId)}
