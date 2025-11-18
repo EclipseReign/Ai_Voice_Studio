@@ -14,7 +14,7 @@ import { Slider } from "@/components/ui/slider";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { Loader2, Sparkles, Mic, Download, Clock, Volume2, User, LogOut, Wand2, LayoutGrid } from "lucide-react";
+import { Loader2, Sparkles, Mic, Download, Clock, Volume2, User, LogOut, Wand2, LayoutGrid, Video } from "lucide-react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import Footer from "@/components/Footer";
